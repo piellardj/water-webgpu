@@ -1,0 +1,47 @@
+{
+	"files": [
+        "../ts/main.ts",
+    ],
+	"compilerOptions": {
+		/* Type Checking */
+		"allowUnreachableCode": false,
+		"allowUnusedLabels": false,
+		"alwaysStrict": true,
+		"exactOptionalPropertyTypes": true,
+		"noFallthroughCasesInSwitch": true,
+		"noImplicitAny": true,
+		"noImplicitOverride": true,
+		"noImplicitReturns": true,
+		"noImplicitThis": true,
+		"noPropertyAccessFromIndexSignature": true,
+		"noUncheckedIndexedAccess": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"strict": true,
+		"strictBindCallApply": true,
+		"strictFunctionTypes": true,
+		"strictNullChecks": true,
+		"strictPropertyInitialization": true,
+		"useUnknownInCatchVariables": true,
+
+		/* Modules */
+		"module": "commonjs",
+		"moduleResolution": "node",
+
+		/* Emit */
+		"declaration": false,
+		"removeComments": false,
+		"sourceMap": true,
+
+		/* JavaScript Support */
+		"allowJs": false,
+
+		/* Interop Constraints */
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"isolatedModules": true, // because webpack is used for bundling
+
+		/* Language and Environment */
+		"target": "ES2017"
+	}
+}
