@@ -27,6 +27,9 @@
 		/* Modules */
 		"module": "commonjs",
 		"moduleResolution": "node",
+		"types": [
+			"@webgpu/types"
+		],
 
 		/* Emit */
 		"declaration": false,

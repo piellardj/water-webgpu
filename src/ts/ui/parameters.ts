@@ -1,8 +1,10 @@
 /// <reference types="../page-interface-generated" />
 
 const controlId = {
+    BACKGROUND_COLORPICKER: "background-color-id",
     INDICATORS_CHECKBOX: "indicators-checkbox-id",
-    BACKGROUND_COLORPICKER_ID: "background-color-id",
+    AXES_CHECKBOX: "axes-checkbox-id",
+    PROJECTION_TABS: "projection-tabs-id",
 };
 
 function updateIndicatorsVisibility(): void {
@@ -19,14 +21,27 @@ function buildColor(id: string): ColorNormalized {
     return [color.r / 255, color.g / 255, color.b / 255, 1];
 }
 
+enum EProjection {
+    ORTHO = "ortho",
+    PERSPECTIVE = "perspective",
+}
+
 abstract class Parameters {
     public static get backgroundColor(): ColorNormalized {
-        return buildColor(controlId.BACKGROUND_COLORPICKER_ID);
+        return buildColor(controlId.BACKGROUND_COLORPICKER);
     }
 
+    public static get showAxes(): boolean {
+        return Page.Checkbox.isChecked(controlId.AXES_CHECKBOX);
+    }
+
+    public static get projection(): EProjection {
+        return Page.Tabs.getValues(controlId.PROJECTION_TABS)[0] as EProjection;
+    }
 }
 
 export {
+    EProjection,
     Parameters,
 };
 

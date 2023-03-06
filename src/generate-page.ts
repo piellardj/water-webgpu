@@ -34,13 +34,36 @@ const data = {
                     type: Demopage.supportedControls.ColorPicker,
                     title: "Background",
                     id: "background-color-id",
-                    defaultValueHex: "#E872B5",
+                    defaultValueHex: "#000000",
                 },
                 {
                     type: Demopage.supportedControls.Checkbox,
                     title: "Indicators",
                     id: "indicators-checkbox-id",
                     checked: true,
+                },
+                {
+                    type: Demopage.supportedControls.Checkbox,
+                    title: "Axes",
+                    id: "axes-checkbox-id",
+                    checked: true,
+                },
+                {
+                    type: Demopage.supportedControls.Tabs,
+                    title: "Projection",
+                    id: "projection-tabs-id",
+                    unique: true,
+                    options: [
+                        {
+                            label: "Orthographic",
+                            value: "ortho",
+                        },
+                        {
+                            label: "Perspective",
+                            value: "perspective",
+                            checked: true,
+                        },
+                    ]
                 },
             ],
         },

@@ -1,4 +1,5 @@
-import { Renderer } from "./rendering/renderer";
+import { Camera } from "./rendering/camera";
+import { Scene } from "./scene";
 import { FrameCounter } from "./ui/frame-counter";
 import { Parameters } from "./ui/parameters";
 import { WebGPUCanvas } from "./webgpu-utils/webgpu-canvas";
@@ -6,7 +7,9 @@ import * as WebGPU from "./webgpu-utils/webgpu-device";
 
 function main(device: GPUDevice, canvas: HTMLCanvasElement, _canvasContainer: HTMLElement): void {
     const webgpuCanvas = new WebGPUCanvas(canvas);
-    const renderer = new Renderer(webgpuCanvas);
+    const camera = new Camera();
+    const scene = new Scene(webgpuCanvas);
+
     const framesCounter = new FrameCounter();
     framesCounter.onChange = (fps: number) => Page.Canvas.setIndicatorText("average-fps", `${fps.toFixed()} fps`);
 
@@ -17,7 +20,7 @@ function main(device: GPUDevice, canvas: HTMLCanvasElement, _canvasContainer: HT
         webgpuCanvas.adjustSize();
 
         const commandEncoder = device.createCommandEncoder();
-        renderer.draw(commandEncoder);
+        scene.render(commandEncoder, camera);
         device.queue.submit([commandEncoder.finish()]);
 
         requestAnimationFrame(mainLoop);
