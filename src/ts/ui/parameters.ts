@@ -4,6 +4,7 @@ const controlId = {
     BACKGROUND_COLORPICKER: "background-color-id",
     INDICATORS_CHECKBOX: "indicators-checkbox-id",
     AXES_CHECKBOX: "axes-checkbox-id",
+    DOMAIN_CHECKBOX: "domain-checkbox-id",
     PROJECTION_TABS: "projection-tabs-id",
 };
 
@@ -33,6 +34,10 @@ abstract class Parameters {
 
     public static get showAxes(): boolean {
         return Page.Checkbox.isChecked(controlId.AXES_CHECKBOX);
+    }
+
+    public static get showDomain(): boolean {
+        return Page.Checkbox.isChecked(controlId.DOMAIN_CHECKBOX);
     }
 
     public static get projection(): EProjection {

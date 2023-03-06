@@ -49,6 +49,12 @@ const data = {
                     checked: true,
                 },
                 {
+                    type: Demopage.supportedControls.Checkbox,
+                    title: "Domain",
+                    id: "domain-checkbox-id",
+                    checked: true,
+                },
+                {
                     type: Demopage.supportedControls.Tabs,
                     title: "Projection",
                     id: "projection-tabs-id",
