@@ -27,6 +27,23 @@ const data = {
         enableFullscreen: true
     },
     controlsSections: [
+        {
+            title: "Rendering",
+            controls: [
+                {
+                    type: Demopage.supportedControls.ColorPicker,
+                    title: "Background",
+                    id: "background-color-id",
+                    defaultValueHex: "#E872B5",
+                },
+                {
+                    type: Demopage.supportedControls.Checkbox,
+                    title: "Indicators",
+                    id: "indicators-checkbox-id",
+                    checked: true,
+                },
+            ],
+        },
     ],
 };
 
