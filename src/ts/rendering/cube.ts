@@ -1,8 +1,8 @@
 import * as glMatrix from "gl-matrix";
 
+import * as Types from "../webgpu-utils/host-shareable-types/types";
 import * as ShaderSources from "../webgpu-utils/shader-sources";
-import { mat4x4, StructType } from "../webgpu-utils/uniform/host-shareable-types/types";
-import { UniformsBuffer } from "../webgpu-utils/uniform/uniforms-buffer";
+import { UniformsBuffer } from "../webgpu-utils/uniforms-buffer";
 import { WebGPUCanvas } from "../webgpu-utils/webgpu-canvas";
 
 class Cube {
@@ -47,8 +47,8 @@ class Cube {
             },
         });
 
-        this.uniformsBuffer = new UniformsBuffer(this.device, new StructType("Uniforms", [
-            { name: "mvp", type: mat4x4 },
+        this.uniformsBuffer = new UniformsBuffer(this.device, new Types.StructType("Uniforms", [
+            { name: "mvp", type: Types.mat4x4 },
         ]));
 
         this.uniformsBindgroup = this.device.createBindGroup({
