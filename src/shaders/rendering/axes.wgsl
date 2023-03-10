@@ -1,5 +1,5 @@
-struct Uniforms {       //             align(16)  size(16)
-    mvp: mat4x4<f32>,   // offset(0)   align(16)  size(16)
+struct Uniforms {       //             align(16)  size(64)
+    mvp: mat4x4<f32>,   // offset(0)   align(16)  size(64)
 };
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;

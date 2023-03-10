@@ -1,7 +1,5 @@
 import { StructType } from "./host-shareable-types/struct-type";
 
-const minSize = 64;
-
 class UniformsBuffer {
     private readonly device: GPUDevice;
     private readonly structType: StructType;
@@ -13,7 +11,7 @@ class UniformsBuffer {
         this.structType = structType;
         this.data = new ArrayBuffer(this.structType.size);
         this.gpuBuffer = this.device.createBuffer({
-            size: Math.max(minSize, structType.size),
+            size: structType.size,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
         });
     }
