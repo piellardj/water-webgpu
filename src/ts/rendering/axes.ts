@@ -1,12 +1,14 @@
 
 import * as glMatrix from "gl-matrix";
 import * as ShaderSources from "../webgpu-utils/shader-sources";
+import { mat4x4, StructType } from "../webgpu-utils/uniform/host-shareable-types/types";
+import { UniformsBuffer } from "../webgpu-utils/uniform/uniforms-buffer";
 import { WebGPUCanvas } from "../webgpu-utils/webgpu-canvas";
 
 class Axes {
     private readonly device: GPUDevice;
     private readonly renderPipeline: GPURenderPipeline;
-    private readonly uniformsBuffer: GPUBuffer;
+    private readonly uniformsBuffer: UniformsBuffer;
 
     private readonly verticesCount: number = 6;
     private readonly uniformsBindgroup: GPUBindGroup;
@@ -45,16 +47,15 @@ class Axes {
             },
         });
 
-        this.uniformsBuffer = this.device.createBuffer({
-            size: 64,
-            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
-        });
+        this.uniformsBuffer = new UniformsBuffer(this.device, new StructType("Uniforms", [
+            { name: "mvp", type: mat4x4 },
+        ]));
 
         this.uniformsBindgroup = this.device.createBindGroup({
             layout: this.renderPipeline.getBindGroupLayout(0),
             entries: [{
                 binding: 0,
-                resource: { buffer: this.uniformsBuffer }
+                resource: this.uniformsBuffer.bindingResource,
             },]
         });
     }
@@ -63,9 +64,8 @@ class Axes {
         glMatrix.mat4.fromScaling(this.matrix, [this.size, this.size, this.size]);
         glMatrix.mat4.multiply(this.mvpMatrix, vpMatrix, this.matrix);
 
-        const uniformBufferData = new ArrayBuffer(64);
-        new Float32Array(uniformBufferData, 0, 16).set(this.mvpMatrix);
-        this.device.queue.writeBuffer(this.uniformsBuffer, 0, uniformBufferData);
+        this.uniformsBuffer.setValueFromName("mvp", this.mvpMatrix);
+        this.uniformsBuffer.uploadToGPU();
 
         renderpassEncoder.setPipeline(this.renderPipeline);
         renderpassEncoder.setBindGroup(0, this.uniformsBindgroup);
