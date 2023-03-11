@@ -1,4 +1,6 @@
 import * as glMatrix from "gl-matrix";
+import { type SpheresData } from "../engine/engine";
+import { Parameters } from "../ui/parameters";
 
 import * as Types from "../webgpu-utils/host-shareable-types/types";
 import * as ShaderSources from "../webgpu-utils/shader-sources";
@@ -11,9 +13,6 @@ class SpheresRenderer {
     private readonly renderPipeline: GPURenderPipeline;
     private readonly uniformsBuffer: UniformsBuffer;
     private readonly uniformsBindgroup: GPUBindGroup;
-
-    private readonly positionsBuffer: GPUBuffer;
-    private readonly spheresCount: number;
 
     private readonly matrix: glMatrix.ReadonlyMat4;
     private readonly mvpMatrix: glMatrix.mat4 = glMatrix.mat4.create();
@@ -75,30 +74,21 @@ class SpheresRenderer {
                 resource: this.uniformsBuffer.bindingResource,
             }]
         });
-
-        this.positionsBuffer = this.device.createBuffer({
-            size: 4 * Float32Array.BYTES_PER_ELEMENT * 1,
-            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.VERTEX,
-            mappedAtCreation: true,
-        });
-        new Int32Array(this.positionsBuffer.getMappedRange()).set([0, 0, 0, 0]);
-        this.positionsBuffer.unmap();
-        this.spheresCount = 1;
     }
 
-    public render(renderpassEncoder: GPURenderPassEncoder, viewData: ViewData, radius: number): void {
+    public render(renderpassEncoder: GPURenderPassEncoder, viewData: ViewData, spheresData: SpheresData): void {
         glMatrix.mat4.multiply(this.mvpMatrix, viewData.vpMatrix, this.matrix);
 
         this.uniformsBuffer.setValueFromName("mvp", this.mvpMatrix);
         this.uniformsBuffer.setValueFromName("cameraUp", viewData.cameraUp);
         this.uniformsBuffer.setValueFromName("cameraRight", viewData.cameraRight);
-        this.uniformsBuffer.setValueFromName("sphereRadius", radius);
+        this.uniformsBuffer.setValueFromName("sphereRadius", Parameters.spheresRadiusFactor * spheresData.radius);
         this.uniformsBuffer.uploadToGPU();
 
         renderpassEncoder.setPipeline(this.renderPipeline);
-        renderpassEncoder.setVertexBuffer(0, this.positionsBuffer);
+        renderpassEncoder.setVertexBuffer(0, spheresData.buffer);
         renderpassEncoder.setBindGroup(0, this.uniformsBindgroup);
-        renderpassEncoder.draw(6, this.spheresCount);
+        renderpassEncoder.draw(6, spheresData.count);
     }
 }
 

@@ -1,4 +1,5 @@
 import * as glMatrix from "gl-matrix";
+import { Engine } from "./engine/engine";
 import { AxesRenderer } from "./rendering/axes-renderer";
 import { CubeRenderer } from "./rendering/cube-renderer";
 import { SpheresRenderer } from "./rendering/spheres-renderer";
@@ -10,12 +11,17 @@ class Scene {
     private readonly webgpuCanvas: WebGPUCanvas;
     private readonly modelMatrix: glMatrix.mat4 = glMatrix.mat4.create();
 
+    private readonly engine: Engine;
+
     private readonly axesRenderer: AxesRenderer;
     private readonly cubeRenderer: CubeRenderer;
     private readonly spheresRenderer: SpheresRenderer;
 
     public constructor(webgpuCanvas: WebGPUCanvas) {
         this.webgpuCanvas = webgpuCanvas;
+
+        this.engine = new Engine(webgpuCanvas.device);
+
         this.axesRenderer = new AxesRenderer(webgpuCanvas);
         this.cubeRenderer = new CubeRenderer(webgpuCanvas, this.modelMatrix);
         this.spheresRenderer = new SpheresRenderer(webgpuCanvas, this.modelMatrix);
@@ -33,8 +39,7 @@ class Scene {
             this.cubeRenderer.render(renderpassEncoder, viewData);
         }
         if (Parameters.showSpheres) {
-            const radius = 0.1 * Parameters.spheresRadiusFactor;
-            this.spheresRenderer.render(renderpassEncoder, viewData, radius);
+            this.spheresRenderer.render(renderpassEncoder, viewData, this.engine.spheresData);
         }
 
         renderpassEncoder.end();
