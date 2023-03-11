@@ -5,8 +5,10 @@ const controlId = {
     INDICATORS_CHECKBOX: "indicators-checkbox-id",
     AXES_CHECKBOX: "axes-checkbox-id",
     DOMAIN_CHECKBOX: "domain-checkbox-id",
-    SPHERES_CHECKBOX: "spheres-checkbox-id",
     PROJECTION_TABS: "projection-tabs-id",
+
+    SPHERES_CHECKBOX: "spheres-checkbox-id",
+    SPHERES_RADIUS_RANGE: "spheres-radius-checkbox-id",
 };
 
 function updateIndicatorsVisibility(): void {
@@ -41,13 +43,18 @@ abstract class Parameters {
         return Page.Checkbox.isChecked(controlId.DOMAIN_CHECKBOX);
     }
 
+    public static get projection(): EProjection {
+        return Page.Tabs.getValues(controlId.PROJECTION_TABS)[0] as EProjection;
+    }
+
     public static get showSpheres(): boolean {
         return Page.Checkbox.isChecked(controlId.SPHERES_CHECKBOX);
     }
 
-    public static get projection(): EProjection {
-        return Page.Tabs.getValues(controlId.PROJECTION_TABS)[0] as EProjection;
+    public static get spheresRadiusFactor(): number {
+        return Page.Range.getValue(controlId.SPHERES_RADIUS_RANGE);
     }
+
 }
 
 export {

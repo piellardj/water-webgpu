@@ -40,7 +40,8 @@ class Scene {
             this.cube.render(renderpassEncoder, viewData);
         }
         if (Parameters.showSpheres) {
-            this.spheres.render(renderpassEncoder, viewData);
+            const radius = 0.1 * Parameters.spheresRadiusFactor;
+            this.spheres.render(renderpassEncoder, viewData, radius);
         }
 
         renderpassEncoder.end();

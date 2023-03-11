@@ -67,7 +67,6 @@ class Spheres {
             { name: "sphereRadius", type: Types.f32 },
             { name: "cameraRight", type: Types.vec3F32 },
         ]));
-        this.uniformsBuffer.setValueFromName("sphereRadius", 0.1);
 
         this.uniformsBindgroup = this.device.createBindGroup({
             layout: this.renderPipeline.getBindGroupLayout(0),
@@ -87,12 +86,13 @@ class Spheres {
         this.spheresCount = 1;
     }
 
-    public render(renderpassEncoder: GPURenderPassEncoder, viewData: ViewData): void {
+    public render(renderpassEncoder: GPURenderPassEncoder, viewData: ViewData, radius: number): void {
         glMatrix.mat4.multiply(this.mvpMatrix, viewData.vpMatrix, this.matrix);
 
         this.uniformsBuffer.setValueFromName("mvp", this.mvpMatrix);
         this.uniformsBuffer.setValueFromName("cameraUp", viewData.cameraUp);
         this.uniformsBuffer.setValueFromName("cameraRight", viewData.cameraRight);
+        this.uniformsBuffer.setValueFromName("sphereRadius", radius);
         this.uniformsBuffer.uploadToGPU();
 
         renderpassEncoder.setPipeline(this.renderPipeline);

@@ -1,9 +1,10 @@
 import * as fs from "fs";
 import * as path from "path";
 import { Demopage } from "webpage-templates";
+import { IDemopageData } from "webpage-templates/build/script/demopage/i-demopage-data";
 
 
-const data = {
+const data: IDemopageData = {
     title: "Smoothed-particle hydrodynamics",
     description: "TODO",
     introduction: [
@@ -55,12 +56,6 @@ const data = {
                     checked: true,
                 },
                 {
-                    type: Demopage.supportedControls.Checkbox,
-                    title: "Spheres",
-                    id: "spheres-checkbox-id",
-                    checked: true,
-                },
-                {
                     type: Demopage.supportedControls.Tabs,
                     title: "Projection",
                     id: "projection-tabs-id",
@@ -76,6 +71,26 @@ const data = {
                             checked: true,
                         },
                     ]
+                },
+            ],
+        },
+        {
+            title: "Rendering",
+            controls: [
+                {
+                    type: Demopage.supportedControls.Checkbox,
+                    title: "Display",
+                    id: "spheres-checkbox-id",
+                    checked: true,
+                },
+                {
+                    type: Demopage.supportedControls.Range,
+                    title: "Radius",
+                    id: "spheres-radius-checkbox-id",
+                    min: 0,
+                    max: 2,
+                    value: 1,
+                    step: 0.1,
                 },
             ],
         },
