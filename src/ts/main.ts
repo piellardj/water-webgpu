@@ -20,7 +20,7 @@ function main(device: GPUDevice, canvas: HTMLCanvasElement, _canvasContainer: HT
         webgpuCanvas.adjustSize();
 
         const commandEncoder = device.createCommandEncoder();
-        scene.render(commandEncoder, camera);
+        scene.render(commandEncoder, camera.viewData);
         device.queue.submit([commandEncoder.finish()]);
 
         requestAnimationFrame(mainLoop);

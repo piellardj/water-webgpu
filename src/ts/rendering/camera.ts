@@ -3,6 +3,15 @@
 import * as glMatrix from "gl-matrix";
 import { EProjection, Parameters } from "../ui/parameters";
 
+type ViewData = {
+    vMatrix: glMatrix.ReadonlyMat4;
+    pMatrix: glMatrix.ReadonlyMat4;
+    vpMatrix: glMatrix.ReadonlyMat4;
+    cameraPosition: glMatrix.ReadonlyVec3;
+    cameraUp: glMatrix.ReadonlyVec3;
+    cameraRight: glMatrix.ReadonlyVec3;
+};
+
 function clamp(x: number, min: number, max: number): number {
     if (x < min) {
         return min;
@@ -35,7 +44,6 @@ class Camera {
             this.zoom *= 1 - 0.1 * delta;
             this.clampZoom();
             this.recomputeEyePosition();
-            this.recomputeViewMatrix();
         });
 
         Page.Canvas.Observers.mouseDrag.push((dX: number, dY: number) => {
@@ -43,7 +51,6 @@ class Camera {
             this.phi -= 0.5 * 2 * 3 * dY;
             this.clampPhi();
             this.recomputeEyePosition();
-            this.recomputeViewMatrix();
         });
 
         // right button to move camera vertically
@@ -78,20 +85,34 @@ class Camera {
                     this._lookAt[2] = clamp(this._lookAt[2], -.5, .5);
 
                     this.recomputeEyePosition();
-                    this.recomputeViewMatrix();
                 }
                 lastMousePosition = [newX, newY];
             });
         }
 
         this.recomputeEyePosition();
-        this.recomputeViewMatrix();
     }
 
-    public get viewUpWorldspace(): glMatrix.ReadonlyVec3 { return this._viewUpWorldspace; }
-    public get viewRightWorldspace(): glMatrix.ReadonlyVec3 { return this._viewRightWorlspace; }
+    public get viewData(): ViewData {
+        this.recomputeProjectionMatrix();
 
-    public buildVPMatrix(aspectRatio: number): glMatrix.ReadonlyMat4 {
+        return {
+            vMatrix: this._viewMatrix,
+            pMatrix: this._projectionMatrix,
+            vpMatrix: this._vpMatrix,
+            cameraPosition: this._eyePosition,
+            cameraUp: this._viewUpWorldspace,
+            cameraRight: this._viewRightWorlspace,
+        }
+    }
+
+    private recomputeViewProjectionMatrix(): void {
+        glMatrix.mat4.multiply(this._vpMatrix, this._projectionMatrix, this._viewMatrix);
+    }
+
+    private recomputeProjectionMatrix(): void {
+        const aspectRatio = Page.Canvas.getAspectRatio();
+
         if (Parameters.projection === EProjection.PERSPECTIVE) {
             const corner: glMatrix.vec4 = [0, 0, 0, 1];
             const result = glMatrix.vec4.create();
@@ -113,8 +134,7 @@ class Camera {
             glMatrix.mat4.ortho(this._projectionMatrix, -side * aspectRatio, side * aspectRatio, -side, side, this.distance - 5.5, this.distance + 2);
         }
 
-        glMatrix.mat4.multiply(this._vpMatrix, this._projectionMatrix, this._viewMatrix);
-        return this._vpMatrix;
+        this.recomputeViewProjectionMatrix();
     }
 
     private recomputeViewMatrix(): void {
@@ -140,6 +160,8 @@ class Camera {
         this._eyePosition[0] = this._lookAt[0] + this.distance * (Math.sin(this.phi) * Math.cos(this.theta));
         this._eyePosition[1] = this._lookAt[1] + this.distance * (Math.sin(this.phi) * Math.sin(this.theta));
         this._eyePosition[2] = this._lookAt[2] + this.distance * (Math.cos(this.phi));
+
+        this.recomputeViewMatrix();
     }
 
     private clampZoom(): void {
@@ -155,6 +177,9 @@ class Camera {
     }
 }
 
+export type {
+    ViewData,
+};
 export {
     Camera,
 };

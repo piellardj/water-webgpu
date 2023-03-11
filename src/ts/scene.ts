@@ -1,9 +1,8 @@
 import * as glMatrix from "gl-matrix";
 import { Axes } from "./rendering/axes";
-import { Camera } from "./rendering/camera";
 import { Cube } from "./rendering/cube";
 import { Spheres } from "./rendering/spheres";
-import { ViewData } from "./rendering/view-data";
+import { type ViewData } from "./rendering/view-data";
 import { Parameters } from "./ui/parameters";
 import { WebGPUCanvas } from "./webgpu-utils/webgpu-canvas";
 
@@ -24,14 +23,8 @@ class Scene {
         glMatrix.mat4.identity(this.modelMatrix);
     }
 
-    public render(commandEncoder: GPUCommandEncoder, camera: Camera): void {
+    public render(commandEncoder: GPUCommandEncoder, viewData: ViewData): void {
         const renderpassEncoder = this.webgpuCanvas.beginRenderPass(commandEncoder);
-
-        const viewData: ViewData = {
-            vpMatrix: camera.buildVPMatrix(this.webgpuCanvas.aspectRatio),
-            cameraUp: camera.viewUpWorldspace,
-            cameraRight: camera.viewRightWorldspace,
-        };
 
         if (Parameters.showAxes) {
             this.axes.render(renderpassEncoder, viewData);
