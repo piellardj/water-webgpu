@@ -8,6 +8,7 @@
         "build": "npm run build-page && npm run webpack",
         "clean": "shx rm -rf docs/* **/*generated.*",
         "lint": "eslint src/ts -c src/config/.eslintrc.json --ext .ts",
+        "lint-fix": "eslint src/ts -c src/config/.eslintrc.json --ext .ts --fix",
         "rebuild": "npm run clean && npm run build",
         "webpack": "webpack --config src/config/webpack.config.js",
         "webpack-watch": "webpack --config src/config/webpack.config.js --watch"

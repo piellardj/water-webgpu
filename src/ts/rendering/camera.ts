@@ -103,7 +103,7 @@ class Camera {
             cameraPosition: this._eyePosition,
             cameraUp: this._viewUpWorldspace,
             cameraRight: this._viewRightWorlspace,
-        }
+        };
     }
 
     private recomputeViewProjectionMatrix(): void {

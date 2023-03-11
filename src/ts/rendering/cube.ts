@@ -57,7 +57,7 @@ class Cube {
             entries: [{
                 binding: 0,
                 resource: this.uniformsBuffer.bindingResource,
-            },]
+            }]
         });
     }
 

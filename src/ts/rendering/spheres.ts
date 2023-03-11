@@ -73,7 +73,7 @@ class Spheres {
             entries: [{
                 binding: 0,
                 resource: this.uniformsBuffer.bindingResource,
-            },]
+            }]
         });
 
         this.positionsBuffer = this.device.createBuffer({

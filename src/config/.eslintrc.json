@@ -32,10 +32,18 @@
                 "ignoreProperties": true
             }
         ],
-        "@typescript-eslint/no-shadow": [
-            "error"
-        ],
+        "@typescript-eslint/no-shadow": "error",
         "@typescript-eslint/no-unused-vars": "off", // enforced by TS
+        "comma-dangle": [
+            "error",
+            {
+                "arrays": "only-multiline",
+                "objects": "only-multiline",
+                "imports": "only-multiline",
+                "exports": "only-multiline",
+                "functions": "never"
+            }
+        ],
         "indent": [
             "warn",
             4,
@@ -43,8 +51,6 @@
                 "SwitchCase": 1
             }
         ],
-        "semi": [
-            "error"
-        ]
+        "semi": "error"
     }
 }

@@ -37,14 +37,14 @@ class ArrayType<T extends Type> implements Type {
         }
         const valuesArray = value as unknown[];
 
-        valuesArray.forEach((value: unknown, index: number) => {
+        valuesArray.forEach((arrayValue: unknown, index: number) => {
             const element = this.elements[index];
             if (!element) {
                 throw new Error();
             }
 
             const localOffset = index * this.stride;
-            element.setValue(arrayBuffer, offset + localOffset, value);
+            element.setValue(arrayBuffer, offset + localOffset, arrayValue);
         });
     }
 }

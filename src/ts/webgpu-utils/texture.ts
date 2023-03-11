@@ -6,7 +6,7 @@ class Texture {
     public constructor(
         private readonly device: GPUDevice,
         public readonly format: GPUTextureFormat,
-        public readonly usage: GPUTextureUsageFlags,
+        public readonly usage: GPUTextureUsageFlags
     ) {
     }
 

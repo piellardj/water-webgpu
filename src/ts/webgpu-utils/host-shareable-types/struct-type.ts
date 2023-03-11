@@ -25,7 +25,7 @@ class StructType implements Type {
     private readonly name: string;
     private readonly attributes: ReadonlyArray<Attribute>;
 
-    public constructor(name: string, attributesDefinitions: AttributeDefinition[]) {
+    public constructor(structName: string, attributesDefinitions: AttributeDefinition[]) {
         const attributes: Attribute[] = [];
         attributesDefinitions.forEach((attributeDefinition: AttributeDefinition, index: number) => {
             const name = attributeDefinition.name;
@@ -86,10 +86,10 @@ class StructType implements Type {
         }
         const size = roundUp(align, lastAttribute.offset + lastAttribute.size);
 
-        this.typeName = `struct ${name}`;
+        this.typeName = `struct ${structName}`;
         this.align = align;
         this.size = size;
-        this.name = name;
+        this.name = structName;
         this.attributes = attributes;
 
         console.debug(this.toString());
@@ -124,7 +124,7 @@ class StructType implements Type {
             if (typeof attribute.customSize === "number") {
                 declaration += `@size(${attribute.customSize}) `;
             }
-            declaration += `${attribute.name}: ${attribute.type.typeName},`
+            declaration += `${attribute.name}: ${attribute.type.typeName},`;
             const offsetComment = `offset(${attribute.offset})`;
             const alignComment = `align(${attribute.align})`;
             const sizeComment = `size(${attribute.size})`;
@@ -133,7 +133,7 @@ class StructType implements Type {
                 offsetComment,
                 alignComment,
                 sizeComment,
-            }
+            };
         });
 
         const structDeclaration = `struct ${this.name} {`;
@@ -151,12 +151,12 @@ class StructType implements Type {
             maxSizeCommentSize = Math.max(maxSizeCommentSize, attributeAsString.sizeComment.length);
         }
 
-        const attributesString = attributesStringData.map(attributesStringData => {
-            return `${attributesStringData.declaration.padEnd(maxDeclarationSize, " ")} // ${attributesStringData.offsetComment.padEnd(maxOffsetCommentSize, " ")} ${attributesStringData.alignComment.padEnd(maxAlignCommentSize, " ")} ${attributesStringData.sizeComment.padEnd(maxSizeCommentSize, " ")}`;
+        const attributesString = attributesStringData.map(attributeStringData => {
+            return `${attributeStringData.declaration.padEnd(maxDeclarationSize, " ")} // ${attributeStringData.offsetComment.padEnd(maxOffsetCommentSize, " ")} ${attributeStringData.alignComment.padEnd(maxAlignCommentSize, " ")} ${attributeStringData.sizeComment.padEnd(maxSizeCommentSize, " ")}`;
         }).join("\n");
         return `${structDeclaration.padEnd(maxDeclarationSize, " ")} // ${" ".repeat(maxOffsetCommentSize)} ${structAlignComment.padEnd(maxAlignCommentSize, " ")} ${structSizeComment.padEnd(maxSizeCommentSize, " ")}
 ${attributesString}
-};`
+};`;
     }
 }
 
