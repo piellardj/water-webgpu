@@ -1,9 +1,10 @@
 import * as glMatrix from "gl-matrix";
 import { Engine } from "./engine/engine";
 import { AxesRenderer } from "./rendering/axes-renderer";
+import { ViewData } from "./rendering/camera";
 import { CubeRenderer } from "./rendering/cube-renderer";
+import { MeshRenderer } from "./rendering/mesh-renderer";
 import { SpheresRenderer } from "./rendering/spheres-renderer";
-import { type ViewData } from "./rendering/view-data";
 import { Parameters } from "./ui/parameters";
 import { WebGPUCanvas } from "./webgpu-utils/webgpu-canvas";
 
@@ -16,6 +17,7 @@ class Scene {
     private readonly axesRenderer: AxesRenderer;
     private readonly cubeRenderer: CubeRenderer;
     private readonly spheresRenderer: SpheresRenderer;
+    private readonly meshRenderer: MeshRenderer;
 
     public constructor(webgpuCanvas: WebGPUCanvas) {
         this.webgpuCanvas = webgpuCanvas;
@@ -25,8 +27,9 @@ class Scene {
         this.axesRenderer = new AxesRenderer(webgpuCanvas);
         this.cubeRenderer = new CubeRenderer(webgpuCanvas, this.modelMatrix);
         this.spheresRenderer = new SpheresRenderer(webgpuCanvas, this.modelMatrix);
+        this.meshRenderer = new MeshRenderer(webgpuCanvas, this.engine.mesh, this.modelMatrix);
 
-        glMatrix.mat4.translate(this.modelMatrix, this.modelMatrix, [-0.5,-0.5,-0.5]);
+        glMatrix.mat4.translate(this.modelMatrix, this.modelMatrix, [-0.5, -0.5, -0.5]);
     }
 
     public render(commandEncoder: GPUCommandEncoder, viewData: ViewData): void {
@@ -40,6 +43,9 @@ class Scene {
         }
         if (Parameters.showSpheres) {
             this.spheresRenderer.render(renderpassEncoder, viewData, this.engine.spheresData);
+        }
+        if (Parameters.showMesh) {
+            this.meshRenderer.render(renderpassEncoder, viewData);
         }
 
         renderpassEncoder.end();

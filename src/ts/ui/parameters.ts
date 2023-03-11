@@ -5,6 +5,7 @@ const controlId = {
     INDICATORS_CHECKBOX: "indicators-checkbox-id",
     AXES_CHECKBOX: "axes-checkbox-id",
     DOMAIN_CHECKBOX: "domain-checkbox-id",
+    MESH_CHECKBOX: "mesh-checkbox-id",
     PROJECTION_TABS: "projection-tabs-id",
 
     SPHERES_CHECKBOX: "spheres-checkbox-id",
@@ -41,6 +42,10 @@ abstract class Parameters {
 
     public static get showDomain(): boolean {
         return Page.Checkbox.isChecked(controlId.DOMAIN_CHECKBOX);
+    }
+
+    public static get showMesh(): boolean {
+        return Page.Checkbox.isChecked(controlId.MESH_CHECKBOX);
     }
 
     public static get projection(): EProjection {

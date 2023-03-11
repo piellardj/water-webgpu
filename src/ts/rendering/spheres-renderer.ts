@@ -6,7 +6,7 @@ import * as Types from "../webgpu-utils/host-shareable-types/types";
 import * as ShaderSources from "../webgpu-utils/shader-sources";
 import { UniformsBuffer } from "../webgpu-utils/uniforms-buffer";
 import { WebGPUCanvas } from "../webgpu-utils/webgpu-canvas";
-import { type ViewData } from "./view-data";
+import { type ViewData } from "./camera";
 
 class SpheresRenderer {
     private readonly device: GPUDevice;

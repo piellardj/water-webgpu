@@ -56,6 +56,12 @@ const data: IDemopageData = {
                     checked: true,
                 },
                 {
+                    type: Demopage.supportedControls.Checkbox,
+                    title: "Mesh",
+                    id: "mesh-checkbox-id",
+                    checked: true,
+                },
+                {
                     type: Demopage.supportedControls.Tabs,
                     title: "Projection",
                     id: "projection-tabs-id",

@@ -1,5 +1,8 @@
-import * as InitialPositions from "./initial-positions";
 import * as glMatrix from "gl-matrix";
+import { FillableMesh } from "./fillable-mesh";
+import * as InitialPositions from "./initial-positions";
+import { Mesh } from "./models/mesh";
+import * as Models from "./models/models";
 
 type SpheresData = {
     radius: number;
@@ -10,14 +13,19 @@ type SpheresData = {
 class Engine {
     private readonly device: GPUDevice;
 
+    public readonly mesh: Mesh;
+
     private readonly positionsBuffer: GPUBuffer;
     private readonly spheresCount: number;
-    private readonly spheresRadius: number = 0.02;
+    private readonly spheresRadius: number = 0.01;
 
     public constructor(device: GPUDevice) {
         this.device = device;
 
-        const positions = InitialPositions.fullCube(this.spheresRadius);
+        this.mesh = Mesh.load(Models.Shapes);
+
+        const fillableMesh = new FillableMesh(this.mesh.triangles);
+        const positions = InitialPositions.fillMesh(this.spheresRadius, fillableMesh);
         this.spheresCount = positions.length;
 
         this.positionsBuffer = this.device.createBuffer({
