@@ -10,15 +10,15 @@ class Scene {
     private readonly webgpuCanvas: WebGPUCanvas;
     private readonly modelMatrix: glMatrix.mat4 = glMatrix.mat4.create();
 
-    private readonly axes: Axes;
-    private readonly cube: Cube;
-    private readonly spheres: Spheres;
+    private readonly axesRenderer: Axes;
+    private readonly cubeRenderer: Cube;
+    private readonly spheresRenderer: Spheres;
 
     public constructor(webgpuCanvas: WebGPUCanvas) {
         this.webgpuCanvas = webgpuCanvas;
-        this.axes = new Axes(webgpuCanvas);
-        this.cube = new Cube(webgpuCanvas, this.modelMatrix);
-        this.spheres = new Spheres(webgpuCanvas, this.modelMatrix);
+        this.axesRenderer = new Axes(webgpuCanvas);
+        this.cubeRenderer = new Cube(webgpuCanvas, this.modelMatrix);
+        this.spheresRenderer = new Spheres(webgpuCanvas, this.modelMatrix);
 
         glMatrix.mat4.identity(this.modelMatrix);
     }
@@ -27,14 +27,14 @@ class Scene {
         const renderpassEncoder = this.webgpuCanvas.beginRenderPass(commandEncoder);
 
         if (Parameters.showAxes) {
-            this.axes.render(renderpassEncoder, viewData);
+            this.axesRenderer.render(renderpassEncoder, viewData);
         }
         if (Parameters.showDomain) {
-            this.cube.render(renderpassEncoder, viewData);
+            this.cubeRenderer.render(renderpassEncoder, viewData);
         }
         if (Parameters.showSpheres) {
             const radius = 0.1 * Parameters.spheresRadiusFactor;
-            this.spheres.render(renderpassEncoder, viewData, radius);
+            this.spheresRenderer.render(renderpassEncoder, viewData, radius);
         }
 
         renderpassEncoder.end();
