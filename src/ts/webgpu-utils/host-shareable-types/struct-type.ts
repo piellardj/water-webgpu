@@ -92,7 +92,7 @@ class StructType implements Type {
         this.name = name;
         this.attributes = attributes;
 
-        console.log(this.toString());
+        console.debug(this.toString());
     }
 
     public setValue(arrayBuffer: ArrayBuffer, offset: number, value: unknown): void {
@@ -124,7 +124,7 @@ class StructType implements Type {
             if (typeof attribute.customSize === "number") {
                 declaration += `@size(${attribute.customSize}) `;
             }
-            declaration += `${attribute.name}: ${attribute.type.typeName};`
+            declaration += `${attribute.name}: ${attribute.type.typeName},`
             const offsetComment = `offset(${attribute.offset})`;
             const alignComment = `align(${attribute.align})`;
             const sizeComment = `size(${attribute.size})`;

@@ -5,6 +5,7 @@ class UniformsBuffer {
     private readonly structType: StructType;
     private readonly data: ArrayBuffer;
     private readonly gpuBuffer: GPUBuffer;
+    private needsToUpload: boolean = true;
 
     public constructor(device: GPUDevice, structType: StructType) {
         this.device = device;
@@ -22,10 +23,14 @@ class UniformsBuffer {
 
     public setValueFromName(name: string, value: unknown): void {
         this.structType.setValueFromName(this.data, 0, name, value);
+        this.needsToUpload = true;
     }
 
     public uploadToGPU(): void {
-        this.device.queue.writeBuffer(this.gpuBuffer, 0, this.data);
+        if (this.needsToUpload) {
+            this.device.queue.writeBuffer(this.gpuBuffer, 0, this.data);
+            this.needsToUpload = false;
+        }
     }
 }
 

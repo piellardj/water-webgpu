@@ -55,6 +55,12 @@ const data = {
                     checked: true,
                 },
                 {
+                    type: Demopage.supportedControls.Checkbox,
+                    title: "Spheres",
+                    id: "spheres-checkbox-id",
+                    checked: true,
+                },
+                {
                     type: Demopage.supportedControls.Tabs,
                     title: "Projection",
                     id: "projection-tabs-id",

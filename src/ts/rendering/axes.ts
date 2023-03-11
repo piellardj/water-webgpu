@@ -4,6 +4,7 @@ import * as Types from "../webgpu-utils/host-shareable-types/types";
 import * as ShaderSources from "../webgpu-utils/shader-sources";
 import { UniformsBuffer } from "../webgpu-utils/uniforms-buffer";
 import { WebGPUCanvas } from "../webgpu-utils/webgpu-canvas";
+import { ViewData } from "./view-data";
 
 class Axes {
     private readonly device: GPUDevice;
@@ -60,9 +61,9 @@ class Axes {
         });
     }
 
-    public render(renderpassEncoder: GPURenderPassEncoder, vpMatrix: glMatrix.ReadonlyMat4): void {
+    public render(renderpassEncoder: GPURenderPassEncoder, viewData: ViewData): void {
         glMatrix.mat4.fromScaling(this.matrix, [this.size, this.size, this.size]);
-        glMatrix.mat4.multiply(this.mvpMatrix, vpMatrix, this.matrix);
+        glMatrix.mat4.multiply(this.mvpMatrix, viewData.vpMatrix, this.matrix);
 
         this.uniformsBuffer.setValueFromName("mvp", this.mvpMatrix);
         this.uniformsBuffer.uploadToGPU();

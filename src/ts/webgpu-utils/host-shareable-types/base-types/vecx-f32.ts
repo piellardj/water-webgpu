@@ -1,4 +1,5 @@
 import { type Type } from "../base-type";
+import { isArrayLike } from "../helpers";
 
 class VecXF32 implements Type {
     public readonly typeName: string;
@@ -15,16 +16,20 @@ class VecXF32 implements Type {
     }
 
     public setValue(arrayBuffer: ArrayBuffer, offset: number, value: unknown): void {
-        if (!Array.isArray(value) || value.length !== this.n) {
+        if (!isArrayLike(value)) {
             throw new Error(`Invalid value '${value}'.`);
         }
-        const values = value as unknown[];
-        for (const val of value) {
+        const valueAsArray = value as unknown[];
+        if (valueAsArray.length !== this.n) {
+            throw new Error(`Invalid value '${value}'.`);
+        }
+
+        for (const val of valueAsArray) {
             if (typeof val !== "number") {
                 throw new Error(`Invalid value '${value}'.`);
             }
         }
-        new Float32Array(arrayBuffer, offset, this.n).set(values as ArrayLike<number>);
+        new Float32Array(arrayBuffer, offset, this.n).set(valueAsArray as ArrayLike<number>);
     }
 }
 
