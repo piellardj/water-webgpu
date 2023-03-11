@@ -26,7 +26,7 @@ class Scene {
         this.cubeRenderer = new CubeRenderer(webgpuCanvas, this.modelMatrix);
         this.spheresRenderer = new SpheresRenderer(webgpuCanvas, this.modelMatrix);
 
-        glMatrix.mat4.identity(this.modelMatrix);
+        glMatrix.mat4.translate(this.modelMatrix, this.modelMatrix, [-0.5,-0.5,-0.5]);
     }
 
     public render(commandEncoder: GPUCommandEncoder, viewData: ViewData): void {
