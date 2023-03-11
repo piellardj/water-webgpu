@@ -6,7 +6,7 @@ import { UniformsBuffer } from "../webgpu-utils/uniforms-buffer";
 import { WebGPUCanvas } from "../webgpu-utils/webgpu-canvas";
 import { type ViewData } from "./view-data";
 
-class Spheres {
+class SpheresRenderer {
     private readonly device: GPUDevice;
     private readonly renderPipeline: GPURenderPipeline;
     private readonly uniformsBuffer: UniformsBuffer;
@@ -103,6 +103,6 @@ class Spheres {
 }
 
 export {
-    Spheres,
+    SpheresRenderer,
 };
 

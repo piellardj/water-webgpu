@@ -6,7 +6,7 @@ import { UniformsBuffer } from "../webgpu-utils/uniforms-buffer";
 import { WebGPUCanvas } from "../webgpu-utils/webgpu-canvas";
 import { type ViewData } from "./view-data";
 
-class Cube {
+class CubeRenderer {
     private readonly device: GPUDevice;
     private readonly renderPipeline: GPURenderPipeline;
     private readonly uniformsBuffer: UniformsBuffer;
@@ -74,6 +74,6 @@ class Cube {
 }
 
 export {
-    Cube,
+    CubeRenderer,
 };
 

@@ -1,7 +1,7 @@
 import * as glMatrix from "gl-matrix";
-import { Axes } from "./rendering/axes";
-import { Cube } from "./rendering/cube";
-import { Spheres } from "./rendering/spheres";
+import { AxesRenderer } from "./rendering/axes-renderer";
+import { CubeRenderer } from "./rendering/cube-renderer";
+import { SpheresRenderer } from "./rendering/spheres-renderer";
 import { type ViewData } from "./rendering/view-data";
 import { Parameters } from "./ui/parameters";
 import { WebGPUCanvas } from "./webgpu-utils/webgpu-canvas";
@@ -10,15 +10,15 @@ class Scene {
     private readonly webgpuCanvas: WebGPUCanvas;
     private readonly modelMatrix: glMatrix.mat4 = glMatrix.mat4.create();
 
-    private readonly axesRenderer: Axes;
-    private readonly cubeRenderer: Cube;
-    private readonly spheresRenderer: Spheres;
+    private readonly axesRenderer: AxesRenderer;
+    private readonly cubeRenderer: CubeRenderer;
+    private readonly spheresRenderer: SpheresRenderer;
 
     public constructor(webgpuCanvas: WebGPUCanvas) {
         this.webgpuCanvas = webgpuCanvas;
-        this.axesRenderer = new Axes(webgpuCanvas);
-        this.cubeRenderer = new Cube(webgpuCanvas, this.modelMatrix);
-        this.spheresRenderer = new Spheres(webgpuCanvas, this.modelMatrix);
+        this.axesRenderer = new AxesRenderer(webgpuCanvas);
+        this.cubeRenderer = new CubeRenderer(webgpuCanvas, this.modelMatrix);
+        this.spheresRenderer = new SpheresRenderer(webgpuCanvas, this.modelMatrix);
 
         glMatrix.mat4.identity(this.modelMatrix);
     }
