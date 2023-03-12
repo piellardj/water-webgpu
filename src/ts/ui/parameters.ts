@@ -11,6 +11,10 @@ const controlId = {
     SPHERES_CHECKBOX: "spheres-checkbox-id",
     SPHERES_RADIUS_RANGE: "spheres-radius-checkbox-id",
     DISPLAY_MODE_SELECT: "display-mode-select-id",
+    WATER_COLOR_COLORPICKER: "water-color-id",
+    WATER_OPACITY_RANGE: "water-opacity-range-id",
+    SPECULARITY_RANGE: "specularity-range-id",
+    FRESNEL_RANGE:  "fresnel-range-id",
 };
 
 function updateIndicatorsVisibility(): void {
@@ -37,6 +41,7 @@ enum EDisplayMode {
     CSREENSPACE_NORMALS = 1,
     WORLDSPACE_NORMALS = 2,
     WATER_DEPTH = 3,
+    WATER = 3,
 }
 
 abstract class Parameters {
@@ -74,6 +79,22 @@ abstract class Parameters {
             throw new Error();
         }
         return +value as EDisplayMode;
+    }
+
+    public static get waterColor(): ColorNormalized {
+        return buildColor(controlId.WATER_COLOR_COLORPICKER);
+    }
+
+    public static get waterOpacity(): number {
+        return Page.Range.getValue(controlId.WATER_OPACITY_RANGE);
+    }
+
+    public static get waterSpecularity(): number {
+        return Page.Range.getValue(controlId.SPECULARITY_RANGE);
+    }
+
+    public static get waterFresnel(): number {
+        return Page.Range.getValue(controlId.FRESNEL_RANGE);
     }
 }
 

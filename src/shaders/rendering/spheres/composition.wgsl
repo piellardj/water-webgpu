@@ -5,14 +5,17 @@ const displayMode_positionLocal = 0u;
 const displayMode_normalScreenspace = 1u;
 const displayMode_normalWorld = 2u;
 const displayMode_waterDepth = 3u;
+const displayMode_water = 4u;
 
-struct Uniforms {           //            align(16) size(48)
+struct Uniforms {           //            align(16) size(64)
     cameraRight: vec3<f32>, // offset(0)  align(16) size(12)
     displayMode: u32,       // offset(12) align(4)  size(4) 
     cameraUp: vec3<f32>,    // offset(16) align(16) size(12)
     f0: f32,                // offset(28) align(4)  size(4) 
     worldColor: vec3<f32>,  // offset(32) align(16) size(12)
     specularity: f32,       // offset(44) align(4)  size(4) 
+    waterColor: vec3<f32>,  // offset(48) align(16) size(12)
+    waterOpacity: f32,        // offset(60) align(4)  size(4) 
 };
 
 @group(1) @binding(0) var<uniform> uniforms: Uniforms;
@@ -75,6 +78,17 @@ fn main_fragment(in: VertexOut) -> FragmentOut {
         }
         case displayMode_waterDepth {
             out.color = vec4<f32>(vec3<f32>(waterDepth), 1.0);
+        }
+        case displayMode_water {
+            let reflectedRayWorlspace = reflect(-toCamera, normalWorld);
+            let specular = uniforms.specularity * smoothstep(0.95, 0.98, reflectedRayWorlspace.z);
+
+            let waterColor: vec3<f32> = pow(uniforms.waterColor, vec3<f32>(1.0 + 8.0 * waterDepth * uniforms.waterOpacity));
+            let fresnelFactor = uniforms.f0 * 2.0 * pow(1.0 - normalScreenspace.z, 2.0); // not at all the real forumla
+            out.color = vec4<f32>(
+                specular + mix(waterColor, uniforms.worldColor, fresnelFactor),
+                1.0
+            );
         }
         default {
             out.color = vec4<f32>(0.0, 0.0, 1.0, 1.0);

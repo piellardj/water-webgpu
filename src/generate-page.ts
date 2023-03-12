@@ -35,7 +35,7 @@ const data: IDemopageData = {
                     type: Demopage.supportedControls.ColorPicker,
                     title: "Background",
                     id: "background-color-id",
-                    defaultValueHex: "#000000",
+                    defaultValueHex: "#CA8BBC",
                 },
                 {
                     type: Demopage.supportedControls.Checkbox,
@@ -121,7 +121,44 @@ const data: IDemopageData = {
                             value: "3",
                             label: "Water depth",
                         },
+                        {
+                            value: "4",
+                            label: "Water",
+                        },
                     ]
+                },
+                {
+                    type: Demopage.supportedControls.ColorPicker,
+                    title: "Water color",
+                    id: "water-color-id",
+                    defaultValueHex: "#0076EC"
+                },
+                {
+                    type: Demopage.supportedControls.Range,
+                    title: "Water opacity",
+                    id: "water-opacity-range-id",
+                    min: 0,
+                    max: 3,
+                    value: 1,
+                    step: 0.1
+                },
+                {
+                    type: Demopage.supportedControls.Range,
+                    title: "Specularity",
+                    id: "specularity-range-id",
+                    min: 0,
+                    max: 1,
+                    value: 0.8,
+                    step: 0.01
+                },
+                {
+                    type: Demopage.supportedControls.Range,
+                    title: "Fresnel",
+                    id: "fresnel-range-id",
+                    min: 0,
+                    max: 1,
+                    value: 0.5,
+                    step: 0.01
                 },
             ],
         },

@@ -59,6 +59,8 @@ class Composition {
             { name: "f0", type: Types.f32 },
             { name: "worldColor", type: Types.vec3F32 },
             { name: "specularity", type: Types.f32 },
+            { name: "waterColor", type: Types.vec3F32 },
+            { name: "waterOpacity", type: Types.f32 },
         ]));
         this.uniformsBindgroup = this.device.createBindGroup({
             layout: this.renderPipeline.getBindGroupLayout(1),
@@ -75,9 +77,11 @@ class Composition {
         this.uniformsBuffer.setValueFromName("cameraRight", viewData.cameraRight);
         this.uniformsBuffer.setValueFromName("displayMode", Parameters.displayMode);
         this.uniformsBuffer.setValueFromName("cameraUp", viewData.cameraUp);
-        // this.uniformsBuffer.setValueFromName("f0", null); // fresnel
+        this.uniformsBuffer.setValueFromName("f0", Parameters.waterFresnel);
         this.uniformsBuffer.setValueFromName("worldColor", Parameters.backgroundColor.slice(0, 3));
-        // this.uniformsBuffer.setValueFromName("specularity", null);
+        this.uniformsBuffer.setValueFromName("specularity", Parameters.waterSpecularity);
+        this.uniformsBuffer.setValueFromName("waterColor", Parameters.waterColor.slice(0, 3));
+        this.uniformsBuffer.setValueFromName("waterOpacity", Parameters.waterOpacity);
         this.uniformsBuffer.uploadToGPU();
 
         renderpassEncoder.setPipeline(this.renderPipeline);
