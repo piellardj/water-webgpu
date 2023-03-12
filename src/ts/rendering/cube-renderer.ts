@@ -11,7 +11,6 @@ class CubeRenderer {
     private readonly renderPipeline: GPURenderPipeline;
     private readonly uniformsBuffer: UniformsBuffer;
 
-    private readonly verticesCount: number = 24;
     private readonly uniformsBindgroup: GPUBindGroup;
 
     private readonly matrix: glMatrix.ReadonlyMat4;
@@ -69,7 +68,7 @@ class CubeRenderer {
 
         renderpassEncoder.setPipeline(this.renderPipeline);
         renderpassEncoder.setBindGroup(0, this.uniformsBindgroup);
-        renderpassEncoder.draw(this.verticesCount);
+        renderpassEncoder.draw(24);
     }
 }
 

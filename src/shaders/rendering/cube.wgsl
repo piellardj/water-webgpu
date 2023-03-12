@@ -14,7 +14,7 @@ struct VertexOut {
 
 @vertex
 fn main_vertex(in: VertexIn) -> VertexOut {
-    const vertices = array<vec3<f32>, 24>(
+    const corners = array<vec3<f32>, 24>(
         vec3<f32>(0.0, 0.0, 0.0), vec3<f32>(1.0, 0.0, 0.0),
         vec3<f32>(0.0, 1.0, 0.0), vec3<f32>(1.0, 1.0, 0.0),
         vec3<f32>(0.0, 0.0, 1.0), vec3<f32>(1.0, 0.0, 1.0),
@@ -30,7 +30,7 @@ fn main_vertex(in: VertexIn) -> VertexOut {
     );
 
     var out: VertexOut;
-    let position = vertices[in.vertexIndex];
+    let position = corners[in.vertexIndex];
     out.position = uniforms.mvp * vec4<f32>(position, 1.0);
     return out;
 }
