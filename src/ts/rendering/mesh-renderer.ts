@@ -19,7 +19,7 @@ class MeshRenderer {
     private readonly matrix: glMatrix.ReadonlyMat4;
     private readonly mvpMatrix: glMatrix.mat4 = glMatrix.mat4.create();
 
-    public constructor(webgpuCanvas: WebGPUCanvas, mesh: Mesh, modelMatrix: glMatrix.ReadonlyMat4) {
+    public constructor(webgpuCanvas: WebGPUCanvas, modelMatrix: glMatrix.ReadonlyMat4, mesh: Mesh) {
         this.device = webgpuCanvas.device;
         this.matrix = modelMatrix;
 
