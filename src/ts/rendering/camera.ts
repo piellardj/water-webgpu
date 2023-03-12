@@ -159,7 +159,6 @@ class Camera {
             // const zNear = Math.max(0.6, zFar - 4);
             const zFar = interpolate(zFarData, this.distance);
             const zNear = interpolate(zNearData, this.distance);
-            console.log(`${this.distance};${zNear};${zFar}`);
             glMatrix.mat4.perspective(this._projectionMatrix, 30 * (Math.PI / 180), aspectRatio, zNear, zFar);
         } else {
             const side = 2.5 / this.zoom;

@@ -33,7 +33,7 @@ class Deferred {
         this.device = webgpuCanvas.device;
         this.matrix = modelMatrix;
 
-        this.texture = new Texture(this.device, "rgba8unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING);
+        this.texture = new Texture(this.device, "rgba8unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING);
         this.depthTexture = new Texture(this.device, "depth16unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING);
 
         this.uniformsBuffer = new UniformsBuffer(this.device, new Types.StructType("Uniforms", [

@@ -99,6 +99,11 @@ const data: IDemopageData = {
                     step: 0.1,
                 },
                 {
+                    type: Demopage.supportedControls.Checkbox,
+                    title: "Blur",
+                    id: "blur-checkbox-id",
+                },
+                {
                     type: Demopage.supportedControls.Select,
                     title: "Display mode",
                     id: "display-mode-select-id",

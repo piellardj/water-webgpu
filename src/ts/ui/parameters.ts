@@ -9,6 +9,7 @@ const controlId = {
     PROJECTION_TABS: "projection-tabs-id",
 
     SPHERES_CHECKBOX: "spheres-checkbox-id",
+    BLUR_CHECKBOX: "blur-checkbox-id",
     SPHERES_RADIUS_RANGE: "spheres-radius-checkbox-id",
     DISPLAY_MODE_SELECT: "display-mode-select-id",
     WATER_COLOR_COLORPICKER: "water-color-id",
@@ -68,6 +69,10 @@ abstract class Parameters {
 
     public static get showSpheres(): boolean {
         return Page.Checkbox.isChecked(controlId.SPHERES_CHECKBOX);
+    }
+
+    public static get blur(): boolean {
+        return Page.Checkbox.isChecked(controlId.BLUR_CHECKBOX);
     }
 
     public static get spheresRadiusFactor(): number {
