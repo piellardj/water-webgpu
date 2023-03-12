@@ -21,6 +21,50 @@ function clamp(x: number, min: number, max: number): number {
     return x;
 }
 
+const zNearData = [
+    { distance: 2, value: 0.6 },
+    { distance: 2.2222222222222223, value: 0.8 },
+    { distance: 2.469135802469136, value: 1 },
+    { distance: 2.7434842249657065, value: 1 },
+    { distance: 3.0483158055174515, value: 1.3 },
+    { distance: 3.387017561686057, value: 1.7 },
+    { distance: 3.763352846317841, value: 1.8 },
+    { distance: 4.223740568257958, value: 2.4 },
+    { distance: 6.437647566312998, value: 4.3 },
+    { distance: 9.811991413371434, value: 7.4 },
+    { distance: 16.6958844644795, value: 14.1 },
+];
+
+const zFarData = [
+    { distance: 2, value: 3.3 },
+    { distance: 2.2222222222222223, value: 3.4 },
+    { distance: 2.469135802469136, value: 3.6 },
+    { distance: 2.7434842249657065, value: 3.9 },
+    { distance: 3.0483158055174515, value: 4 },
+    { distance: 3.387017561686057, value: 4.3 },
+    { distance: 3.763352846317841, value: 4.8 },
+    { distance: 4.223740568257958, value: 5.2 },
+    { distance: 6.437647566312998, value: 7.3 },
+    { distance: 9.811991413371434, value: 10.8 },
+    { distance: 16.6958844644795, value: 17.8 },
+];
+
+function interpolate(datas: { distance: number, value: number }[], distance: number): number {
+    for (let i = 0; i < datas.length - 1; i++) {
+        const previousData = datas[i]!;
+        const nextData = datas[i + 1]!
+        if (distance < previousData.distance) {
+            return previousData.value;
+        } else if (distance < nextData.distance) {
+            return previousData.value + (nextData.value - previousData.value) * (distance - previousData.distance) / (nextData.distance - previousData.distance);
+        }
+
+        if (i === datas.length - 2) {
+            return nextData.value;
+        }
+    }
+}
+
 class Camera {
     private readonly _lookAt: glMatrix.vec3 = [0, 0, 0];
 
@@ -114,24 +158,15 @@ class Camera {
         const aspectRatio = Page.Canvas.getAspectRatio();
 
         if (Parameters.projection === EProjection.PERSPECTIVE) {
-            const corner: glMatrix.vec4 = [0, 0, 0, 1];
-            const result = glMatrix.vec4.create();
-            let zNear = 100000000000000, zFar = -5;
-            for (corner[0] = -1; corner[0] <= 1; corner[0] += 2) {
-                for (corner[1] = -1; corner[1] <= 1; corner[1] += 2) {
-                    for (corner[2] = -1; corner[2] <= 1; corner[2] += 2) {
-                        glMatrix.vec4.transformMat4(result, corner, this._viewMatrix);
-                        result[2] /= result[3];
-                        zNear = Math.min(zNear, Math.abs(result[2]));
-                        zFar = Math.max(zFar, Math.abs(result[2]));
-                    }
-                }
-            }
-            zNear = Math.max(0.05, 0.5 * zNear);
+            // const zFar = this.distance + 1.3;
+            // const zNear = Math.max(0.6, zFar - 4);
+            const zFar = interpolate(zFarData, this.distance);
+            const zNear = interpolate(zNearData, this.distance);
+            console.log(`${this.distance};${zNear};${zFar}`);
             glMatrix.mat4.perspective(this._projectionMatrix, 30 * (Math.PI / 180), aspectRatio, zNear, zFar);
         } else {
             const side = 2.5 / this.zoom;
-            glMatrix.mat4.ortho(this._projectionMatrix, -side * aspectRatio, side * aspectRatio, -side, side, this.distance - 5.5, this.distance + 2);
+            glMatrix.mat4.ortho(this._projectionMatrix, -side * aspectRatio, side * aspectRatio, -side, side, this.distance - 3.75, this.distance + 1.1);
         }
 
         this.recomputeViewProjectionMatrix();
@@ -165,7 +200,7 @@ class Camera {
     }
 
     private clampZoom(): void {
-        this.zoom = clamp(this.zoom, 0.5, 5);
+        this.zoom = clamp(this.zoom, 0.6, 5);
     }
 
     private clampPhi(): void {
