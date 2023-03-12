@@ -6,6 +6,7 @@ const controlId = {
     AXES_CHECKBOX: "axes-checkbox-id",
     DOMAIN_CHECKBOX: "domain-checkbox-id",
     MESH_CHECKBOX: "mesh-checkbox-id",
+    GRID_CELLS_CHECKBOX: "grid-cells-checkbox-id",
     PROJECTION_TABS: "projection-tabs-id",
 
     SPHERES_CHECKBOX: "spheres-checkbox-id",
@@ -69,6 +70,10 @@ abstract class Parameters {
 
     public static get showSpheres(): boolean {
         return Page.Checkbox.isChecked(controlId.SPHERES_CHECKBOX);
+    }
+
+    public static get showGridCells(): boolean {
+        return Page.Checkbox.isChecked(controlId.GRID_CELLS_CHECKBOX);
     }
 
     public static get blur(): boolean {

@@ -3,6 +3,7 @@ import { Engine } from "./engine/engine";
 import { AxesRenderer } from "./rendering/axes-renderer";
 import { ViewData } from "./rendering/camera";
 import { CubeRenderer } from "./rendering/cube-renderer";
+import { GridCellsRenderer } from "./rendering/grid-cells-renderer";
 import { MeshRenderer } from "./rendering/mesh-renderer";
 import { SpheresRenderer } from "./rendering/spheres/spheres-renderer";
 import { Parameters } from "./ui/parameters";
@@ -18,6 +19,7 @@ class Scene {
     private readonly cubeRenderer: CubeRenderer;
     private readonly spheresRenderer: SpheresRenderer;
     private readonly meshRenderer: MeshRenderer;
+    private readonly gridCellsRenderer: GridCellsRenderer;
 
     public constructor(webgpuCanvas: WebGPUCanvas) {
         this.webgpuCanvas = webgpuCanvas;
@@ -28,6 +30,7 @@ class Scene {
         this.cubeRenderer = new CubeRenderer(webgpuCanvas, this.modelMatrix);
         this.spheresRenderer = new SpheresRenderer(webgpuCanvas, this.modelMatrix);
         this.meshRenderer = new MeshRenderer(webgpuCanvas, this.modelMatrix, this.engine.mesh);
+        this.gridCellsRenderer = new GridCellsRenderer(webgpuCanvas, this.modelMatrix, this.engine.cellsIndicesBuffer);
 
         glMatrix.mat4.translate(this.modelMatrix, this.modelMatrix, [-0.5, -0.5, -0.5]);
     }
@@ -50,6 +53,9 @@ class Scene {
         }
         if (Parameters.showSpheres) {
             this.spheresRenderer.renderComposition(renderpassEncoder, viewData);
+        }
+        if (Parameters.showGridCells) {
+            this.gridCellsRenderer.render(renderpassEncoder, viewData, this.engine.gridSize, this.engine.cellSize, this.engine.cellsCount);
         }
         renderpassEncoder.end();
     }

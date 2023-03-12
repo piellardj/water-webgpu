@@ -62,6 +62,12 @@ const data: IDemopageData = {
                     checked: true,
                 },
                 {
+                    type: Demopage.supportedControls.Checkbox,
+                    title: "Grid cells",
+                    id: "grid-cells-checkbox-id",
+                    checked: true,
+                },
+                {
                     type: Demopage.supportedControls.Tabs,
                     title: "Projection",
                     id: "projection-tabs-id",
@@ -166,7 +172,7 @@ const data: IDemopageData = {
                     id: "fresnel-range-id",
                     min: 0,
                     max: 1,
-                    value: 0.5,
+                    value: 1,
                     step: 0.01
                 },
             ],
