@@ -17,7 +17,7 @@ class Engine {
 
     private readonly positionsBuffer: GPUBuffer;
     private readonly spheresCount: number;
-    private readonly spheresRadius: number = 0.01;
+    private readonly spheresRadius: number = 0.02;
 
     public constructor(device: GPUDevice) {
         this.device = device;

@@ -4,7 +4,7 @@ import { AxesRenderer } from "./rendering/axes-renderer";
 import { ViewData } from "./rendering/camera";
 import { CubeRenderer } from "./rendering/cube-renderer";
 import { MeshRenderer } from "./rendering/mesh-renderer";
-import { SpheresRenderer } from "./rendering/spheres-renderer";
+import { SpheresRenderer } from "./rendering/spheres/spheres-renderer";
 import { Parameters } from "./ui/parameters";
 import { WebGPUCanvas } from "./webgpu-utils/webgpu-canvas";
 
@@ -33,6 +33,10 @@ class Scene {
     }
 
     public render(commandEncoder: GPUCommandEncoder, viewData: ViewData): void {
+        if (Parameters.showSpheres) {
+            this.spheresRenderer.renderDeferred(commandEncoder, viewData, this.engine.spheresData);
+        }
+
         const renderpassEncoder = this.webgpuCanvas.beginRenderPass(commandEncoder);
 
         if (Parameters.showAxes) {
@@ -41,14 +45,17 @@ class Scene {
         if (Parameters.showDomain) {
             this.cubeRenderer.render(renderpassEncoder, viewData);
         }
-        if (Parameters.showSpheres) {
-            this.spheresRenderer.render(renderpassEncoder, viewData, this.engine.spheresData);
-        }
         if (Parameters.showMesh) {
             this.meshRenderer.render(renderpassEncoder, viewData);
         }
-
+        if (Parameters.showSpheres) {
+            this.spheresRenderer.renderComposition(renderpassEncoder, viewData);
+        }
         renderpassEncoder.end();
+    }
+
+    public setSize(width: number, height: number): boolean {
+        return this.spheresRenderer.setSize(width, height);
     }
 }
 

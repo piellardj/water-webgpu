@@ -98,6 +98,27 @@ const data: IDemopageData = {
                     value: 1,
                     step: 0.1,
                 },
+                {
+                    type: Demopage.supportedControls.Select,
+                    title: "Display mode",
+                    id: "display-mode-select-id",
+                    placeholder: "<unknown>",
+                    options: [
+                        {
+                            value: "0",
+                            label: "Local position",
+                        },
+                        {
+                            value: "1",
+                            label: "Screenspace normals",
+                        },
+                        {
+                            value: "2",
+                            label: "World normals",
+                            checked: true,
+                        },
+                    ]
+                },
             ],
         },
     ],

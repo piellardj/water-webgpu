@@ -10,6 +10,7 @@ const controlId = {
 
     SPHERES_CHECKBOX: "spheres-checkbox-id",
     SPHERES_RADIUS_RANGE: "spheres-radius-checkbox-id",
+    DISPLAY_MODE_SELECT: "display-mode-select-id",
 };
 
 function updateIndicatorsVisibility(): void {
@@ -29,6 +30,12 @@ function buildColor(id: string): ColorNormalized {
 enum EProjection {
     ORTHO = "ortho",
     PERSPECTIVE = "perspective",
+}
+
+enum EDisplayMode {
+    LOCAL_POSITION = 0,
+    CSREENSPACE_NORMALS = 1,
+    WORLDSPACE_NORMALS = 2,
 }
 
 abstract class Parameters {
@@ -60,6 +67,13 @@ abstract class Parameters {
         return Page.Range.getValue(controlId.SPHERES_RADIUS_RANGE);
     }
 
+    public static get displayMode(): EDisplayMode {
+        const value = Page.Select.getValue(controlId.DISPLAY_MODE_SELECT);
+        if (!value) {
+            throw new Error();
+        }
+        return +value as EDisplayMode;
+    }
 }
 
 export {

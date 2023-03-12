@@ -18,6 +18,7 @@ function main(device: GPUDevice, canvas: HTMLCanvasElement, _canvasContainer: HT
 
         webgpuCanvas.setClearColor(Parameters.backgroundColor);
         webgpuCanvas.adjustSize();
+        scene.setSize(webgpuCanvas.width, webgpuCanvas.height);
 
         const commandEncoder = device.createCommandEncoder();
         scene.render(commandEncoder, camera.viewData);
