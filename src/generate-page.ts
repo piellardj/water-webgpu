@@ -125,6 +125,10 @@ const data: IDemopageData = {
                             value: "4",
                             label: "Water",
                         },
+                        {
+                            value: "5",
+                            label: "Depth",
+                        },
                     ]
                 },
                 {

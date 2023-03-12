@@ -42,6 +42,7 @@ enum EDisplayMode {
     WORLDSPACE_NORMALS = 2,
     WATER_DEPTH = 3,
     WATER = 3,
+    DEPTH = 4,
 }
 
 abstract class Parameters {

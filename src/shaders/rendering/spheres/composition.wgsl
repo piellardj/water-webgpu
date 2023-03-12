@@ -6,6 +6,7 @@ const displayMode_normalScreenspace = 1u;
 const displayMode_normalWorld = 2u;
 const displayMode_waterDepth = 3u;
 const displayMode_water = 4u;
+const displayMode_depth = 5u;
 
 struct Uniforms {           //            align(16) size(64)
     cameraRight: vec3<f32>, // offset(0)  align(16) size(12)
@@ -53,8 +54,9 @@ fn main_fragment(in: VertexOut) -> FragmentOut {
     var out: FragmentOut;
 
     let sample = textureSample(uTexture, uSampler, in.uv);
-    out.depth = sample.a;
-    if (out.depth >= 1.0) {
+    let depth = sample.a;
+    out.depth = depth;
+    if (depth >= 1.0) {
         discard;
     }
 
@@ -67,6 +69,9 @@ fn main_fragment(in: VertexOut) -> FragmentOut {
     let normalWorld = normalScreenspace.x * uniforms.cameraRight + normalScreenspace.y * uniforms.cameraUp + normalScreenspace.z * toCamera;
 
     switch uniforms.displayMode {
+        case displayMode_depth {
+            out.color = vec4<f32>(vec3<f32>(depth), 1.0);
+        }
         case displayMode_positionLocal {
             out.color = vec4<f32>(positionLocal, 0.0, 1.0);
         }
