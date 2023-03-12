@@ -4,8 +4,9 @@
 const displayMode_positionLocal = 0u;
 const displayMode_normalScreenspace = 1u;
 const displayMode_normalWorld = 2u;
+const displayMode_waterDepth = 3u;
 
-struct Uniforms {            //            align(16) size(48)
+struct Uniforms {           //            align(16) size(48)
     cameraRight: vec3<f32>, // offset(0)  align(16) size(12)
     displayMode: u32,       // offset(12) align(4)  size(4) 
     cameraUp: vec3<f32>,    // offset(16) align(16) size(12)
@@ -71,6 +72,9 @@ fn main_fragment(in: VertexOut) -> FragmentOut {
         } 
         case displayMode_normalWorld {
             out.color = vec4<f32>(0.5 + 0.5 * normalWorld, 1.0);
+        }
+        case displayMode_waterDepth {
+            out.color = vec4<f32>(vec3<f32>(waterDepth), 1.0);
         }
         default {
             out.color = vec4<f32>(0.0, 0.0, 1.0, 1.0);

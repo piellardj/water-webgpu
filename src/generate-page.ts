@@ -117,6 +117,10 @@ const data: IDemopageData = {
                             label: "World normals",
                             checked: true,
                         },
+                        {
+                            value: "3",
+                            label: "Water depth",
+                        },
                     ]
                 },
             ],

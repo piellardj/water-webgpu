@@ -39,22 +39,45 @@ fn main_vertex(in: VertexIn) -> VertexOut {
     return output;
 }
 
-struct FragmentOut {
-    @builtin(frag_depth) depth: f32,
-    @location(0) color: vec4<f32>,
-};
-
-@fragment
-fn main_fragment(in: VertexOut) -> FragmentOut {
+fn computeLocalDepth(in: VertexOut) -> f32 {
     let distanceFromCenterSquared: f32 = dot(in.localPosition, in.localPosition);
     if (distanceFromCenterSquared > 1.0) {
         discard;
     }
 
-    let localDepth = sqrt(1.0 - distanceFromCenterSquared);
+    return sqrt(1.0 - distanceFromCenterSquared);
+}
 
-    var output: FragmentOut;
-    output.depth = mix(in.position.z, in.middlePointDepth, localDepth);
-    output.color = vec4<f32>(0.5 + 0.5 * in.localPosition, 0, output.depth);
+fn computeDepth(in: VertexOut, localDepth: f32) -> f32 {
+    return mix(in.position.z, in.middlePointDepth, localDepth);
+}
+
+struct FragmentRGAOut {
+    @builtin(frag_depth) depth: f32,
+    @location(0) color: vec4<f32>,
+};
+
+@fragment
+fn main_fragment_rga(in: VertexOut) -> FragmentRGAOut {
+    let localDepth = computeLocalDepth(in);
+    let depth = computeDepth(in, localDepth);
+
+    var output: FragmentRGAOut;
+    output.depth = depth;
+    output.color = vec4<f32>(0.5 + 0.5 * in.localPosition, 0, depth);
+    return output;
+}
+
+struct FragmentBOut {
+    @location(0) color: vec4<f32>,
+};
+
+@fragment
+fn main_fragment_b(in: VertexOut) -> FragmentBOut {
+    let localDepth = computeLocalDepth(in);
+    let waterDepth = max(0.005, 40.0 * uniforms.sphereRadius * localDepth);
+
+    var output: FragmentBOut;
+    output.color = vec4<f32>(0, 0, 0.1 * waterDepth, 0);
     return output;
 }

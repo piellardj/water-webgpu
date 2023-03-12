@@ -10,7 +10,7 @@ import { type ViewData } from "../camera";
 
 type RenderPass = {
     readonly colorAttachment: GPURenderPassColorAttachment;
-    readonly depthAttachment: GPURenderPassDepthStencilAttachment;
+    readonly depthAttachment?: GPURenderPassDepthStencilAttachment;
     readonly descriptor: GPURenderPassDescriptor;
     readonly pipeline: GPURenderPipeline;
     readonly uniformsBindgroup: GPUBindGroup;
@@ -19,7 +19,7 @@ type RenderPass = {
 class Deferred {
     private readonly device: GPUDevice;
 
-    private readonly renderPass: RenderPass;
+    private readonly renderPasses: RenderPass[];
 
     private readonly uniformsBuffer: UniformsBuffer;
 
@@ -36,8 +36,18 @@ class Deferred {
         this.texture = new Texture(this.device, "rgba8unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING);
         this.depthTexture = new Texture(this.device, "depth16unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING);
 
+        this.uniformsBuffer = new UniformsBuffer(this.device, new Types.StructType("Uniforms", [
+            { name: "mvp", type: Types.mat4x4 },
+            { name: "cameraUp", type: Types.vec3F32 },
+            { name: "sphereRadius", type: Types.f32 },
+            { name: "cameraRight", type: Types.vec3F32 },
+        ]));
+
         const shaderModule = this.device.createShaderModule({ code: ShaderSources.Rendering.Spheres.Spheres });
 
+        this.renderPasses = [];
+
+        // RGA render pass
         {
             const colorAttachment: GPURenderPassColorAttachment = {
                 view: this.texture.getView(),
@@ -52,58 +62,18 @@ class Deferred {
                 depthStoreOp: "store",
                 stencilReadOnly: true,
             };
-
             const renderPassDescriptor: GPURenderPassDescriptor = {
                 colorAttachments: [colorAttachment],
                 depthStencilAttachment: depthAttachment,
             };
-
-            const renderPipelineDescriptor: GPURenderPipelineDescriptor = {
-                layout: "auto",
-                vertex: {
-                    module: shaderModule,
-                    entryPoint: "main_vertex",
-                    buffers: [
-                        {
-                            attributes: [
-                                {
-                                    shaderLocation: 0,
-                                    offset: 0,
-                                    format: "float32x3",
-                                }
-                            ],
-                            arrayStride: Float32Array.BYTES_PER_ELEMENT * 4,
-                            stepMode: "instance",
-                        },
-                    ],
-                },
-                fragment: {
-                    module: shaderModule,
-                    entryPoint: "main_fragment",
-                    targets: [{
-                        format: this.texture.format,
-                    }],
-                },
-                primitive: {
-                    cullMode: "none",
-                    topology: "triangle-list",
-                },
-                depthStencil: {
-                    depthWriteEnabled: true,
-                    depthCompare: "less",
-                    format: this.depthTexture.format,
-                },
+            const writeMask = GPUColorWrite.RED | GPUColorWrite.GREEN | GPUColorWrite.ALPHA;
+            const pipelineDescriptor = this.createDeferredDescriptor(shaderModule, "main_fragment_rga", writeMask);
+            pipelineDescriptor.depthStencil = {
+                depthWriteEnabled: true,
+                depthCompare: "less",
+                format: this.depthTexture.format,
             };
-
-            const pipeline = this.device.createRenderPipeline(renderPipelineDescriptor);
-
-            this.uniformsBuffer = new UniformsBuffer(this.device, new Types.StructType("Uniforms", [
-                { name: "mvp", type: Types.mat4x4 },
-                { name: "cameraUp", type: Types.vec3F32 },
-                { name: "sphereRadius", type: Types.f32 },
-                { name: "cameraRight", type: Types.vec3F32 },
-            ]));
-
+            const pipeline = this.device.createRenderPipeline(pipelineDescriptor);
             const uniformsBindgroup = this.device.createBindGroup({
                 layout: pipeline.getBindGroupLayout(0),
                 entries: [{
@@ -112,13 +82,54 @@ class Deferred {
                 }]
             });
 
-            this.renderPass = {
+            this.renderPasses.push({
                 colorAttachment,
                 depthAttachment,
                 descriptor: renderPassDescriptor,
                 pipeline,
                 uniformsBindgroup,
+            });
+        }
+
+        // B render pass
+        {
+            const colorAttachment: GPURenderPassColorAttachment = {
+                view: this.texture.getView(),
+                loadOp: "load",
+                storeOp: "store",
             };
+            const renderPassDescriptor: GPURenderPassDescriptor = {
+                colorAttachments: [colorAttachment],
+            };
+            const writeMask = GPUColorWrite.BLUE;
+            const additiveBlend: GPUBlendState = {
+                color: {
+                    srcFactor: "one",
+                    dstFactor: "one",
+                    operation: "add",
+                },
+                alpha: {
+                    srcFactor: "one",
+                    dstFactor: "one",
+                    operation: "add",
+                }
+            };
+            const pipelineDescriptor = this.createDeferredDescriptor(shaderModule, "main_fragment_b", writeMask, additiveBlend);
+            const pipeline = this.device.createRenderPipeline(pipelineDescriptor);
+            const uniformsBindgroup = this.device.createBindGroup({
+                layout: pipeline.getBindGroupLayout(0),
+                entries: [{
+                    binding: 0,
+                    resource: this.uniformsBuffer.bindingResource,
+                }]
+            });
+
+            this.renderPasses.push({
+                colorAttachment,
+                descriptor: renderPassDescriptor,
+                pipeline,
+                uniformsBindgroup,
+            });
         }
     }
 
@@ -131,30 +142,78 @@ class Deferred {
         this.uniformsBuffer.setValueFromName("sphereRadius", Parameters.spheresRadiusFactor * spheresData.radius);
         this.uniformsBuffer.uploadToGPU();
 
-        const renderpassEncoder = commandEncoder.beginRenderPass(this.renderPass.descriptor);
-        renderpassEncoder.setViewport(0, 0, this.texture.getWidth(), this.texture.getHeight(), 0, 1);
-        renderpassEncoder.setScissorRect(0, 0, this.texture.getWidth(), this.texture.getHeight());
-        renderpassEncoder.setPipeline(this.renderPass.pipeline);
-        renderpassEncoder.setVertexBuffer(0, spheresData.buffer);
-        renderpassEncoder.setBindGroup(0, this.renderPass.uniformsBindgroup);
-        renderpassEncoder.draw(6, spheresData.count);
-        renderpassEncoder.end();
+        for (const renderPass of this.renderPasses) {
+            const renderpassEncoder = commandEncoder.beginRenderPass(renderPass.descriptor);
+            renderpassEncoder.setViewport(0, 0, this.texture.getWidth(), this.texture.getHeight(), 0, 1);
+            renderpassEncoder.setScissorRect(0, 0, this.texture.getWidth(), this.texture.getHeight());
+            renderpassEncoder.setPipeline(renderPass.pipeline);
+            renderpassEncoder.setVertexBuffer(0, spheresData.buffer);
+            renderpassEncoder.setBindGroup(0, renderPass.uniformsBindgroup);
+            renderpassEncoder.draw(6, spheresData.count);
+            renderpassEncoder.end();
+        }
     }
 
     public setSize(width: number, height: number): boolean {
         let somethingChanged = false;
 
         if (this.texture.setSize(width, height)) {
-            this.renderPass.colorAttachment.view = this.texture.getView();
+            for (const renderPass of this.renderPasses) {
+                renderPass.colorAttachment.view = this.texture.getView();
+            }
             somethingChanged = true;
         }
 
         if (this.depthTexture.setSize(width, height)) {
-            this.renderPass.depthAttachment.view = this.depthTexture.getView();
+            for (const renderPass of this.renderPasses) {
+                if (renderPass.depthAttachment) {
+                    renderPass.depthAttachment.view = this.depthTexture.getView();
+                }
+            }
             somethingChanged = true;
         }
 
         return somethingChanged;
+    }
+
+    private createDeferredDescriptor(shaderModule: GPUShaderModule, fragmentMain: string, writeMask: GPUColorWriteFlags, blend?: GPUBlendState): GPURenderPipelineDescriptor {
+        const colorTarget: GPUColorTargetState = {
+            format: this.texture.format,
+            writeMask,
+        };
+        if (blend) {
+            colorTarget.blend = blend;
+        }
+
+        return {
+            layout: "auto",
+            vertex: {
+                module: shaderModule,
+                entryPoint: "main_vertex",
+                buffers: [
+                    {
+                        attributes: [
+                            {
+                                shaderLocation: 0,
+                                offset: 0,
+                                format: "float32x3",
+                            }
+                        ],
+                        arrayStride: Float32Array.BYTES_PER_ELEMENT * 4,
+                        stepMode: "instance",
+                    }
+                ]
+            },
+            fragment: {
+                module: shaderModule,
+                entryPoint: fragmentMain,
+                targets: [colorTarget],
+            },
+            primitive: {
+                cullMode: "none",
+                topology: "triangle-strip",
+            },
+        };
     }
 }
 

@@ -36,6 +36,7 @@ enum EDisplayMode {
     LOCAL_POSITION = 0,
     CSREENSPACE_NORMALS = 1,
     WORLDSPACE_NORMALS = 2,
+    WATER_DEPTH = 3,
 }
 
 abstract class Parameters {
