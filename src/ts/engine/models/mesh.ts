@@ -43,7 +43,7 @@ class Mesh {
                     triangles.push(new Triangle(
                         vertices[indices[0] - 1]!,
                         vertices[indices[1] - 1]!,
-                        vertices[indices[2] - 1]!,
+                        vertices[indices[2] - 1]!
                     ));
                 }
             } else {

@@ -13,7 +13,7 @@ class Composition {
     private readonly linearSampler: GPUSampler;
     private textureBindgroup: GPUBindGroup;
 
-    private readonly uniformsBuffer: UniformsBuffer
+    private readonly uniformsBuffer: UniformsBuffer;
     private readonly uniformsBindgroup: GPUBindGroup;
 
     public constructor(webgpuCanvas: WebGPUCanvas, deferredTexture: Texture) {

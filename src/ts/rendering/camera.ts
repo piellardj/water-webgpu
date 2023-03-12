@@ -52,17 +52,14 @@ const zFarData = [
 function interpolate(datas: { distance: number, value: number }[], distance: number): number {
     for (let i = 0; i < datas.length - 1; i++) {
         const previousData = datas[i]!;
-        const nextData = datas[i + 1]!
+        const nextData = datas[i + 1]!;
         if (distance < previousData.distance) {
             return previousData.value;
         } else if (distance < nextData.distance) {
             return previousData.value + (nextData.value - previousData.value) * (distance - previousData.distance) / (nextData.distance - previousData.distance);
         }
-
-        if (i === datas.length - 2) {
-            return nextData.value;
-        }
     }
+    return datas[datas.length - 1].value;
 }
 
 class Camera {

@@ -24,8 +24,8 @@ class FillableMesh {
         this.rayCasterZ = new RayCaster(ERayDirection.Z, triangles);
 
 
-        let boundingBoxMin: glMatrix.vec3 = [+100, +100, +100];
-        let boundingBoxMax: glMatrix.vec3 = [-100, -100, -100];
+        const boundingBoxMin: glMatrix.vec3 = [+100, +100, +100];
+        const boundingBoxMax: glMatrix.vec3 = [-100, -100, -100];
 
         for (const triangle of triangles) {
             for (let i = 0; i < 3; i++) {
@@ -52,10 +52,10 @@ class FillableMesh {
     public getSegments(rayDirection: ERayDirection, rayCoords: glMatrix.ReadonlyVec2): ReadonlyArray<Segment> {
         let segments: ReadonlyArray<Segment>;
 
-        const registeredSegment = this.registeredSegments.find(registeredSegment => {
-            return registeredSegment.direction === rayDirection &&
-                registeredSegment.coords[0] === rayCoords[0] &&
-                registeredSegment.coords[1] === rayCoords[1];
+        const registeredSegment = this.registeredSegments.find(segment => {
+            return segment.direction === rayDirection &&
+                segment.coords[0] === rayCoords[0] &&
+                segment.coords[1] === rayCoords[1];
         });
         if (registeredSegment) {
             segments = registeredSegment.segments;
