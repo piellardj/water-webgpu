@@ -211,7 +211,7 @@ class Deferred {
             },
             primitive: {
                 cullMode: "none",
-                topology: "triangle-strip",
+                topology: "triangle-list",
             },
         };
     }
