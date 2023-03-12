@@ -30,7 +30,7 @@ class Scene {
         this.cubeRenderer = new CubeRenderer(webgpuCanvas, this.modelMatrix);
         this.spheresRenderer = new SpheresRenderer(webgpuCanvas, this.modelMatrix);
         this.meshRenderer = new MeshRenderer(webgpuCanvas, this.modelMatrix, this.engine.mesh);
-        this.gridCellsRenderer = new GridCellsRenderer(webgpuCanvas, this.modelMatrix, this.engine.cellsIndicesBuffer);
+        this.gridCellsRenderer = new GridCellsRenderer(webgpuCanvas, this.modelMatrix);
 
         glMatrix.mat4.translate(this.modelMatrix, this.modelMatrix, [-0.5, -0.5, -0.5]);
     }
@@ -55,7 +55,7 @@ class Scene {
             this.spheresRenderer.renderComposition(renderpassEncoder, viewData);
         }
         if (Parameters.showGridCells) {
-            this.gridCellsRenderer.render(renderpassEncoder, viewData, this.engine.gridSize, this.engine.cellSize, this.engine.cellsCount);
+            this.gridCellsRenderer.render(renderpassEncoder, viewData, this.engine.gridCellsData);
         }
         renderpassEncoder.end();
     }

@@ -1,5 +1,5 @@
 import * as glMatrix from "gl-matrix";
-
+import { type CellsData } from "../engine/engine";
 import * as Types from "../webgpu-utils/host-shareable-types/types";
 import * as ShaderSources from "../webgpu-utils/shader-sources";
 import { UniformsBuffer } from "../webgpu-utils/uniforms-buffer";
@@ -12,15 +12,12 @@ class GridCellsRenderer {
     private readonly uniformsBuffer: UniformsBuffer;
     private readonly uniformsBindgroup: GPUBindGroup;
 
-    private readonly indicesBuffer: GPUBuffer;
-
     private readonly matrix: glMatrix.ReadonlyMat4;
     private readonly mvpMatrix: glMatrix.mat4 = glMatrix.mat4.create();
 
-    public constructor(webgpuCanvas: WebGPUCanvas, modelMatrix: glMatrix.ReadonlyMat4, indicesBuffer: GPUBuffer) {
+    public constructor(webgpuCanvas: WebGPUCanvas, modelMatrix: glMatrix.ReadonlyMat4) {
         this.device = webgpuCanvas.device;
         this.matrix = modelMatrix;
-        this.indicesBuffer = indicesBuffer;
 
         const shaderModule = this.device.createShaderModule({ code: ShaderSources.Rendering.GridCells });
 
@@ -78,18 +75,18 @@ class GridCellsRenderer {
         });
     }
 
-    public render(renderpassEncoder: GPURenderPassEncoder, viewData: ViewData, gridSize: [number, number, number], cellSize: number, cellsCount: number): void {
+    public render(renderpassEncoder: GPURenderPassEncoder, viewData: ViewData, data: CellsData): void {
         glMatrix.mat4.multiply(this.mvpMatrix, viewData.vpMatrix, this.matrix);
 
         this.uniformsBuffer.setValueFromName("mvp", this.mvpMatrix);
-        this.uniformsBuffer.setValueFromName("gridSize", gridSize);
-        this.uniformsBuffer.setValueFromName("cellSize", cellSize);
+        this.uniformsBuffer.setValueFromName("gridSize", data.gridSize);
+        this.uniformsBuffer.setValueFromName("cellSize", data.cellSize);
         this.uniformsBuffer.uploadToGPU();
 
         renderpassEncoder.setPipeline(this.renderPipeline);
         renderpassEncoder.setBindGroup(0, this.uniformsBindgroup);
-        renderpassEncoder.setVertexBuffer(0, this.indicesBuffer);
-        renderpassEncoder.draw(24, cellsCount);
+        renderpassEncoder.setVertexBuffer(0, data.cellsIndicesBuffer);
+        renderpassEncoder.drawIndirect(data.cellsIndirectDrawBuffer, 0);
     }
 }
 

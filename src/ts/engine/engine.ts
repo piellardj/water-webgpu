@@ -10,6 +10,13 @@ type SpheresData = {
     buffer: GPUBuffer;
 };
 
+type CellsData = {
+    readonly cellSize: number;
+    readonly gridSize: glMatrix.ReadonlyVec3;
+    readonly cellsIndicesBuffer: GPUBuffer;
+    readonly cellsIndirectDrawBuffer: GPUBuffer;
+}
+
 class Engine {
     private readonly device: GPUDevice;
 
@@ -19,10 +26,10 @@ class Engine {
     private readonly spheresCount: number;
     private readonly spheresRadius: number = 0.02;
 
-    public readonly cellSize: number = 0.05;
-    public readonly gridSize: [number, number, number] = [Math.ceil(1 / this.cellSize), Math.ceil(1 / this.cellSize), Math.ceil(1 / this.cellSize)];
-    public readonly cellsIndicesBuffer: GPUBuffer;
-    public readonly cellsCount: number;
+    private readonly cellSize: number = 0.05;
+    private readonly gridSize: glMatrix.ReadonlyVec3 = [Math.ceil(1 / this.cellSize), Math.ceil(1 / this.cellSize), Math.ceil(1 / this.cellSize)];
+    private readonly cellsIndicesBuffer: GPUBuffer;
+    private readonly cellsIndirectDrawBuffer: GPUBuffer;
 
     public constructor(device: GPUDevice) {
         this.device = device;
@@ -35,11 +42,16 @@ class Engine {
 
         this.cellsIndicesBuffer = this.device.createBuffer({
             size: Uint32Array.BYTES_PER_ELEMENT * this.gridSize[0] * this.gridSize[1] * this.gridSize[2],
-            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.VERTEX,
+            usage: GPUBufferUsage.VERTEX,
             mappedAtCreation: true,
-        })
+        });
+        this.cellsIndirectDrawBuffer = this.device.createBuffer({
+            size: Uint32Array.BYTES_PER_ELEMENT * 4,
+            usage: GPUBufferUsage.INDIRECT,
+            mappedAtCreation: true,
+        });
         {
-            const cells: glMatrix.vec3[] = [];
+            const cellsIndices: number[] = [];
             for (const position of positions) {
                 const naiveCell = [
                     Math.floor(position[0] / this.cellSize),
@@ -51,21 +63,16 @@ class Engine {
                     Math.max(0, Math.min(naiveCell[1], this.gridSize[1] - 1)),
                     Math.max(0, Math.min(naiveCell[2], this.gridSize[2] - 1)),
                 ];
-                let isKnownCell = false;
-                for (const knownCell of cells) {
-                    if (knownCell[0] === cell[0] && knownCell[1] === cell[1] && knownCell[2] === cell[2]) {
-                        isKnownCell = true;
-                        break;
-                    }
-                }
-                if (!isKnownCell) {
-                    cells.push(cell);
+                const cellIndex = cell[0] + this.gridSize[0] * (cell[1] + this.gridSize[1] * cell[2]);
+
+                if (!cellsIndices.includes(cellIndex)) {
+                    cellsIndices.push(cellIndex);
                 }
             }
-            this.cellsCount = cells.length;
-            const cellsIndices = cells.map(cell => cell[0] + this.gridSize[0] * (cell[1] + this.gridSize[1] * cell[2]));
+            new Uint32Array(this.cellsIndirectDrawBuffer.getMappedRange()).set([24, cellsIndices.length, 0, 0]);
             new Uint32Array(this.cellsIndicesBuffer.getMappedRange()).set(cellsIndices);
         }
+        this.cellsIndirectDrawBuffer.unmap();
         this.cellsIndicesBuffer.unmap();
 
         this.positionsBuffer = this.device.createBuffer({
@@ -89,9 +96,19 @@ class Engine {
             buffer: this.positionsBuffer,
         };
     }
+
+    public get gridCellsData(): CellsData {
+        return {
+            cellSize: this.cellSize,
+            gridSize: this.gridSize,
+            cellsIndicesBuffer: this.cellsIndicesBuffer,
+            cellsIndirectDrawBuffer: this.cellsIndirectDrawBuffer,
+        };
+    }
 }
 
 export type {
+    CellsData,
     SpheresData,
 };
 export {
