@@ -70,8 +70,7 @@ class Blur {
     }
 
     public setDeferredTexture(deferredTexture: Texture): void {
-        const requiredUsage = GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING;
-        if ((deferredTexture.usage & requiredUsage) !== requiredUsage) {
+        if (!deferredTexture.hasUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING)) {
             throw new Error("Texture has wrong usage.");
         }
         if (deferredTexture.format !== "rgba8unorm" || this.temporaryTexture.format !== "rgba8unorm") {

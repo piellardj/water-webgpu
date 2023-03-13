@@ -47,6 +47,10 @@ class Texture {
         return false;
     }
 
+    public hasUsage(usage: GPUTextureUsageFlags): boolean {
+        return (this.usage & usage) === usage;
+    }
+
     public free(): void {
         if (this.texture) {
             this.texture.destroy();
