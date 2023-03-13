@@ -4,6 +4,7 @@ import { Mesh } from "../engine/models/mesh";
 import * as Types from "../webgpu-utils/host-shareable-types/types";
 import * as ShaderSources from "../webgpu-utils/shader-sources";
 import { StructType, UniformsBuffer } from "../webgpu-utils/uniforms-buffer";
+import { WebGPUBuffer } from "../webgpu-utils/webgpu-buffer";
 import { WebGPUCanvas } from "../webgpu-utils/webgpu-canvas";
 import { type ViewData } from "./camera";
 
@@ -13,7 +14,7 @@ class MeshRenderer {
     private readonly uniformsBuffer: UniformsBuffer;
 
     private readonly verticesCount: number;
-    private readonly buffer: GPUBuffer;
+    private readonly buffer: WebGPUBuffer;
     private readonly uniformsBindgroup: GPUBindGroup;
 
     private readonly matrix: glMatrix.ReadonlyMat4;
@@ -73,10 +74,9 @@ class MeshRenderer {
         ]));
 
         this.verticesCount = 3 * mesh.triangles.length;
-        this.buffer = this.device.createBuffer({
+        this.buffer = new WebGPUBuffer(this.device, {
             size: 4 * 2 * 3 * 3 * mesh.triangles.length,
             usage: GPUBufferUsage.VERTEX,
-            mappedAtCreation: true,
         });
         const buffer = new Float32Array(this.buffer.getMappedRange());
         let i = 0;
@@ -121,7 +121,7 @@ class MeshRenderer {
         this.uniformsBuffer.uploadToGPU();
 
         renderpassEncoder.setPipeline(this.renderPipeline);
-        renderpassEncoder.setVertexBuffer(0, this.buffer);
+        renderpassEncoder.setVertexBuffer(0, this.buffer.gpuBuffer);
         renderpassEncoder.setBindGroup(0, this.uniformsBindgroup);
         renderpassEncoder.draw(this.verticesCount);
     }

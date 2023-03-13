@@ -59,7 +59,7 @@ function interpolate(datas: { distance: number, value: number }[], distance: num
             return previousData.value + (nextData.value - previousData.value) * (distance - previousData.distance) / (nextData.distance - previousData.distance);
         }
     }
-    return datas[datas.length - 1].value;
+    return datas[datas.length - 1]!.value;
 }
 
 class Camera {

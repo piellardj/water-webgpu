@@ -1,4 +1,5 @@
 import * as glMatrix from "gl-matrix";
+import { WebGPUBuffer } from "../webgpu-utils/webgpu-buffer";
 import { FillableMesh } from "./fillable-mesh";
 import * as InitialPositions from "./initial-positions";
 import { Mesh } from "./models/mesh";
@@ -22,14 +23,14 @@ class Engine {
 
     public readonly mesh: Mesh;
 
-    private readonly positionsBuffer: GPUBuffer;
+    private readonly positionsBuffer: WebGPUBuffer;
     private readonly spheresCount: number;
     private readonly spheresRadius: number = 0.02;
 
     private readonly cellSize: number = 0.05;
     private readonly gridSize: glMatrix.ReadonlyVec3 = [Math.ceil(1 / this.cellSize), Math.ceil(1 / this.cellSize), Math.ceil(1 / this.cellSize)];
-    private readonly cellsIndicesBuffer: GPUBuffer;
-    private readonly cellsIndirectDrawBuffer: GPUBuffer;
+    private readonly cellsIndicesBuffer: WebGPUBuffer;
+    private readonly cellsIndirectDrawBuffer: WebGPUBuffer;
 
     public constructor(device: GPUDevice) {
         this.device = device;
@@ -40,25 +41,23 @@ class Engine {
         const positions = InitialPositions.fillMesh(this.spheresRadius, fillableMesh);
         this.spheresCount = positions.length;
 
-        this.cellsIndicesBuffer = this.device.createBuffer({
+        this.cellsIndicesBuffer = new WebGPUBuffer(this.device, {
             size: Uint32Array.BYTES_PER_ELEMENT * this.gridSize[0] * this.gridSize[1] * this.gridSize[2],
             usage: GPUBufferUsage.VERTEX,
-            mappedAtCreation: true,
         });
-        this.cellsIndirectDrawBuffer = this.device.createBuffer({
+        this.cellsIndirectDrawBuffer = new WebGPUBuffer(this.device, {
             size: Uint32Array.BYTES_PER_ELEMENT * 4,
             usage: GPUBufferUsage.INDIRECT,
-            mappedAtCreation: true,
         });
         {
             const cellsIndices: number[] = [];
             for (const position of positions) {
-                const naiveCell = [
+                const naiveCell: glMatrix.ReadonlyVec3 = [
                     Math.floor(position[0] / this.cellSize),
                     Math.floor(position[1] / this.cellSize),
                     Math.floor(position[2] / this.cellSize),
                 ];
-                const cell: glMatrix.vec3 = [
+                const cell: glMatrix.ReadonlyVec3 = [
                     Math.max(0, Math.min(naiveCell[0], this.gridSize[0] - 1)),
                     Math.max(0, Math.min(naiveCell[1], this.gridSize[1] - 1)),
                     Math.max(0, Math.min(naiveCell[2], this.gridSize[2] - 1)),
@@ -75,10 +74,9 @@ class Engine {
         this.cellsIndirectDrawBuffer.unmap();
         this.cellsIndicesBuffer.unmap();
 
-        this.positionsBuffer = this.device.createBuffer({
+        this.positionsBuffer = new WebGPUBuffer(this.device, {
             size: 4 * Float32Array.BYTES_PER_ELEMENT * this.spheresCount,
-            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.VERTEX,
-            mappedAtCreation: true,
+            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.VERTEX
         });
         const positionsData = new Float32Array(this.positionsBuffer.getMappedRange());
         positions.forEach((position: glMatrix.vec3, index: number) => {
@@ -93,7 +91,7 @@ class Engine {
         return {
             radius: this.spheresRadius,
             count: this.spheresCount,
-            buffer: this.positionsBuffer,
+            buffer: this.positionsBuffer.gpuBuffer,
         };
     }
 
@@ -101,8 +99,8 @@ class Engine {
         return {
             cellSize: this.cellSize,
             gridSize: this.gridSize,
-            cellsIndicesBuffer: this.cellsIndicesBuffer,
-            cellsIndirectDrawBuffer: this.cellsIndirectDrawBuffer,
+            cellsIndicesBuffer: this.cellsIndicesBuffer.gpuBuffer,
+            cellsIndirectDrawBuffer: this.cellsIndirectDrawBuffer.gpuBuffer,
         };
     }
 }
