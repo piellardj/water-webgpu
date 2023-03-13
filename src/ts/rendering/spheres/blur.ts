@@ -58,7 +58,7 @@ class Blur {
         computePass.setBindGroup(0, this.bindgroupHorizontal);
         computePass.dispatchWorkgroups(
             Math.ceil(width / Blur.USEFUL_WORKGROUP_SIZE),
-            height,
+            height
         );
 
         computePass.setBindGroup(0, this.bindgroupVertical);

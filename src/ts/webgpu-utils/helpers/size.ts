@@ -10,7 +10,7 @@ function printSize(size: number): string {
 
 function getPrintableSize(size: number, units: string[]): string {
     if (size < 1024 || units.length === 1) {
-        return `${printSize(size)}${units[0]}`
+        return `${printSize(size)}${units[0]}`;
     }
     return getPrintableSize(size / 1024, units.slice(1));
 }
