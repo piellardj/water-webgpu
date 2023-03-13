@@ -1,4 +1,4 @@
-import { StructType } from "./host-shareable-types/struct-type";
+import { type AttributeDefinition, StructType } from "./host-shareable-types/struct-type";
 import { WebGPUBuffer } from "./webgpu-buffer";
 
 class UniformsBuffer {
@@ -8,12 +8,12 @@ class UniformsBuffer {
     private readonly gpuBuffer: WebGPUBuffer;
     private needsToUpload: boolean = true;
 
-    public constructor(device: GPUDevice, structType: StructType) {
+    public constructor(device: GPUDevice, attributesDefinitions: AttributeDefinition[]) {
         this.device = device;
-        this.structType = structType;
+        this.structType = new StructType("Uniforms", attributesDefinitions);
         this.data = new ArrayBuffer(this.structType.size);
         this.gpuBuffer = new WebGPUBuffer(this.device, {
-            size: structType.size,
+            size: this.structType.size,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
         });
     }

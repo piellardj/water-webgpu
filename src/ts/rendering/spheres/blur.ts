@@ -1,7 +1,5 @@
-import { Texture } from "../../webgpu-utils/texture";
-import * as Types from "../../webgpu-utils/host-shareable-types/types";
-import * as ShaderSources from "../../webgpu-utils/shader-sources";
-import { StructType, UniformsBuffer } from "../../webgpu-utils/uniforms-buffer";
+import * as ShaderSources from "../../shader-sources";
+import * as WebGPU from "../../webgpu-utils/webgpu-utils";
 
 class Blur {
     private static readonly WORKGROUP_SIZE = 256;
@@ -9,17 +7,17 @@ class Blur {
     private static readonly USEFUL_WORKGROUP_SIZE = Blur.WORKGROUP_SIZE - (2 * Blur.BLUR_RADIUS);
 
     private readonly device: GPUDevice;
-    private readonly temporaryTexture: Texture;
+    private readonly temporaryTexture: WebGPU.Texture;
     private readonly pipeline: GPUComputePipeline;
-    private readonly uniformsBufferHorizontal: UniformsBuffer;
-    private readonly uniformsBufferVertical: UniformsBuffer;
+    private readonly uniformsBufferHorizontal: WebGPU.Uniforms;
+    private readonly uniformsBufferVertical: WebGPU.Uniforms;
     private bindgroupHorizontal: GPUBindGroup | null = null;
     private bindgroupVertical: GPUBindGroup | null = null;
 
-    public constructor(device: GPUDevice, deferredTexture: Texture) {
+    public constructor(device: GPUDevice, deferredTexture: WebGPU.Texture) {
         this.device = device;
 
-        this.temporaryTexture = new Texture(device, "rgba8unorm", GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING);
+        this.temporaryTexture = new WebGPU.Texture(device, "rgba8unorm", GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING);
 
         this.pipeline = this.device.createComputePipeline({
             layout: "auto",
@@ -32,14 +30,14 @@ class Blur {
             }
         });
 
-        this.uniformsBufferHorizontal = new UniformsBuffer(device, new StructType("Uniforms", [
-            { name: "direction", type: Types.vec2I32 },
-        ]));
+        this.uniformsBufferHorizontal = new WebGPU.Uniforms(device, [
+            { name: "direction", type: WebGPU.Types.vec2I32 },
+        ]);
         this.uniformsBufferHorizontal.setValueFromName("direction", [1, 0]);
         this.uniformsBufferHorizontal.uploadToGPU();
-        this.uniformsBufferVertical = new UniformsBuffer(device, new StructType("Uniforms", [
-            { name: "direction", type: Types.vec2I32 },
-        ]));
+        this.uniformsBufferVertical = new WebGPU.Uniforms(device, [
+            { name: "direction", type: WebGPU.Types.vec2I32 },
+        ]);
         this.uniformsBufferVertical.setValueFromName("direction", [0, 1]);
         this.uniformsBufferVertical.uploadToGPU();
         this.setDeferredTexture(deferredTexture);
@@ -69,7 +67,7 @@ class Blur {
         computePass.end();
     }
 
-    public setDeferredTexture(deferredTexture: Texture): void {
+    public setDeferredTexture(deferredTexture: WebGPU.Texture): void {
         if (!deferredTexture.hasUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING)) {
             throw new Error("Texture has wrong usage.");
         }

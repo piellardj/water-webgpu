@@ -2,11 +2,10 @@ import { Camera } from "./rendering/camera";
 import { Scene } from "./scene";
 import { FrameCounter } from "./ui/frame-counter";
 import { Parameters } from "./ui/parameters";
-import { WebGPUCanvas } from "./webgpu-utils/webgpu-canvas";
-import * as WebGPU from "./webgpu-utils/webgpu-device";
+import * as WebGPU from "./webgpu-utils/webgpu-utils";
 
 function main(device: GPUDevice, canvas: HTMLCanvasElement, _canvasContainer: HTMLElement): void {
-    const webgpuCanvas = new WebGPUCanvas(canvas);
+    const webgpuCanvas = new WebGPU.Canvas(canvas);
     const camera = new Camera();
     const scene = new Scene(webgpuCanvas);
 

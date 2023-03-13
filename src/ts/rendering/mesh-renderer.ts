@@ -1,26 +1,22 @@
 import * as glMatrix from "gl-matrix";
-
 import { Mesh } from "../engine/models/mesh";
-import * as Types from "../webgpu-utils/host-shareable-types/types";
-import * as ShaderSources from "../webgpu-utils/shader-sources";
-import { StructType, UniformsBuffer } from "../webgpu-utils/uniforms-buffer";
-import { WebGPUBuffer } from "../webgpu-utils/webgpu-buffer";
-import { WebGPUCanvas } from "../webgpu-utils/webgpu-canvas";
+import * as ShaderSources from "../shader-sources";
+import * as WebGPU from "../webgpu-utils/webgpu-utils";
 import { type ViewData } from "./camera";
 
 class MeshRenderer {
     private readonly device: GPUDevice;
     private readonly renderPipeline: GPURenderPipeline;
-    private readonly uniformsBuffer: UniformsBuffer;
+    private readonly uniformsBuffer: WebGPU.Uniforms;
 
     private readonly verticesCount: number;
-    private readonly buffer: WebGPUBuffer;
+    private readonly buffer: WebGPU.Buffer;
     private readonly uniformsBindgroup: GPUBindGroup;
 
     private readonly matrix: glMatrix.ReadonlyMat4;
     private readonly mvpMatrix: glMatrix.mat4 = glMatrix.mat4.create();
 
-    public constructor(webgpuCanvas: WebGPUCanvas, modelMatrix: glMatrix.ReadonlyMat4, mesh: Mesh) {
+    public constructor(webgpuCanvas: WebGPU.Canvas, modelMatrix: glMatrix.ReadonlyMat4, mesh: Mesh) {
         this.device = webgpuCanvas.device;
         this.matrix = modelMatrix;
 
@@ -68,13 +64,13 @@ class MeshRenderer {
             },
         });
 
-        this.uniformsBuffer = new UniformsBuffer(this.device, new StructType("Uniforms", [
-            { name: "mvp", type: Types.mat4x4 },
-            { name: "modelMatrix", type: Types.mat4x4 },
-        ]));
+        this.uniformsBuffer = new WebGPU.Uniforms(this.device, [
+            { name: "mvp", type: WebGPU.Types.mat4x4 },
+            { name: "modelMatrix", type: WebGPU.Types.mat4x4 },
+        ]);
 
         this.verticesCount = 3 * mesh.triangles.length;
-        this.buffer = new WebGPUBuffer(this.device, {
+        this.buffer = new WebGPU.Buffer(this.device, {
             size: 4 * 2 * 3 * 3 * mesh.triangles.length,
             usage: GPUBufferUsage.VERTEX,
         });

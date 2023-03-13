@@ -1,15 +1,13 @@
 
 import * as glMatrix from "gl-matrix";
-import * as Types from "../webgpu-utils/host-shareable-types/types";
-import * as ShaderSources from "../webgpu-utils/shader-sources";
-import { UniformsBuffer } from "../webgpu-utils/uniforms-buffer";
-import { WebGPUCanvas } from "../webgpu-utils/webgpu-canvas";
+import * as ShaderSources from "../shader-sources";
+import * as WebGPU from "../webgpu-utils/webgpu-utils";
 import { type ViewData } from "./camera";
 
 class AxesRenderer {
     private readonly device: GPUDevice;
     private readonly renderPipeline: GPURenderPipeline;
-    private readonly uniformsBuffer: UniformsBuffer;
+    private readonly uniformsBuffer: WebGPU.Uniforms;
 
     private readonly verticesCount: number = 6;
     private readonly uniformsBindgroup: GPUBindGroup;
@@ -18,7 +16,7 @@ class AxesRenderer {
     private readonly mvpMatrix: glMatrix.mat4 = glMatrix.mat4.create();
     public size: number = 1;
 
-    public constructor(webgpuCanvas: WebGPUCanvas) {
+    public constructor(webgpuCanvas: WebGPU.Canvas) {
         this.device = webgpuCanvas.device;
 
         const shaderModule = this.device.createShaderModule({ code: ShaderSources.Rendering.Axes });
@@ -48,9 +46,9 @@ class AxesRenderer {
             },
         });
 
-        this.uniformsBuffer = new UniformsBuffer(this.device, new Types.StructType("Uniforms", [
-            { name: "mvp", type: Types.mat4x4 },
-        ]));
+        this.uniformsBuffer = new WebGPU.Uniforms(this.device, [
+            { name: "mvp", type: WebGPU.Types.mat4x4 },
+        ]);
 
         this.uniformsBindgroup = this.device.createBindGroup({
             layout: this.renderPipeline.getBindGroupLayout(0),

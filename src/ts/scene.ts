@@ -7,10 +7,10 @@ import { GridCellsRenderer } from "./rendering/grid-cells-renderer";
 import { MeshRenderer } from "./rendering/mesh-renderer";
 import { SpheresRenderer } from "./rendering/spheres/spheres-renderer";
 import { Parameters } from "./ui/parameters";
-import { WebGPUCanvas } from "./webgpu-utils/webgpu-canvas";
+import * as WebGPU from "./webgpu-utils/webgpu-utils";
 
 class Scene {
-    private readonly webgpuCanvas: WebGPUCanvas;
+    private readonly webgpuCanvas: WebGPU.Canvas;
     private readonly modelMatrix: glMatrix.mat4 = glMatrix.mat4.create();
 
     private readonly engine: Engine;
@@ -21,7 +21,7 @@ class Scene {
     private readonly meshRenderer: MeshRenderer;
     private readonly gridCellsRenderer: GridCellsRenderer;
 
-    public constructor(webgpuCanvas: WebGPUCanvas) {
+    public constructor(webgpuCanvas: WebGPU.Canvas) {
         this.webgpuCanvas = webgpuCanvas;
 
         this.engine = new Engine(webgpuCanvas.device);

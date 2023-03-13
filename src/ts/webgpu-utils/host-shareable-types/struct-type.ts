@@ -160,6 +160,9 @@ ${attributesString}
     }
 }
 
+export type {
+    AttributeDefinition,
+};
 export {
     StructType,
 };

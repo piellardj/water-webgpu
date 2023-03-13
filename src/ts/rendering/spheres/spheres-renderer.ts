@@ -1,7 +1,7 @@
 import * as glMatrix from "gl-matrix";
 import { type SpheresData } from "../../engine/engine";
 import { Parameters } from "../../ui/parameters";
-import { WebGPUCanvas } from "../../webgpu-utils/webgpu-canvas";
+import * as WebGPU from "../../webgpu-utils/webgpu-utils";
 import { type ViewData } from "../camera";
 import { Blur } from "./blur";
 import { Composition } from "./composition";
@@ -12,7 +12,7 @@ class SpheresRenderer {
     private readonly blur: Blur;
     private readonly compositionRenderer: Composition;
 
-    public constructor(webgpuCanvas: WebGPUCanvas, modelMatrix: glMatrix.ReadonlyMat4) {
+    public constructor(webgpuCanvas: WebGPU.Canvas, modelMatrix: glMatrix.ReadonlyMat4) {
         this.deferredRenderer = new Deferred(webgpuCanvas, modelMatrix);
         this.blur = new Blur(webgpuCanvas.device, this.deferredRenderer.texture);
         this.compositionRenderer = new Composition(webgpuCanvas, this.deferredRenderer.texture);

@@ -1,9 +1,6 @@
+import * as ShaderSources from "../../shader-sources";
 import { Parameters } from "../../ui/parameters";
-import * as Types from "../../webgpu-utils/host-shareable-types/types";
-import * as ShaderSources from "../../webgpu-utils/shader-sources";
-import { Texture } from "../../webgpu-utils/texture";
-import { StructType, UniformsBuffer } from "../../webgpu-utils/uniforms-buffer";
-import { WebGPUCanvas } from "../../webgpu-utils/webgpu-canvas";
+import * as WebGPU from "../../webgpu-utils/webgpu-utils";
 import { type ViewData } from "../camera";
 
 class Composition {
@@ -13,10 +10,10 @@ class Composition {
     private readonly linearSampler: GPUSampler;
     private textureBindgroup: GPUBindGroup;
 
-    private readonly uniformsBuffer: UniformsBuffer;
+    private readonly uniformsBuffer: WebGPU.Uniforms;
     private readonly uniformsBindgroup: GPUBindGroup;
 
-    public constructor(webgpuCanvas: WebGPUCanvas, deferredTexture: Texture) {
+    public constructor(webgpuCanvas: WebGPU.Canvas, deferredTexture: WebGPU.Texture) {
         this.device = webgpuCanvas.device;
 
         const shaderModule = this.device.createShaderModule({ code: ShaderSources.Rendering.Spheres.Composition });
@@ -52,16 +49,16 @@ class Composition {
 
         this.textureBindgroup = this.createTextureBindgroup(deferredTexture);
 
-        this.uniformsBuffer = new UniformsBuffer(this.device, new StructType("Uniforms", [
-            { name: "cameraRight", type: Types.vec3F32 },
-            { name: "displayMode", type: Types.u32 },
-            { name: "cameraUp", type: Types.vec3F32 },
-            { name: "f0", type: Types.f32 },
-            { name: "worldColor", type: Types.vec3F32 },
-            { name: "specularity", type: Types.f32 },
-            { name: "waterColor", type: Types.vec3F32 },
-            { name: "waterOpacity", type: Types.f32 },
-        ]));
+        this.uniformsBuffer = new WebGPU.Uniforms(this.device, [
+            { name: "cameraRight", type: WebGPU.Types.vec3F32 },
+            { name: "displayMode", type: WebGPU.Types.u32 },
+            { name: "cameraUp", type: WebGPU.Types.vec3F32 },
+            { name: "f0", type: WebGPU.Types.f32 },
+            { name: "worldColor", type: WebGPU.Types.vec3F32 },
+            { name: "specularity", type: WebGPU.Types.f32 },
+            { name: "waterColor", type: WebGPU.Types.vec3F32 },
+            { name: "waterOpacity", type: WebGPU.Types.f32 },
+        ]);
         this.uniformsBindgroup = this.device.createBindGroup({
             layout: this.renderPipeline.getBindGroupLayout(1),
             entries: [
@@ -90,11 +87,11 @@ class Composition {
         renderpassEncoder.draw(4);
     }
 
-    public setDeferredTexture(deferredTexture: Texture): void {
+    public setDeferredTexture(deferredTexture: WebGPU.Texture): void {
         this.textureBindgroup = this.createTextureBindgroup(deferredTexture);
     }
 
-    private createTextureBindgroup(deferredTexture: Texture): GPUBindGroup {
+    private createTextureBindgroup(deferredTexture: WebGPU.Texture): GPUBindGroup {
         return this.device.createBindGroup({
             layout: this.renderPipeline.getBindGroupLayout(0),
             entries: [{

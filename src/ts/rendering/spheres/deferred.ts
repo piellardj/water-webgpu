@@ -1,11 +1,8 @@
 import * as glMatrix from "gl-matrix";
 import { type SpheresData } from "../../engine/engine";
+import * as ShaderSources from "../../shader-sources";
 import { Parameters } from "../../ui/parameters";
-import * as Types from "../../webgpu-utils/host-shareable-types/types";
-import * as ShaderSources from "../../webgpu-utils/shader-sources";
-import { Texture } from "../../webgpu-utils/texture";
-import { UniformsBuffer } from "../../webgpu-utils/uniforms-buffer";
-import { WebGPUCanvas } from "../../webgpu-utils/webgpu-canvas";
+import * as WebGPU from "../../webgpu-utils/webgpu-utils";
 import { type ViewData } from "../camera";
 
 type RenderPass = {
@@ -21,27 +18,27 @@ class Deferred {
 
     private readonly renderPasses: RenderPass[];
 
-    private readonly uniformsBuffer: UniformsBuffer;
+    private readonly uniformsBuffer: WebGPU.Uniforms;
 
-    public readonly texture: Texture;
-    private readonly depthTexture: Texture;
+    public readonly texture: WebGPU.Texture;
+    private readonly depthTexture: WebGPU.Texture;
 
     private readonly matrix: glMatrix.ReadonlyMat4;
     private readonly mvpMatrix: glMatrix.mat4 = glMatrix.mat4.create();
 
-    public constructor(webgpuCanvas: WebGPUCanvas, modelMatrix: glMatrix.ReadonlyMat4) {
+    public constructor(webgpuCanvas: WebGPU.Canvas, modelMatrix: glMatrix.ReadonlyMat4) {
         this.device = webgpuCanvas.device;
         this.matrix = modelMatrix;
 
-        this.texture = new Texture(this.device, "rgba8unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING);
-        this.depthTexture = new Texture(this.device, "depth16unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING);
+        this.texture = new WebGPU.Texture(this.device, "rgba8unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING);
+        this.depthTexture = new WebGPU.Texture(this.device, "depth16unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING);
 
-        this.uniformsBuffer = new UniformsBuffer(this.device, new Types.StructType("Uniforms", [
-            { name: "mvp", type: Types.mat4x4 },
-            { name: "cameraUp", type: Types.vec3F32 },
-            { name: "sphereRadius", type: Types.f32 },
-            { name: "cameraRight", type: Types.vec3F32 },
-        ]));
+        this.uniformsBuffer = new WebGPU.Uniforms(this.device, [
+            { name: "mvp", type: WebGPU.Types.mat4x4 },
+            { name: "cameraUp", type: WebGPU.Types.vec3F32 },
+            { name: "sphereRadius", type: WebGPU.Types.f32 },
+            { name: "cameraRight", type: WebGPU.Types.vec3F32 },
+        ]);
 
         const shaderModule = this.device.createShaderModule({ code: ShaderSources.Rendering.Spheres.Spheres });
 

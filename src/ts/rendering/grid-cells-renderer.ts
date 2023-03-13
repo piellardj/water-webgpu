@@ -1,21 +1,19 @@
 import * as glMatrix from "gl-matrix";
 import { type CellsData } from "../engine/engine";
-import * as Types from "../webgpu-utils/host-shareable-types/types";
-import * as ShaderSources from "../webgpu-utils/shader-sources";
-import { UniformsBuffer } from "../webgpu-utils/uniforms-buffer";
-import { WebGPUCanvas } from "../webgpu-utils/webgpu-canvas";
+import * as ShaderSources from "../shader-sources";
+import * as WebGPU from "../webgpu-utils/webgpu-utils";
 import { type ViewData } from "./camera";
 
 class GridCellsRenderer {
     private readonly device: GPUDevice;
     private readonly renderPipeline: GPURenderPipeline;
-    private readonly uniformsBuffer: UniformsBuffer;
+    private readonly uniformsBuffer: WebGPU.Uniforms;
     private readonly uniformsBindgroup: GPUBindGroup;
 
     private readonly matrix: glMatrix.ReadonlyMat4;
     private readonly mvpMatrix: glMatrix.mat4 = glMatrix.mat4.create();
 
-    public constructor(webgpuCanvas: WebGPUCanvas, modelMatrix: glMatrix.ReadonlyMat4) {
+    public constructor(webgpuCanvas: WebGPU.Canvas, modelMatrix: glMatrix.ReadonlyMat4) {
         this.device = webgpuCanvas.device;
         this.matrix = modelMatrix;
 
@@ -58,12 +56,12 @@ class GridCellsRenderer {
             },
         });
 
-        this.uniformsBuffer = new UniformsBuffer(this.device, new Types.StructType("Uniforms", [
-            { name: "mvp", type: Types.mat4x4 },
-            { name: "color", type: Types.vec4F32 },
-            { name: "gridSize", type: Types.vec3U32 },
-            { name: "cellSize", type: Types.f32 },
-        ]));
+        this.uniformsBuffer = new WebGPU.Uniforms(this.device, [
+            { name: "mvp", type: WebGPU.Types.mat4x4 },
+            { name: "color", type: WebGPU.Types.vec4F32 },
+            { name: "gridSize", type: WebGPU.Types.vec3U32 },
+            { name: "cellSize", type: WebGPU.Types.f32 },
+        ]);
         this.uniformsBuffer.setValueFromName("color", [1, 1, 1, 1]);
 
         this.uniformsBindgroup = this.device.createBindGroup({

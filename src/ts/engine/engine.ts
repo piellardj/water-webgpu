@@ -1,5 +1,5 @@
 import * as glMatrix from "gl-matrix";
-import { WebGPUBuffer } from "../webgpu-utils/webgpu-buffer";
+import * as WebGPU from "../webgpu-utils/webgpu-utils";
 import { FillableMesh } from "./fillable-mesh";
 import * as InitialPositions from "./initial-positions";
 import { Mesh } from "./models/mesh";
@@ -23,14 +23,14 @@ class Engine {
 
     public readonly mesh: Mesh;
 
-    private readonly positionsBuffer: WebGPUBuffer;
+    private readonly positionsBuffer: WebGPU.Buffer;
     private readonly spheresCount: number;
     private readonly spheresRadius: number = 0.02;
 
     private readonly cellSize: number = 0.05;
     private readonly gridSize: glMatrix.ReadonlyVec3 = [Math.ceil(1 / this.cellSize), Math.ceil(1 / this.cellSize), Math.ceil(1 / this.cellSize)];
-    private readonly cellsIndicesBuffer: WebGPUBuffer;
-    private readonly cellsIndirectDrawBuffer: WebGPUBuffer;
+    private readonly cellsIndicesBuffer: WebGPU.Buffer;
+    private readonly cellsIndirectDrawBuffer: WebGPU.Buffer;
 
     public constructor(device: GPUDevice) {
         this.device = device;
@@ -41,11 +41,11 @@ class Engine {
         const positions = InitialPositions.fillMesh(this.spheresRadius, fillableMesh);
         this.spheresCount = positions.length;
 
-        this.cellsIndicesBuffer = new WebGPUBuffer(this.device, {
+        this.cellsIndicesBuffer = new WebGPU.Buffer(this.device, {
             size: Uint32Array.BYTES_PER_ELEMENT * this.gridSize[0] * this.gridSize[1] * this.gridSize[2],
             usage: GPUBufferUsage.VERTEX,
         });
-        this.cellsIndirectDrawBuffer = new WebGPUBuffer(this.device, {
+        this.cellsIndirectDrawBuffer = new WebGPU.Buffer(this.device, {
             size: Uint32Array.BYTES_PER_ELEMENT * 4,
             usage: GPUBufferUsage.INDIRECT,
         });
@@ -74,7 +74,7 @@ class Engine {
         this.cellsIndirectDrawBuffer.unmap();
         this.cellsIndicesBuffer.unmap();
 
-        this.positionsBuffer = new WebGPUBuffer(this.device, {
+        this.positionsBuffer = new WebGPU.Buffer(this.device, {
             size: 4 * Float32Array.BYTES_PER_ELEMENT * this.spheresCount,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.VERTEX
         });
