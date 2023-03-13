@@ -62,10 +62,25 @@ const data: IDemopageData = {
                     checked: true,
                 },
                 {
-                    type: Demopage.supportedControls.Checkbox,
-                    title: "Grid cells",
-                    id: "grid-cells-checkbox-id",
-                    checked: true,
+                    type: Demopage.supportedControls.Select,
+                    title: "Grid cemms",
+                    id: "grid-cells-select-id",
+                    placeholder: "<unknown>",
+                    options: [
+                        {
+                            value: "0",
+                            label: "Hidden",
+                            checked: true,
+                        },
+                        {
+                            value: "1",
+                            label: "Color by population",
+                        },
+                        {
+                            value: "2",
+                            label: "Final",
+                        },
+                    ],
                 },
                 {
                     type: Demopage.supportedControls.Tabs,

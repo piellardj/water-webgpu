@@ -1,6 +1,8 @@
 import * as glMatrix from "gl-matrix";
+import { type ViewData } from "../rendering/camera";
 import * as WebGPU from "../webgpu-utils/webgpu-utils";
 import { FillableMesh } from "./fillable-mesh";
+import { Indexing } from "./indexing/indexing";
 import * as InitialPositions from "./initial-positions";
 import { Mesh } from "./models/mesh";
 import * as Models from "./models/models";
@@ -23,8 +25,8 @@ class Engine {
 
     public readonly mesh: Mesh;
 
-    private readonly positionsBuffer: WebGPU.Buffer;
-    private readonly spheresCount: number;
+    private readonly particlesBuffer: WebGPU.Buffer;
+    private readonly particlesCount: number;
     private readonly spheresRadius: number = 0.02;
 
     private readonly cellSize: number = 0.05;
@@ -32,14 +34,16 @@ class Engine {
     private readonly cellsIndicesBuffer: WebGPU.Buffer;
     private readonly cellsIndirectDrawBuffer: WebGPU.Buffer;
 
-    public constructor(device: GPUDevice) {
-        this.device = device;
+    private readonly indexing: Indexing;
+
+    public constructor(canvas: WebGPU.Canvas, modelMatrix: glMatrix.ReadonlyMat4) {
+        this.device = canvas.device;
 
         this.mesh = Mesh.load(Models.Shapes);
 
         const fillableMesh = new FillableMesh(this.mesh.triangles);
         const positions = InitialPositions.fillMesh(this.spheresRadius, fillableMesh);
-        this.spheresCount = positions.length;
+        this.particlesCount = positions.length;
 
         this.cellsIndicesBuffer = new WebGPU.Buffer(this.device, {
             size: Uint32Array.BYTES_PER_ELEMENT * this.gridSize[0] * this.gridSize[1] * this.gridSize[2],
@@ -74,24 +78,41 @@ class Engine {
         this.cellsIndirectDrawBuffer.unmap();
         this.cellsIndicesBuffer.unmap();
 
-        this.positionsBuffer = new WebGPU.Buffer(this.device, {
-            size: 4 * Float32Array.BYTES_PER_ELEMENT * this.spheresCount,
-            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.VERTEX
+        this.particlesBuffer = new WebGPU.Buffer(this.device, {
+            size: 4 * Float32Array.BYTES_PER_ELEMENT * this.particlesCount,
+            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE,
         });
-        const positionsData = new Float32Array(this.positionsBuffer.getMappedRange());
+        const positionsData = new Float32Array(this.particlesBuffer.getMappedRange());
         positions.forEach((position: glMatrix.vec3, index: number) => {
             const data = [position[0], position[1], position[2], 0];
             const offset = 4 * index;
             positionsData.set(data, offset);
         });
-        this.positionsBuffer.unmap();
+        this.particlesBuffer.unmap();
+
+        this.indexing = new Indexing(canvas, {
+            gridSize: this.gridSize,
+            cellSize: this.cellSize,
+            cellsCount: Math.pow(Math.ceil(1 / this.cellSize), 3),
+            particlesBuffer: this.particlesBuffer,
+            particlesCount: this.particlesCount,
+            modelMatrix,
+        });
+    }
+
+    public compute(commandEncoder: GPUCommandEncoder): void {
+        this.indexing.compute(commandEncoder);
+    }
+
+    public renderCellsDebug(renderpassEncoder: GPURenderPassEncoder, viewData: ViewData): void {
+        this.indexing.renderCellsDebug(renderpassEncoder, viewData);
     }
 
     public get spheresData(): SpheresData {
         return {
             radius: this.spheresRadius,
-            count: this.spheresCount,
-            buffer: this.positionsBuffer.gpuBuffer,
+            count: this.particlesCount,
+            buffer: this.particlesBuffer.gpuBuffer,
         };
     }
 

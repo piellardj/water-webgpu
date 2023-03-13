@@ -6,7 +6,7 @@ const controlId = {
     AXES_CHECKBOX: "axes-checkbox-id",
     DOMAIN_CHECKBOX: "domain-checkbox-id",
     MESH_CHECKBOX: "mesh-checkbox-id",
-    GRID_CELLS_CHECKBOX: "grid-cells-checkbox-id",
+    GRID_CELLS_SELECT: "grid-cells-select-id",
     PROJECTION_TABS: "projection-tabs-id",
 
     SPHERES_CHECKBOX: "spheres-checkbox-id",
@@ -16,7 +16,7 @@ const controlId = {
     WATER_COLOR_COLORPICKER: "water-color-id",
     WATER_OPACITY_RANGE: "water-opacity-range-id",
     SPECULARITY_RANGE: "specularity-range-id",
-    FRESNEL_RANGE:  "fresnel-range-id",
+    FRESNEL_RANGE: "fresnel-range-id",
 };
 
 function updateIndicatorsVisibility(): void {
@@ -47,6 +47,12 @@ enum EDisplayMode {
     DEPTH = 4,
 }
 
+enum EGridDisplayMode {
+    HIDDEN = 0,
+    COLOR_BY_POPULATION = 1,
+    FINAL = 2,
+}
+
 abstract class Parameters {
     public static get backgroundColor(): ColorNormalized {
         return buildColor(controlId.BACKGROUND_COLORPICKER);
@@ -72,8 +78,12 @@ abstract class Parameters {
         return Page.Checkbox.isChecked(controlId.SPHERES_CHECKBOX);
     }
 
-    public static get showGridCells(): boolean {
-        return Page.Checkbox.isChecked(controlId.GRID_CELLS_CHECKBOX);
+    public static get showGridCells(): EGridDisplayMode {
+        const value = Page.Select.getValue(controlId.GRID_CELLS_SELECT);
+        if (!value) {
+            throw new Error();
+        }
+        return +value as EGridDisplayMode;
     }
 
     public static get blur(): boolean {
@@ -110,6 +120,7 @@ abstract class Parameters {
 }
 
 export {
+    EGridDisplayMode,
     EProjection,
     Parameters,
 };

@@ -6,7 +6,7 @@ import { CubeRenderer } from "./rendering/cube-renderer";
 import { GridCellsRenderer } from "./rendering/grid-cells-renderer";
 import { MeshRenderer } from "./rendering/mesh-renderer";
 import { SpheresRenderer } from "./rendering/spheres/spheres-renderer";
-import { Parameters } from "./ui/parameters";
+import { EGridDisplayMode, Parameters } from "./ui/parameters";
 import * as WebGPU from "./webgpu-utils/webgpu-utils";
 
 class Scene {
@@ -24,7 +24,7 @@ class Scene {
     public constructor(webgpuCanvas: WebGPU.Canvas) {
         this.webgpuCanvas = webgpuCanvas;
 
-        this.engine = new Engine(webgpuCanvas.device);
+        this.engine = new Engine(webgpuCanvas, this.modelMatrix);
 
         this.axesRenderer = new AxesRenderer(webgpuCanvas);
         this.cubeRenderer = new CubeRenderer(webgpuCanvas, this.modelMatrix);
@@ -33,6 +33,10 @@ class Scene {
         this.gridCellsRenderer = new GridCellsRenderer(webgpuCanvas, this.modelMatrix);
 
         glMatrix.mat4.translate(this.modelMatrix, this.modelMatrix, [-0.5, -0.5, -0.5]);
+    }
+
+    public update(commandEncoder: GPUCommandEncoder): void {
+        this.engine.compute(commandEncoder);
     }
 
     public render(commandEncoder: GPUCommandEncoder, viewData: ViewData): void {
@@ -54,8 +58,14 @@ class Scene {
         if (Parameters.showSpheres) {
             this.spheresRenderer.renderComposition(renderpassEncoder, viewData);
         }
-        if (Parameters.showGridCells) {
-            this.gridCellsRenderer.render(renderpassEncoder, viewData, this.engine.gridCellsData);
+
+        switch (Parameters.showGridCells) {
+            case EGridDisplayMode.FINAL:
+                this.gridCellsRenderer.render(renderpassEncoder, viewData, this.engine.gridCellsData);
+                break;
+            case EGridDisplayMode.COLOR_BY_POPULATION:
+                this.engine.renderCellsDebug(renderpassEncoder, viewData);
+                break;
         }
         renderpassEncoder.end();
     }
