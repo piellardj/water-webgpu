@@ -1,17 +1,16 @@
-import { getPrintableSizeFromBytes } from "./helpers/size";
+import * as MemoryMetrics from "./helpers/memory-metrics";
 
 type Descriptor = {
     size: GPUSize64;
     usage: GPUBufferUsageFlags;
 };
 
-let totalBuffersSize = 0;
-
 class WebGPUBuffer {
+    private static readonly objectType: string = "GPUBuffer";
+
     private buffer: GPUBuffer | null = null;
     private readonly size: GPUSize64;
     private readonly usage: GPUBufferUsageFlags;
-    private readonly printableSize: string;
 
     public constructor(
         private readonly device: GPUDevice,
@@ -19,7 +18,6 @@ class WebGPUBuffer {
     ) {
         this.size = descriptor.size;
         this.usage = descriptor.usage;
-        this.printableSize = getPrintableSizeFromBytes(this.size);
     }
 
     public get gpuBuffer(): GPUBuffer {
@@ -65,15 +63,22 @@ class WebGPUBuffer {
         if (this.buffer) {
             this.buffer.destroy();
             this.buffer = null;
-            totalBuffersSize -= this.size;
-            console.debug(`Destroyed GPUBuffer of size ${this.printableSize}. Total size of buffers on GPU is now ${getPrintableSizeFromBytes(totalBuffersSize)}.`);
+
+            MemoryMetrics.registerDestruction({
+                objectType: WebGPUBuffer.objectType,
+                objectSizeInBytes: this.size,
+            });
         }
     }
 
     private createBuffer(descriptor: GPUBufferDescriptor): GPUBuffer {
         const buffer = this.device.createBuffer(descriptor);
-        totalBuffersSize += this.size;
-        console.debug(`Allocating GPUBuffer of size ${this.printableSize}. Total size of buffers on GPU is now ${getPrintableSizeFromBytes(totalBuffersSize)}.`);
+
+        MemoryMetrics.registerAllocation({
+            objectType: WebGPUBuffer.objectType,
+            objectSizeInBytes: this.size,
+        });
+
         return buffer;
     }
 }

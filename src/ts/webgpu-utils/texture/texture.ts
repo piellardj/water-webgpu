@@ -1,4 +1,14 @@
+import * as MemoryMetrics from "../helpers/memory-metrics";
+import { textureTypes } from "./texture-types";
+
+function computeMemoryCost(width: number, height: number, format: GPUTextureFormat): number {
+    const texelSize = textureTypes[format];
+    return width * height * texelSize.texelSize;
+}
+
 class Texture {
+    private static readonly objectType: string = "GPUTexture";
+
     private width: number = 1;
     private height: number = 1;
     private texture: GPUTexture | null = null;
@@ -20,6 +30,14 @@ class Texture {
                 size: [this.width, this.height],
                 format: this.format,
                 usage: this.usage,
+            });
+            const width = this.texture.width;
+            const height = this.texture.height;
+
+            MemoryMetrics.registerAllocation({
+                objectType: Texture.objectType,
+                objectSizeInBytes: computeMemoryCost(width, height, this.format),
+                properties: `${width}x${height}, ${this.format}`,
             });
         }
         return this.texture;
@@ -53,8 +71,16 @@ class Texture {
 
     public free(): void {
         if (this.texture) {
+            const width = this.texture.width;
+            const height = this.texture.height;
             this.texture.destroy();
             this.texture = null;
+
+            MemoryMetrics.registerDestruction({
+                objectType: Texture.objectType,
+                objectSizeInBytes: computeMemoryCost(width, height, this.format),
+                properties: `${width}x${height}, ${this.format}`,
+            });
         }
     }
 }

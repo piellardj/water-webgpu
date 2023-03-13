@@ -1,4 +1,4 @@
-import { Texture } from "./texture";
+import { Texture } from "./texture/texture";
 import * as WebGPU from "./webgpu-device";
 
 class WebGPUCanvas {
