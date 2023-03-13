@@ -1,8 +1,6 @@
 import * as glMatrix from "gl-matrix";
-import { type ViewData } from "../../rendering/camera";
 import * as WebGPU from "../../webgpu-utils/webgpu-utils";
 import { CountParticlesPerCell } from "./count-particles-per-cell";
-import { RenderCellsByPopulation } from "./render-cells-by-population";
 import { ResetCells } from "./reset-cells";
 
 type Data = {
@@ -11,11 +9,16 @@ type Data = {
     cellsCount: number;
     particlesBuffer: WebGPU.Buffer;
     particlesCount: number;
-    modelMatrix: glMatrix.ReadonlyMat4;
+};
+
+type CellsDebugData = {
+    cellsBuffer: WebGPU.Buffer;
+    cellsCount: number;
+    gridSize: glMatrix.ReadonlyVec3;
+    cellSize: number;
 };
 
 class Indexing {
-    private readonly webglCanvas: WebGPU.Canvas;
     private readonly device: GPUDevice;
 
     private readonly cellsBuffer: WebGPU.Buffer;
@@ -25,13 +28,9 @@ class Indexing {
 
     private readonly resetCells: ResetCells;
     private readonly countParticlesPerCell: CountParticlesPerCell;
-    private renderCellsByPopulation: RenderCellsByPopulation | null = null;
 
-    private readonly modelMatrix: glMatrix.ReadonlyMat4;
-
-    public constructor(webglCanvas: WebGPU.Canvas, data: Data) {
-        this.webglCanvas = webglCanvas;
-        this.device = webglCanvas.device;
+    public constructor(device: GPUDevice, data: Data) {
+        this.device = device;
 
         this.cellsCount = data.cellsCount;
         this.gridSize = data.gridSize;
@@ -54,8 +53,6 @@ class Indexing {
             particlesBuffer: data.particlesBuffer,
             particlesCount: data.particlesCount,
         });
-
-        this.modelMatrix = data.modelMatrix;
     }
 
     public compute(commandEncoder: GPUCommandEncoder): void {
@@ -63,19 +60,19 @@ class Indexing {
         this.countParticlesPerCell.compute(commandEncoder);
     }
 
-    public renderCellsDebug(renderpassEncoder: GPURenderPassEncoder, viewData: ViewData): void {
-        if (!this.renderCellsByPopulation) {
-            this.renderCellsByPopulation = new RenderCellsByPopulation(this.webglCanvas, this.modelMatrix);
-        }
-        this.renderCellsByPopulation.render(renderpassEncoder, viewData, {
+    public get gridCellsDebugData(): CellsDebugData {
+        return {
             cellsBuffer: this.cellsBuffer,
             cellsCount: this.cellsCount,
             gridSize: this.gridSize,
             cellSize: this.cellSize,
-        });
+        };
     }
 }
 
+export type {
+    CellsDebugData,
+};
 export {
     Indexing,
 };

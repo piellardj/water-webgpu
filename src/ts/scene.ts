@@ -3,6 +3,7 @@ import { Engine } from "./engine/engine";
 import { AxesRenderer } from "./rendering/axes-renderer";
 import { ViewData } from "./rendering/camera";
 import { CubeRenderer } from "./rendering/cube-renderer";
+import { GridCellsByPopulationRenderer } from "./rendering/grid-cells-by-population-renderer";
 import { GridCellsRenderer } from "./rendering/grid-cells-renderer";
 import { MeshRenderer } from "./rendering/mesh-renderer";
 import { SpheresRenderer } from "./rendering/spheres/spheres-renderer";
@@ -20,11 +21,12 @@ class Scene {
     private readonly spheresRenderer: SpheresRenderer;
     private readonly meshRenderer: MeshRenderer;
     private readonly gridCellsRenderer: GridCellsRenderer;
+    private gridCellsPerPopulationRenderer: GridCellsByPopulationRenderer | null = null;
 
     public constructor(webgpuCanvas: WebGPU.Canvas) {
         this.webgpuCanvas = webgpuCanvas;
 
-        this.engine = new Engine(webgpuCanvas, this.modelMatrix);
+        this.engine = new Engine(webgpuCanvas.device);
 
         this.axesRenderer = new AxesRenderer(webgpuCanvas);
         this.cubeRenderer = new CubeRenderer(webgpuCanvas, this.modelMatrix);
@@ -64,7 +66,10 @@ class Scene {
                 this.gridCellsRenderer.render(renderpassEncoder, viewData, this.engine.gridCellsData);
                 break;
             case EGridDisplayMode.COLOR_BY_POPULATION:
-                this.engine.renderCellsDebug(renderpassEncoder, viewData);
+                if (!this.gridCellsPerPopulationRenderer) {
+                    this.gridCellsPerPopulationRenderer = new GridCellsByPopulationRenderer(this.webgpuCanvas, this.modelMatrix);
+                }
+                this.gridCellsPerPopulationRenderer.render(renderpassEncoder, viewData, this.engine.gridCellsDebugData);
                 break;
         }
         renderpassEncoder.end();

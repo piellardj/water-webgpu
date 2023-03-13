@@ -1,7 +1,7 @@
-import { type ViewData } from "../../rendering/camera";
 import * as glMatrix from "gl-matrix";
-import * as ShaderSources from "../../shader-sources";
-import * as WebGPU from "../../webgpu-utils/webgpu-utils";
+import * as ShaderSources from "../shader-sources";
+import * as WebGPU from "../webgpu-utils/webgpu-utils";
+import { type ViewData } from "./camera";
 
 type Data = {
     cellsBuffer: WebGPU.Buffer;
@@ -10,7 +10,7 @@ type Data = {
     cellSize: number;
 };
 
-class RenderCellsByPopulation {
+class GridCellsByPopulationRenderer {
     private readonly device: GPUDevice;
 
     private readonly renderPipeline: GPURenderPipeline;
@@ -108,6 +108,6 @@ class RenderCellsByPopulation {
 }
 
 export {
-    RenderCellsByPopulation,
+    GridCellsByPopulationRenderer,
 };
 

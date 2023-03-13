@@ -1,8 +1,7 @@
 import * as glMatrix from "gl-matrix";
-import { type ViewData } from "../rendering/camera";
 import * as WebGPU from "../webgpu-utils/webgpu-utils";
 import { FillableMesh } from "./fillable-mesh";
-import { Indexing } from "./indexing/indexing";
+import { Indexing, type CellsDebugData } from "./indexing/indexing";
 import * as InitialPositions from "./initial-positions";
 import { Mesh } from "./models/mesh";
 import * as Models from "./models/models";
@@ -36,8 +35,8 @@ class Engine {
 
     private readonly indexing: Indexing;
 
-    public constructor(canvas: WebGPU.Canvas, modelMatrix: glMatrix.ReadonlyMat4) {
-        this.device = canvas.device;
+    public constructor(device: GPUDevice) {
+        this.device = device;
 
         this.mesh = Mesh.load(Models.Shapes);
 
@@ -90,22 +89,17 @@ class Engine {
         });
         this.particlesBuffer.unmap();
 
-        this.indexing = new Indexing(canvas, {
+        this.indexing = new Indexing(this.device, {
             gridSize: this.gridSize,
             cellSize: this.cellSize,
             cellsCount: Math.pow(Math.ceil(1 / this.cellSize), 3),
             particlesBuffer: this.particlesBuffer,
             particlesCount: this.particlesCount,
-            modelMatrix,
         });
     }
 
     public compute(commandEncoder: GPUCommandEncoder): void {
         this.indexing.compute(commandEncoder);
-    }
-
-    public renderCellsDebug(renderpassEncoder: GPURenderPassEncoder, viewData: ViewData): void {
-        this.indexing.renderCellsDebug(renderpassEncoder, viewData);
     }
 
     public get spheresData(): SpheresData {
@@ -123,6 +117,9 @@ class Engine {
             cellsIndicesBuffer: this.cellsIndicesBuffer.gpuBuffer,
             cellsIndirectDrawBuffer: this.cellsIndirectDrawBuffer.gpuBuffer,
         };
+    }
+    public get gridCellsDebugData(): CellsDebugData {
+        return this.indexing.gridCellsDebugData;
     }
 }
 
