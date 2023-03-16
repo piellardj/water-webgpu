@@ -3,7 +3,7 @@ struct Cell {                    //           align(4) size(8)
     offset: u32,                 // offset(4) align(4) size(4)
 };
 struct CellsBuffer {
-    cells: array<Cell>, // stride(48)
+    cells: array<Cell>, // stride(8)
 };
 
 struct Particle {            //            align(16) size(16)

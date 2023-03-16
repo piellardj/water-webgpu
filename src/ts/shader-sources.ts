@@ -1,8 +1,13 @@
 /// <reference types="./webgpu-utils/wgsl-type"/>
 
 import CountParticlesPerCell from "../shaders/engine/indexing/count-particles-per-cell.wgsl";
+import DownPass from "../shaders/engine/indexing/prefix-sum/down-pass.wgsl";
+import FinalizePrefixSum from "../shaders/engine/indexing/prefix-sum/finalize.wgsl";
+import PreparePrefixSum from "../shaders/engine/indexing/prefix-sum/prepare.wgsl";
+import Reduce from "../shaders/engine/indexing/prefix-sum/reduce.wgsl";
 import RenderCellsByPopulation from "../shaders/engine/indexing/render-cells-by-population.wgsl";
 import ResetCells from "../shaders/engine/indexing/reset-cells.wgsl";
+
 import Axes from "../shaders/rendering/axes.wgsl";
 import Cube from "../shaders/rendering/cube.wgsl";
 import GridCells from "../shaders/rendering/grid-cells.wgsl";
@@ -14,8 +19,14 @@ import Spheres from "../shaders/rendering/spheres/spheres.wgsl";
 const engine = {
     Indexing: {
         CountParticlesPerCell,
+        FinalizePrefixSum,
+        PreparePrefixSum,
         RenderCellsByPopulation,
         ResetCells,
+        PrefixSum: {
+            DownPass,
+            Reduce,
+        },
     },
 };
 

@@ -30,7 +30,7 @@ class Engine {
 
     private readonly cellSize: number = 0.05;
     private readonly gridSize: glMatrix.ReadonlyVec3 = [Math.ceil(1 / this.cellSize), Math.ceil(1 / this.cellSize), Math.ceil(1 / this.cellSize)];
-    private readonly cellsIndicesBuffer: WebGPU.Buffer;
+    private readonly drawableCellsIndicesBuffer: WebGPU.Buffer;
     private readonly cellsIndirectDrawBuffer: WebGPU.Buffer;
 
     private readonly indexing: Indexing;
@@ -44,13 +44,13 @@ class Engine {
         const positions = InitialPositions.fillMesh(this.spheresRadius, fillableMesh);
         this.particlesCount = positions.length;
 
-        this.cellsIndicesBuffer = new WebGPU.Buffer(this.device, {
+        this.drawableCellsIndicesBuffer = new WebGPU.Buffer(this.device, {
             size: Uint32Array.BYTES_PER_ELEMENT * this.gridSize[0] * this.gridSize[1] * this.gridSize[2],
-            usage: GPUBufferUsage.VERTEX,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE,
         });
         this.cellsIndirectDrawBuffer = new WebGPU.Buffer(this.device, {
             size: Uint32Array.BYTES_PER_ELEMENT * 4,
-            usage: GPUBufferUsage.INDIRECT,
+            usage: GPUBufferUsage.INDIRECT | GPUBufferUsage.STORAGE,
         });
         {
             const cellsIndices: number[] = [];
@@ -72,10 +72,10 @@ class Engine {
                 }
             }
             new Uint32Array(this.cellsIndirectDrawBuffer.getMappedRange()).set([24, cellsIndices.length, 0, 0]);
-            new Uint32Array(this.cellsIndicesBuffer.getMappedRange()).set(cellsIndices);
+            new Uint32Array(this.drawableCellsIndicesBuffer.getMappedRange()).set(cellsIndices);
         }
         this.cellsIndirectDrawBuffer.unmap();
-        this.cellsIndicesBuffer.unmap();
+        this.drawableCellsIndicesBuffer.unmap();
 
         this.particlesBuffer = new WebGPU.Buffer(this.device, {
             size: 4 * Float32Array.BYTES_PER_ELEMENT * this.particlesCount,
@@ -92,9 +92,10 @@ class Engine {
         this.indexing = new Indexing(this.device, {
             gridSize: this.gridSize,
             cellSize: this.cellSize,
-            cellsCount: Math.pow(Math.ceil(1 / this.cellSize), 3),
             particlesBuffer: this.particlesBuffer,
             particlesCount: this.particlesCount,
+            cellsIndirectDrawBuffer: this.cellsIndirectDrawBuffer,
+            drawableCellsIndicesBuffer: this.drawableCellsIndicesBuffer,
         });
     }
 
@@ -114,7 +115,7 @@ class Engine {
         return {
             cellSize: this.cellSize,
             gridSize: this.gridSize,
-            cellsIndicesBuffer: this.cellsIndicesBuffer.gpuBuffer,
+            cellsIndicesBuffer: this.drawableCellsIndicesBuffer.gpuBuffer,
             cellsIndirectDrawBuffer: this.cellsIndirectDrawBuffer.gpuBuffer,
         };
     }
