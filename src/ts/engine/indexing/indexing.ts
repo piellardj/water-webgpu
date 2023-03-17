@@ -1,5 +1,6 @@
 import * as glMatrix from "gl-matrix";
 import * as WebGPU from "../../webgpu-utils/webgpu-utils";
+import { type ParticlesBufferData } from "../engine";
 import { CountParticlesPerCell } from "./count-particles-per-cell";
 import { FinalizePrefixSum } from "./finalize-prefix-sum";
 import { PrefixSum } from "./prefix-sum";
@@ -10,8 +11,7 @@ type Data = {
     gridSize: glMatrix.ReadonlyVec3;
     cellSize: number;
 
-    particlesBuffer: WebGPU.Buffer;
-    particlesCount: number;
+    particlesBufferData: ParticlesBufferData
 
     cellsIndirectDrawBuffer: WebGPU.Buffer,
     drawableCellsIndicesBuffer: WebGPU.Buffer,
@@ -76,8 +76,7 @@ class Indexing {
             cellsBufferData,
             gridSize: data.gridSize,
             cellSize: data.cellSize,
-            particlesBuffer: data.particlesBuffer,
-            particlesCount: data.particlesCount,
+            particlesBufferData: data.particlesBufferData,
         });
 
         this.preparePrefixSum = new PreparePrefixSum(device, {

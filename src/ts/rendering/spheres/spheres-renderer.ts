@@ -12,14 +12,14 @@ class SpheresRenderer {
     private readonly blur: Blur;
     private readonly compositionRenderer: Composition;
 
-    public constructor(webgpuCanvas: WebGPU.Canvas, modelMatrix: glMatrix.ReadonlyMat4) {
-        this.deferredRenderer = new Deferred(webgpuCanvas, modelMatrix);
+    public constructor(webgpuCanvas: WebGPU.Canvas, modelMatrix: glMatrix.ReadonlyMat4, spheresData: SpheresData) {
+        this.deferredRenderer = new Deferred(webgpuCanvas, modelMatrix, spheresData);
         this.blur = new Blur(webgpuCanvas.device, this.deferredRenderer.texture);
         this.compositionRenderer = new Composition(webgpuCanvas, this.deferredRenderer.texture);
     }
 
-    public renderDeferred(commandEncoder: GPUCommandEncoder, viewData: ViewData, spheresData: SpheresData): void {
-        this.deferredRenderer.render(commandEncoder, viewData, spheresData);
+    public renderDeferred(commandEncoder: GPUCommandEncoder, viewData: ViewData): void {
+        this.deferredRenderer.render(commandEncoder, viewData);
 
         if (Parameters.blur) {
             this.blur.compute(commandEncoder);

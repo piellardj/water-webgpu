@@ -23,12 +23,20 @@ class Deferred {
     public readonly texture: WebGPU.Texture;
     private readonly depthTexture: WebGPU.Texture;
 
+    private readonly sphereRadius: number;
+    private readonly positionsBuffer: GPUBuffer;
+    private readonly spheresCount: number;
+
     private readonly matrix: glMatrix.ReadonlyMat4;
     private readonly mvpMatrix: glMatrix.mat4 = glMatrix.mat4.create();
 
-    public constructor(webgpuCanvas: WebGPU.Canvas, modelMatrix: glMatrix.ReadonlyMat4) {
+    public constructor(webgpuCanvas: WebGPU.Canvas, modelMatrix: glMatrix.ReadonlyMat4, spheresData: SpheresData) {
         this.device = webgpuCanvas.device;
         this.matrix = modelMatrix;
+
+        this.sphereRadius = spheresData.radius;
+        this.positionsBuffer = spheresData.buffer;
+        this.spheresCount = spheresData.count;
 
         this.texture = new WebGPU.Texture(this.device, "rgba8unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING);
         this.depthTexture = new WebGPU.Texture(this.device, "depth16unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING);
@@ -67,7 +75,7 @@ class Deferred {
                 depthStencilAttachment: depthAttachment,
             };
             const writeMask = GPUColorWrite.RED | GPUColorWrite.GREEN | GPUColorWrite.ALPHA;
-            const pipelineDescriptor = this.createDeferredDescriptor(shaderModule, "main_fragment_rga", writeMask);
+            const pipelineDescriptor = this.createDeferredDescriptor(shaderModule, "main_fragment_rga", spheresData, writeMask);
             pipelineDescriptor.depthStencil = {
                 depthWriteEnabled: true,
                 depthCompare: "less",
@@ -114,7 +122,7 @@ class Deferred {
                     operation: "add",
                 }
             };
-            const pipelineDescriptor = this.createDeferredDescriptor(shaderModule, "main_fragment_b", writeMask, additiveBlend);
+            const pipelineDescriptor = this.createDeferredDescriptor(shaderModule, "main_fragment_b", spheresData, writeMask, additiveBlend);
             const pipeline = this.device.createRenderPipeline(pipelineDescriptor);
             const uniformsBindgroup = this.device.createBindGroup({
                 layout: pipeline.getBindGroupLayout(0),
@@ -133,13 +141,13 @@ class Deferred {
         }
     }
 
-    public render(commandEncoder: GPUCommandEncoder, viewData: ViewData, spheresData: SpheresData): void {
+    public render(commandEncoder: GPUCommandEncoder, viewData: ViewData): void {
         glMatrix.mat4.multiply(this.mvpMatrix, viewData.vpMatrix, this.matrix);
 
         this.uniforms.setValueFromName("mvp", this.mvpMatrix);
         this.uniforms.setValueFromName("cameraUp", viewData.cameraUp);
         this.uniforms.setValueFromName("cameraRight", viewData.cameraRight);
-        this.uniforms.setValueFromName("sphereRadius", Parameters.spheresRadiusFactor * spheresData.radius);
+        this.uniforms.setValueFromName("sphereRadius", Parameters.spheresRadiusFactor * this.sphereRadius);
         this.uniforms.uploadToGPU();
 
         for (const renderPass of this.renderPasses) {
@@ -147,9 +155,9 @@ class Deferred {
             renderpassEncoder.setViewport(0, 0, this.texture.getWidth(), this.texture.getHeight(), 0, 1);
             renderpassEncoder.setScissorRect(0, 0, this.texture.getWidth(), this.texture.getHeight());
             renderpassEncoder.setPipeline(renderPass.pipeline);
-            renderpassEncoder.setVertexBuffer(0, spheresData.buffer);
+            renderpassEncoder.setVertexBuffer(0, this.positionsBuffer);
             renderpassEncoder.setBindGroup(0, renderPass.uniformsBindgroup);
-            renderpassEncoder.draw(6, spheresData.count);
+            renderpassEncoder.draw(6, this.spheresCount);
             renderpassEncoder.end();
         }
     }
@@ -176,7 +184,7 @@ class Deferred {
         return somethingChanged;
     }
 
-    private createDeferredDescriptor(shaderModule: GPUShaderModule, fragmentMain: string, writeMask: GPUColorWriteFlags, blend?: GPUBlendState): GPURenderPipelineDescriptor {
+    private createDeferredDescriptor(shaderModule: GPUShaderModule, fragmentMain: string, spheresData: SpheresData, writeMask: GPUColorWriteFlags, blend?: GPUBlendState): GPURenderPipelineDescriptor {
         const colorTarget: GPUColorTargetState = {
             format: this.texture.format,
             writeMask,
@@ -195,11 +203,11 @@ class Deferred {
                         attributes: [
                             {
                                 shaderLocation: 0,
-                                offset: 0,
-                                format: "float32x3",
+                                offset: spheresData.positionAttributeOffset,
+                                format: spheresData.positionAttributeFormat,
                             }
                         ],
-                        arrayStride: Float32Array.BYTES_PER_ELEMENT * 4,
+                        arrayStride: spheresData.arrayStride,
                         stepMode: "instance",
                     }
                 ]

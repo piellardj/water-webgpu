@@ -30,7 +30,7 @@ class Scene {
 
         this.axesRenderer = new AxesRenderer(webgpuCanvas);
         this.cubeRenderer = new CubeRenderer(webgpuCanvas, this.modelMatrix);
-        this.spheresRenderer = new SpheresRenderer(webgpuCanvas, this.modelMatrix);
+        this.spheresRenderer = new SpheresRenderer(webgpuCanvas, this.modelMatrix, this.engine.spheresData);
         this.meshRenderer = new MeshRenderer(webgpuCanvas, this.modelMatrix, this.engine.mesh);
         this.gridCellsRenderer = new GridCellsRenderer(webgpuCanvas, this.modelMatrix);
 
@@ -43,7 +43,7 @@ class Scene {
 
     public render(commandEncoder: GPUCommandEncoder, viewData: ViewData): void {
         if (Parameters.showSpheres) {
-            this.spheresRenderer.renderDeferred(commandEncoder, viewData, this.engine.spheresData);
+            this.spheresRenderer.renderDeferred(commandEncoder, viewData);
         }
 
         const renderpassEncoder = this.webgpuCanvas.beginRenderPass(commandEncoder);

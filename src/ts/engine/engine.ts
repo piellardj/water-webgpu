@@ -7,9 +7,12 @@ import { Mesh } from "./models/mesh";
 import * as Models from "./models/models";
 
 type SpheresData = {
-    radius: number;
-    count: number;
-    buffer: GPUBuffer;
+    readonly radius: number;
+    readonly count: number;
+    readonly buffer: GPUBuffer;
+    readonly arrayStride: number;
+    readonly positionAttributeOffset: number;
+    readonly positionAttributeFormat: GPUVertexFormat;
 };
 
 type CellsData = {
@@ -19,13 +22,18 @@ type CellsData = {
     readonly cellsIndirectDrawBuffer: GPUBuffer;
 }
 
+type ParticlesBufferData = {
+    readonly particlesBuffer: WebGPU.Buffer;
+    readonly particlesStructType: WebGPU.Types.StructType;
+    readonly particlesCount: number;
+};
+
 class Engine {
     private readonly device: GPUDevice;
 
     public readonly mesh: Mesh;
 
-    private readonly particlesBuffer: WebGPU.Buffer;
-    private readonly particlesCount: number;
+    private readonly particles: ParticlesBufferData;
     private readonly spheresRadius: number = 0.02;
 
     private readonly cellSize: number = 0.05;
@@ -42,7 +50,6 @@ class Engine {
 
         const fillableMesh = new FillableMesh(this.mesh.triangles);
         const positions = InitialPositions.fillMesh(this.spheresRadius, fillableMesh);
-        this.particlesCount = positions.length;
 
         this.drawableCellsIndicesBuffer = new WebGPU.Buffer(this.device, {
             size: Uint32Array.BYTES_PER_ELEMENT * this.gridSize[0] * this.gridSize[1] * this.gridSize[2],
@@ -55,23 +62,32 @@ class Engine {
         new Uint32Array(this.cellsIndirectDrawBuffer.getMappedRange()).set([24, 0, 0, 0]);
         this.cellsIndirectDrawBuffer.unmap();
 
-        this.particlesBuffer = new WebGPU.Buffer(this.device, {
-            size: 4 * Float32Array.BYTES_PER_ELEMENT * this.particlesCount,
+        const particlesCount = positions.length;
+        const particlesStructType = new WebGPU.Types.StructType("Particle", [
+            { name: "position", type: WebGPU.Types.vec3F32 },
+            { name: "indexInCell", type: WebGPU.Types.u32 },
+        ]);
+        const particlesBuffer = new WebGPU.Buffer(this.device, {
+            size: particlesStructType.size * particlesCount,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE,
         });
-        const positionsData = new Float32Array(this.particlesBuffer.getMappedRange());
+        const positionsData = new Float32Array(particlesBuffer.getMappedRange());
         positions.forEach((position: glMatrix.vec3, index: number) => {
             const data = [position[0], position[1], position[2], 0];
             const offset = 4 * index;
             positionsData.set(data, offset);
         });
-        this.particlesBuffer.unmap();
+        particlesBuffer.unmap();
+        this.particles = {
+            particlesCount,
+            particlesStructType,
+            particlesBuffer,
+        };
 
         this.indexing = new Indexing(this.device, {
             gridSize: this.gridSize,
             cellSize: this.cellSize,
-            particlesBuffer: this.particlesBuffer,
-            particlesCount: this.particlesCount,
+            particlesBufferData: this.particles,
             cellsIndirectDrawBuffer: this.cellsIndirectDrawBuffer,
             drawableCellsIndicesBuffer: this.drawableCellsIndicesBuffer,
         });
@@ -84,8 +100,11 @@ class Engine {
     public get spheresData(): SpheresData {
         return {
             radius: this.spheresRadius,
-            count: this.particlesCount,
-            buffer: this.particlesBuffer.gpuBuffer,
+            count: this.particles.particlesCount,
+            buffer: this.particles.particlesBuffer.gpuBuffer,
+            arrayStride: this.particles.particlesStructType.size,
+            positionAttributeOffset: this.particles.particlesStructType.getAttributeOffset("position"),
+            positionAttributeFormat: "float32x3",
         };
     }
 
@@ -104,6 +123,7 @@ class Engine {
 
 export type {
     CellsData,
+    ParticlesBufferData,
     SpheresData,
 };
 export {
