@@ -29,6 +29,12 @@ class PrefixSum {
             throw new Error("Prefix sum: invalid data");
         }
 
+        this.uniforms = new WebGPU.Uniforms(device, [
+            { name: "itemsCount", type: WebGPU.Types.u32 },
+        ]);
+        this.uniforms.setValueFromName("itemsCount", data.itemsCount);
+        this.uniforms.uploadToGPU();
+
         if (!PrefixSum.reducePipeline) {
             PrefixSum.reducePipeline = device.createComputePipeline({
                 layout: "auto",
@@ -37,7 +43,8 @@ class PrefixSum {
                         code: ShaderSources.Engine.Indexing.PrefixSum.Reduce,
                         injected: {
                             "#INJECT(type)": data.type.typeName,
-                        }
+                        },
+                        structs: [this.uniforms],
                     }),
                     entryPoint: "main",
                     constants: {
@@ -49,12 +56,6 @@ class PrefixSum {
         }
 
         this.itemsBuffer = data.itemsBuffer;
-
-        this.uniforms = new WebGPU.Uniforms(device, [
-            { name: "itemsCount", type: WebGPU.Types.u32 },
-        ]);
-        this.uniforms.setValueFromName("itemsCount", data.itemsCount);
-        this.uniforms.uploadToGPU();
 
         this.dispatchSize = Math.ceil(data.itemsCount / PrefixSum.WORKGROUP_SIZE);
 
@@ -88,7 +89,8 @@ class PrefixSum {
                             code: ShaderSources.Engine.Indexing.PrefixSum.DownPass,
                             injected: {
                                 "#INJECT(type)": data.type.typeName,
-                            }
+                            },
+                            structs: [this.uniforms],
                         }),
                         entryPoint: "main",
                         constants: {

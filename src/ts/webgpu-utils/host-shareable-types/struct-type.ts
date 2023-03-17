@@ -91,8 +91,6 @@ class StructType implements Type {
         this.size = size;
         this.name = structName;
         this.attributes = attributes;
-
-        console.debug(this.toString());
     }
 
     public setValue(arrayBuffer: ArrayBuffer, offset: number, value: unknown): void {

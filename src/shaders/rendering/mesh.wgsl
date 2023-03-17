@@ -1,8 +1,3 @@
-struct Uniforms {             //            align(16) size(128)
-    mvp: mat4x4<f32>,         // offset(0)  align(16) size(64) 
-    modelMatrix: mat4x4<f32>, // offset(64) align(16) size(64) 
-};
-
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
 struct VertexIn {

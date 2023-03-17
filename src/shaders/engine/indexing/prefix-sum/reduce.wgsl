@@ -1,9 +1,5 @@
 alias Type = #INJECT(type);
 
-struct Uniforms {    //           align(4) size(4)
-    itemsCount: u32, // offset(0) align(4) size(4)
-};
-
 @group(0) @binding(0) var<storage,read_write> inputBuffer: array<Type>;
 @group(0) @binding(1) var<storage,read_write> outputBuffer: array<Type>; // each cell stores the total for the corresponding workgroup
 @group(0) @binding(2) var<uniform> uniforms: Uniforms;

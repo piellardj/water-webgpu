@@ -1,10 +1,3 @@
-struct Uniforms {           //            align(16) size(96)
-    mvp: mat4x4<f32>,       // offset(0)  align(16) size(64)
-    cameraUp: vec3<f32>,    // offset(64) align(16) size(12)
-    sphereRadius: f32,      // offset(76) align(4)  size(4) 
-    cameraRight: vec3<f32>, // offset(80) align(16) size(12)
-};
-
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
 struct VertexIn {

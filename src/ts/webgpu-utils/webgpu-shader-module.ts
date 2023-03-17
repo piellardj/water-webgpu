@@ -1,6 +1,11 @@
+import { StructType, UniformsBuffer } from "./uniforms-buffer";
+
+type StructOrUniform = StructType | UniformsBuffer;
+
 type Data = {
     code: string;
     injected?: Record<string, string>;
+    structs?: StructOrUniform[];
 };
 
 abstract class ShaderModule {
@@ -13,10 +18,14 @@ abstract class ShaderModule {
             }
         }
 
+        if (data.structs) {
+            const structsAsString = data.structs.map(struct => struct.toString());
+            code = structsAsString.join("\n\n") + "\n\n" + code;
+        }
+
         return device.createShaderModule({ code });
     }
 }
-
 
 export {
     ShaderModule,

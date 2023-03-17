@@ -8,17 +8,6 @@ const displayMode_waterDepth = 3u;
 const displayMode_water = 4u;
 const displayMode_depth = 5u;
 
-struct Uniforms {           //            align(16) size(64)
-    cameraRight: vec3<f32>, // offset(0)  align(16) size(12)
-    displayMode: u32,       // offset(12) align(4)  size(4) 
-    cameraUp: vec3<f32>,    // offset(16) align(16) size(12)
-    f0: f32,                // offset(28) align(4)  size(4) 
-    worldColor: vec3<f32>,  // offset(32) align(16) size(12)
-    specularity: f32,       // offset(44) align(4)  size(4) 
-    waterColor: vec3<f32>,  // offset(48) align(16) size(12)
-    waterOpacity: f32,        // offset(60) align(4)  size(4) 
-};
-
 @group(1) @binding(0) var<uniform> uniforms: Uniforms;
 
 struct VertexIn {

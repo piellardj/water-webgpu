@@ -24,7 +24,18 @@ class GridCellsByPopulationRenderer {
         this.device = webgpuCanvas.device;
         this.matrix = modelMatrix;
 
-        const shaderModule = WebGPU.ShaderModule.create(this.device, { code: ShaderSources.Engine.Indexing.RenderCellsByPopulation });
+        this.uniformsBuffer = new WebGPU.Uniforms(this.device, [
+            { name: "mvp", type: WebGPU.Types.mat4x4 },
+            { name: "color", type: WebGPU.Types.vec4F32 },
+            { name: "gridSize", type: WebGPU.Types.vec3U32 },
+            { name: "cellSize", type: WebGPU.Types.f32 },
+        ]);
+        this.uniformsBuffer.setValueFromName("color", [1, 1, 1, 1]);
+
+        const shaderModule = WebGPU.ShaderModule.create(this.device, {
+            code: ShaderSources.Engine.Indexing.RenderCellsByPopulation,
+            structs: [this.uniformsBuffer],
+        });
 
         this.renderPipeline = this.device.createRenderPipeline({
             layout: "auto",
@@ -74,14 +85,6 @@ class GridCellsByPopulationRenderer {
                 format: webgpuCanvas.depthTextureFormat,
             },
         });
-
-        this.uniformsBuffer = new WebGPU.Uniforms(this.device, [
-            { name: "mvp", type: WebGPU.Types.mat4x4 },
-            { name: "color", type: WebGPU.Types.vec4F32 },
-            { name: "gridSize", type: WebGPU.Types.vec3U32 },
-            { name: "cellSize", type: WebGPU.Types.f32 },
-        ]);
-        this.uniformsBuffer.setValueFromName("color", [1, 1, 1, 1]);
 
         this.uniformsBindgroup = this.device.createBindGroup({
             layout: this.renderPipeline.getBindGroupLayout(0),

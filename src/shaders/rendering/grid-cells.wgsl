@@ -1,10 +1,3 @@
-struct Uniforms {        //            align(16) size(96)
-    mvp: mat4x4<f32>,    // offset(0)  align(16) size(64)
-    color: vec4<f32>,    // offset(64) align(16) size(16)
-    gridSize: vec3<u32>, // offset(80) align(16) size(12)
-    cellSize: f32,       // offset(92) align(4)  size(4) 
-};
-
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 
 struct VertexIn {

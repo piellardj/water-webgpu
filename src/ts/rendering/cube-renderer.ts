@@ -17,7 +17,14 @@ class CubeRenderer {
         this.device = webgpuCanvas.device;
         this.matrix = modelMatrix;
 
-        const shaderModule = WebGPU.ShaderModule.create(this.device, { code: ShaderSources.Rendering.Cube });
+        this.uniformsBuffer = new WebGPU.Uniforms(this.device, [
+            { name: "mvp", type: WebGPU.Types.mat4x4 },
+        ]);
+
+        const shaderModule = WebGPU.ShaderModule.create(this.device, {
+            code: ShaderSources.Rendering.Cube,
+            structs: [this.uniformsBuffer],
+        });
 
         this.renderPipeline = this.device.createRenderPipeline({
             layout: "auto",
@@ -43,10 +50,6 @@ class CubeRenderer {
                 format: webgpuCanvas.depthTextureFormat,
             },
         });
-
-        this.uniformsBuffer = new WebGPU.Uniforms(this.device, [
-            { name: "mvp", type: WebGPU.Types.mat4x4 },
-        ]);
 
         this.uniformsBindgroup = this.device.createBindGroup({
             layout: this.renderPipeline.getBindGroupLayout(0),

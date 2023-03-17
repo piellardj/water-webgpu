@@ -33,6 +33,10 @@ class UniformsBuffer {
             this.needsToUpload = false;
         }
     }
+
+    public toString(): string {
+        return this.structType.toString();
+    }
 }
 
 export {

@@ -19,10 +19,24 @@ class Blur {
 
         this.temporaryTexture = new WebGPU.Texture(device, "rgba8unorm", GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING);
 
+        const uniformBufferAttributes = [
+            { name: "direction", type: WebGPU.Types.vec2I32 },
+        ];
+        this.uniformsBufferHorizontal = new WebGPU.Uniforms(device, uniformBufferAttributes);
+        this.uniformsBufferHorizontal.setValueFromName("direction", [1, 0]);
+        this.uniformsBufferHorizontal.uploadToGPU();
+
+        this.uniformsBufferVertical = new WebGPU.Uniforms(device, uniformBufferAttributes);
+        this.uniformsBufferVertical.setValueFromName("direction", [0, 1]);
+        this.uniformsBufferVertical.uploadToGPU();
+
         this.pipeline = this.device.createComputePipeline({
             layout: "auto",
             compute: {
-                module: WebGPU.ShaderModule.create(this.device, { code: ShaderSources.Rendering.Spheres.Blur }),
+                module: WebGPU.ShaderModule.create(this.device, {
+                    code: ShaderSources.Rendering.Spheres.Blur,
+                    structs: [this.uniformsBufferHorizontal],
+                }),
                 entryPoint: "main",
                 constants: {
                     workgroupSize: Blur.WORKGROUP_SIZE,
@@ -30,16 +44,6 @@ class Blur {
             }
         });
 
-        this.uniformsBufferHorizontal = new WebGPU.Uniforms(device, [
-            { name: "direction", type: WebGPU.Types.vec2I32 },
-        ]);
-        this.uniformsBufferHorizontal.setValueFromName("direction", [1, 0]);
-        this.uniformsBufferHorizontal.uploadToGPU();
-        this.uniformsBufferVertical = new WebGPU.Uniforms(device, [
-            { name: "direction", type: WebGPU.Types.vec2I32 },
-        ]);
-        this.uniformsBufferVertical.setValueFromName("direction", [0, 1]);
-        this.uniformsBufferVertical.uploadToGPU();
         this.setDeferredTexture(deferredTexture);
     }
 

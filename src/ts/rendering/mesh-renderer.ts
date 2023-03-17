@@ -20,7 +20,15 @@ class MeshRenderer {
         this.device = webgpuCanvas.device;
         this.matrix = modelMatrix;
 
-        const shaderModule = WebGPU.ShaderModule.create(this.device, { code: ShaderSources.Rendering.Mesh });
+        this.uniformsBuffer = new WebGPU.Uniforms(this.device, [
+            { name: "mvp", type: WebGPU.Types.mat4x4 },
+            { name: "modelMatrix", type: WebGPU.Types.mat4x4 },
+        ]);
+
+        const shaderModule = WebGPU.ShaderModule.create(this.device, {
+            code: ShaderSources.Rendering.Mesh,
+            structs: [this.uniformsBuffer],
+        });
 
         this.renderPipeline = this.device.createRenderPipeline({
             layout: "auto",
@@ -63,11 +71,6 @@ class MeshRenderer {
                 format: webgpuCanvas.depthTextureFormat,
             },
         });
-
-        this.uniformsBuffer = new WebGPU.Uniforms(this.device, [
-            { name: "mvp", type: WebGPU.Types.mat4x4 },
-            { name: "modelMatrix", type: WebGPU.Types.mat4x4 },
-        ]);
 
         this.verticesCount = 3 * mesh.triangles.length;
         this.buffer = new WebGPU.Buffer(this.device, {

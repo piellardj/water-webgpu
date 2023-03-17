@@ -18,8 +18,18 @@ class AxesRenderer {
 
     public constructor(webgpuCanvas: WebGPU.Canvas) {
         this.device = webgpuCanvas.device;
+        this.uniformsBuffer = new WebGPU.Uniforms(this.device, [
+            { name: "mvp", type: WebGPU.Types.mat4x4 },
+        ]);
 
-        const shaderModule = WebGPU.ShaderModule.create(this.device, { code: ShaderSources.Rendering.Axes });
+        this.uniformsBuffer = new WebGPU.Uniforms(this.device, [
+            { name: "mvp", type: WebGPU.Types.mat4x4 },
+        ]);
+
+        const shaderModule = WebGPU.ShaderModule.create(this.device, {
+            code: ShaderSources.Rendering.Axes,
+            structs: [this.uniformsBuffer],
+        });
 
         this.renderPipeline = this.device.createRenderPipeline({
             layout: "auto",
@@ -45,10 +55,6 @@ class AxesRenderer {
                 format: webgpuCanvas.depthTextureFormat,
             },
         });
-
-        this.uniformsBuffer = new WebGPU.Uniforms(this.device, [
-            { name: "mvp", type: WebGPU.Types.mat4x4 },
-        ]);
 
         this.uniformsBindgroup = this.device.createBindGroup({
             layout: this.renderPipeline.getBindGroupLayout(0),
