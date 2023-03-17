@@ -1,9 +1,11 @@
+alias Type = vec2<u32>;
+
 struct Uniforms {    //           align(4) size(4)
     itemsCount: u32, // offset(0) align(4) size(4)
 };
 
-@group(0) @binding(0) var<storage,read> workgroupOffset: array<vec2<u32>>;
-@group(0) @binding(1) var<storage,read_write> outputBuffer: array<vec2<u32>>;
+@group(0) @binding(0) var<storage,read> workgroupOffset: array<Type>;
+@group(0) @binding(1) var<storage,read_write> outputBuffer: array<Type>;
 @group(0) @binding(2) var<uniform> uniforms: Uniforms;
 
 override workgroupSize: i32;
