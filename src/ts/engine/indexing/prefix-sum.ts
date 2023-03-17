@@ -41,8 +41,8 @@ class PrefixSum {
                 compute: {
                     module: WebGPU.ShaderModule.create(device, {
                         code: ShaderSources.Engine.Indexing.PrefixSum.Reduce,
-                        injected: {
-                            "#INJECT(type)": data.type.typeName,
+                        aliases: {
+                            "Type": data.type.typeName,
                         },
                         structs: [this.uniforms],
                     }),
@@ -87,8 +87,8 @@ class PrefixSum {
                     compute: {
                         module: WebGPU.ShaderModule.create(device, {
                             code: ShaderSources.Engine.Indexing.PrefixSum.DownPass,
-                            injected: {
-                                "#INJECT(type)": data.type.typeName,
+                            aliases: {
+                                "Type": data.type.typeName,
                             },
                             structs: [this.uniforms],
                         }),

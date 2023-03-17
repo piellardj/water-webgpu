@@ -4,6 +4,7 @@ type StructOrUniform = StructType | UniformsBuffer;
 
 type Data = {
     code: string;
+    aliases?: Record<string, string>;
     injected?: Record<string, string>;
     structs?: StructOrUniform[];
 };
@@ -21,6 +22,14 @@ abstract class ShaderModule {
         if (data.structs) {
             const structsAsString = data.structs.map(struct => struct.toString());
             code = structsAsString.join("\n\n") + "\n\n" + code;
+        }
+
+        if (data.aliases) {
+            const aliasesAsString = Object.entries(data.aliases).map(([name, value]: [string, string]) => {
+                return `alias ${name} = ${value};`;
+            });
+
+            code = aliasesAsString.join("\n") + "\n\n" + code;
         }
 
         return device.createShaderModule({ code });

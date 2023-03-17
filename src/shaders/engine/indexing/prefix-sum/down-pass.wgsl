@@ -1,5 +1,3 @@
-alias Type = #INJECT(type);
-
 @group(0) @binding(0) var<storage,read> workgroupOffset: array<Type>;
 @group(0) @binding(1) var<storage,read_write> outputBuffer: array<Type>;
 @group(0) @binding(2) var<uniform> uniforms: Uniforms;
