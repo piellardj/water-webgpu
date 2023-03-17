@@ -27,7 +27,7 @@ class FinalizePrefixSum {
             compute: {
                 module: WebGPU.ShaderModule.create(device, {
                     code: ShaderSources.Engine.Indexing.FinalizePrefixSum,
-                    structs: [data.cellsBufferData.cellStructType],
+                    structs: [data.cellsBufferData.cellStructType, WebGPU.Types.indirectDrawBufferType],
                 }),
                 entryPoint: "main",
                 constants: {
