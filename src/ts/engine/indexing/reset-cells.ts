@@ -1,9 +1,9 @@
 import * as ShaderSources from "../../shader-sources";
 import * as WebGPU from "../../webgpu-utils/webgpu-utils";
+import { type CellsBufferData } from "./indexing";
 
 type Data = {
-    cellsBuffer: WebGPU.Buffer;
-    cellsCount: number;
+    cellsBufferData: CellsBufferData;
 };
 
 class ResetCells {
@@ -15,15 +15,18 @@ class ResetCells {
     private readonly bindgroup: GPUBindGroup;
 
     public constructor(device: GPUDevice, data: Data) {
-        this.workgroupsCount = Math.ceil(data.cellsCount / ResetCells.WORKGROUP_SIZE);
+        this.workgroupsCount = Math.ceil(data.cellsBufferData.cellsCount / ResetCells.WORKGROUP_SIZE);
 
         this.pipeline = device.createComputePipeline({
             layout: "auto",
             compute: {
-                module: WebGPU.ShaderModule.create(device, { code: ShaderSources.Engine.Indexing.ResetCells }),
+                module: WebGPU.ShaderModule.create(device, {
+                    code: ShaderSources.Engine.Indexing.ResetCells,
+                    structs: [data.cellsBufferData.cellStructType],
+                }),
                 entryPoint: "main",
                 constants: {
-                    cellsCount: data.cellsCount,
+                    cellsCount: data.cellsBufferData.cellsCount,
                     workgroupSize: ResetCells.WORKGROUP_SIZE,
                 },
             },
@@ -33,7 +36,7 @@ class ResetCells {
             entries: [
                 {
                     binding: 0,
-                    resource: data.cellsBuffer.bindingResource,
+                    resource: data.cellsBufferData.cellsBufferBindingResource,
                 }
             ]
         });

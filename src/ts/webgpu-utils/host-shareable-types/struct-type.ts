@@ -113,6 +113,15 @@ class StructType implements Type {
         throw new Error(`Unknown struct attribute '${attributeName}'.`);
     }
 
+    public getAttributeOffset(attributeName: string): number {
+        for (const attribute of this.attributes) {
+            if (attribute.name === attributeName) {
+                return attribute.offset;
+            }
+        }
+        throw new Error(`Unknown attribute '${attributeName}'.`);
+    }
+
     public toString(): string {
         const attributesStringData = this.attributes.map(attribute => {
             let declaration = "    ";

@@ -67,9 +67,9 @@ class Scene {
                 break;
             case EGridDisplayMode.COLOR_BY_POPULATION:
                 if (!this.gridCellsPerPopulationRenderer) {
-                    this.gridCellsPerPopulationRenderer = new GridCellsByPopulationRenderer(this.webgpuCanvas, this.modelMatrix);
+                    this.gridCellsPerPopulationRenderer = new GridCellsByPopulationRenderer(this.webgpuCanvas, this.modelMatrix, this.engine.gridCellsDebugData);
                 }
-                this.gridCellsPerPopulationRenderer.render(renderpassEncoder, viewData, this.engine.gridCellsDebugData);
+                this.gridCellsPerPopulationRenderer.render(renderpassEncoder, viewData);
                 break;
         }
         renderpassEncoder.end();

@@ -18,17 +18,28 @@ type Data = {
 };
 
 type CellsDebugData = {
-    cellsBuffer: WebGPU.Buffer;
-    cellsCount: number;
-    gridSize: glMatrix.ReadonlyVec3;
-    cellSize: number;
+    readonly cellsBuffer: WebGPU.Buffer;
+    readonly cellsCount: number;
+    readonly arrayStride: number;
+    readonly particlesCountAttributeOffset: number;
+    readonly particlesCountAttributeFormat: GPUVertexFormat;
+    readonly gridSize: glMatrix.ReadonlyVec3;
+    readonly cellSize: number;
+};
+
+type CellsBufferData = {
+    readonly cellsBufferBindingResource: GPUBindingResource;
+    readonly cellStructType: WebGPU.Types.StructType;
+    readonly cellsCount: number;
 };
 
 class Indexing {
-    private readonly cellsBuffer: WebGPU.Buffer;
     private readonly cellsCount: number;
     private readonly gridSize: glMatrix.ReadonlyVec3;
     private readonly cellSize: number;
+
+    private readonly cellStructType: WebGPU.Types.StructType;
+    private readonly cellsBuffer: WebGPU.Buffer;
 
     private readonly resetCells: ResetCells;
     private readonly countParticlesPerCell: CountParticlesPerCell;
@@ -41,14 +52,24 @@ class Indexing {
         this.gridSize = data.gridSize;
         this.cellSize = data.cellSize;
 
+        this.cellStructType = new WebGPU.Types.StructType("Cell", [
+            { name: "particlesCount", type: WebGPU.Types.u32 },
+            { name: "offset", type: WebGPU.Types.u32 },
+        ]);
+
         this.cellsBuffer = new WebGPU.Buffer(device, {
-            size: (2 * Uint32Array.BYTES_PER_ELEMENT) * this.cellsCount,
+            size:  this.cellStructType.size * this.cellsCount,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX,
         });
 
-        this.resetCells = new ResetCells(device, {
-            cellsBuffer: this.cellsBuffer,
+        const cellsBufferData = {
+            cellsBufferBindingResource: this.cellsBuffer.bindingResource,
+            cellStructType:  this.cellStructType,
             cellsCount: this.cellsCount,
+        };
+
+        this.resetCells = new ResetCells(device, {
+            cellsBufferData,
         });
 
         this.countParticlesPerCell = new CountParticlesPerCell(device, {
@@ -60,8 +81,7 @@ class Indexing {
         });
 
         this.preparePrefixSum = new PreparePrefixSum(device, {
-            cellsBuffer: this.cellsBuffer,
-            cellsCount: this.cellsCount,
+            cellsBufferData,
         });
 
         this.prefixSum = new PrefixSum(device, {
@@ -72,8 +92,7 @@ class Indexing {
 
         this.finalizePrefixSum = new FinalizePrefixSum(device, {
             dataItemsBuffer: this.preparePrefixSum.dataItemsBuffer,
-            cellsBuffer: this.cellsBuffer,
-            cellsCount: this.cellsCount,
+            cellsBufferData,
             cellsIndirectDrawBuffer: data.cellsIndirectDrawBuffer,
             drawableCellsIndicesBuffer: data.drawableCellsIndicesBuffer,
         });
@@ -92,6 +111,9 @@ class Indexing {
         return {
             cellsBuffer: this.cellsBuffer,
             cellsCount: this.cellsCount,
+            arrayStride: this.cellStructType.size,
+            particlesCountAttributeOffset: this.cellStructType.getAttributeOffset("particlesCount"),
+            particlesCountAttributeFormat: "uint32",
             gridSize: this.gridSize,
             cellSize: this.cellSize,
         };
@@ -99,6 +121,7 @@ class Indexing {
 }
 
 export type {
+    CellsBufferData,
     CellsDebugData,
 };
 export {

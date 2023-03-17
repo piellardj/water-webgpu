@@ -1,9 +1,9 @@
 import * as ShaderSources from "../../shader-sources";
 import * as WebGPU from "../../webgpu-utils/webgpu-utils";
+import { type CellsBufferData } from "./indexing";
 
 type Data = {
-    cellsBuffer: WebGPU.Buffer;
-    cellsCount: number;
+    cellsBufferData: CellsBufferData;
 };
 
 class PreparePrefixSum {
@@ -17,20 +17,23 @@ class PreparePrefixSum {
     private readonly bindgroup: GPUBindGroup;
 
     public constructor(device: GPUDevice, data: Data) {
-        this.workgroupsCount = Math.ceil(data.cellsCount / PreparePrefixSum.WORKGROUP_SIZE);
+        this.workgroupsCount = Math.ceil(data.cellsBufferData.cellsCount / PreparePrefixSum.WORKGROUP_SIZE);
 
         this.dataItemsBuffer = new WebGPU.Buffer(device, {
-            size: (Uint32Array.BYTES_PER_ELEMENT * 2) * data.cellsCount,
+            size: (Uint32Array.BYTES_PER_ELEMENT * 2) * data.cellsBufferData.cellsCount,
             usage: GPUBufferUsage.STORAGE,
         });
 
         this.pipeline = device.createComputePipeline({
             layout: "auto",
             compute: {
-                module: WebGPU.ShaderModule.create(device, { code: ShaderSources.Engine.Indexing.PreparePrefixSum }),
+                module: WebGPU.ShaderModule.create(device, {
+                    code: ShaderSources.Engine.Indexing.PreparePrefixSum,
+                    structs: [data.cellsBufferData.cellStructType],
+                }),
                 entryPoint: "main",
                 constants: {
-                    cellsCount: data.cellsCount,
+                    cellsCount: data.cellsBufferData.cellsCount,
                     workgroupSize: PreparePrefixSum.WORKGROUP_SIZE,
                 },
             },
@@ -40,7 +43,7 @@ class PreparePrefixSum {
             entries: [
                 {
                     binding: 0,
-                    resource: data.cellsBuffer.bindingResource,
+                    resource: data.cellsBufferData.cellsBufferBindingResource,
                 },
                 {
                     binding: 1,

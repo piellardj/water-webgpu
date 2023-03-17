@@ -1,8 +1,3 @@
-struct Cell {            //           align(4) size(8)
-    particlesCount: u32, // offset(0) align(4) size(4)
-    offset: u32,         // offset(4) align(4) size(4)
-};
-
 struct DataItem {              //           align(4) size(8)
     particlesCount: u32,       // offset(0) align(4) size(4)
     doesContainParticles: u32, // offset(4) align(4) size(4)

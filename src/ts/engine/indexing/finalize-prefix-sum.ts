@@ -1,10 +1,11 @@
 import * as ShaderSources from "../../shader-sources";
 import * as WebGPU from "../../webgpu-utils/webgpu-utils";
+import { type CellsBufferData } from "./indexing";
 
 type Data = {
     dataItemsBuffer: WebGPU.Buffer,
-    cellsBuffer: WebGPU.Buffer;
-    cellsCount: number;
+
+    cellsBufferData: CellsBufferData,
 
     cellsIndirectDrawBuffer: WebGPU.Buffer,
     drawableCellsIndicesBuffer: WebGPU.Buffer,
@@ -19,15 +20,18 @@ class FinalizePrefixSum {
     private readonly bindgroup: GPUBindGroup;
 
     public constructor(device: GPUDevice, data: Data) {
-        this.workgroupsCount = Math.ceil(data.cellsCount / FinalizePrefixSum.WORKGROUP_SIZE);
+        this.workgroupsCount = Math.ceil(data.cellsBufferData.cellsCount / FinalizePrefixSum.WORKGROUP_SIZE);
 
         this.pipeline = device.createComputePipeline({
             layout: "auto",
             compute: {
-                module: WebGPU.ShaderModule.create(device, { code: ShaderSources.Engine.Indexing.FinalizePrefixSum }),
+                module: WebGPU.ShaderModule.create(device, {
+                    code: ShaderSources.Engine.Indexing.FinalizePrefixSum,
+                    structs: [data.cellsBufferData.cellStructType],
+                }),
                 entryPoint: "main",
                 constants: {
-                    cellsCount: data.cellsCount,
+                    cellsCount: data.cellsBufferData.cellsCount,
                     workgroupSize: FinalizePrefixSum.WORKGROUP_SIZE,
                 },
             },
@@ -41,7 +45,7 @@ class FinalizePrefixSum {
                 },
                 {
                     binding: 1,
-                    resource: data.cellsBuffer.bindingResource,
+                    resource: data.cellsBufferData.cellsBufferBindingResource,
                 },
                 {
                     binding: 2,
