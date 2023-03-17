@@ -7,7 +7,7 @@ import { type ViewData } from "./camera";
 class GridCellsRenderer {
     private readonly device: GPUDevice;
     private readonly renderPipeline: GPURenderPipeline;
-    private readonly uniformsBuffer: WebGPU.Uniforms;
+    private readonly uniforms: WebGPU.Uniforms;
     private readonly uniformsBindgroup: GPUBindGroup;
 
     private readonly matrix: glMatrix.ReadonlyMat4;
@@ -17,17 +17,17 @@ class GridCellsRenderer {
         this.device = webgpuCanvas.device;
         this.matrix = modelMatrix;
 
-        this.uniformsBuffer = new WebGPU.Uniforms(this.device, [
+        this.uniforms = new WebGPU.Uniforms(this.device, [
             { name: "mvp", type: WebGPU.Types.mat4x4 },
             { name: "color", type: WebGPU.Types.vec4F32 },
             { name: "gridSize", type: WebGPU.Types.vec3U32 },
             { name: "cellSize", type: WebGPU.Types.f32 },
         ]);
-        this.uniformsBuffer.setValueFromName("color", [1, 1, 1, 1]);
+        this.uniforms.setValueFromName("color", [1, 1, 1, 1]);
 
         const shaderModule = WebGPU.ShaderModule.create(this.device, {
             code: ShaderSources.Rendering.GridCells,
-            structs: [this.uniformsBuffer],
+            structs: [this.uniforms],
         });
 
         this.renderPipeline = this.device.createRenderPipeline({
@@ -71,7 +71,7 @@ class GridCellsRenderer {
             layout: this.renderPipeline.getBindGroupLayout(0),
             entries: [{
                 binding: 0,
-                resource: this.uniformsBuffer.bindingResource,
+                resource: this.uniforms.bindingResource,
             }]
         });
     }
@@ -79,10 +79,10 @@ class GridCellsRenderer {
     public render(renderpassEncoder: GPURenderPassEncoder, viewData: ViewData, data: CellsData): void {
         glMatrix.mat4.multiply(this.mvpMatrix, viewData.vpMatrix, this.matrix);
 
-        this.uniformsBuffer.setValueFromName("mvp", this.mvpMatrix);
-        this.uniformsBuffer.setValueFromName("gridSize", data.gridSize);
-        this.uniformsBuffer.setValueFromName("cellSize", data.cellSize);
-        this.uniformsBuffer.uploadToGPU();
+        this.uniforms.setValueFromName("mvp", this.mvpMatrix);
+        this.uniforms.setValueFromName("gridSize", data.gridSize);
+        this.uniforms.setValueFromName("cellSize", data.cellSize);
+        this.uniforms.uploadToGPU();
 
         renderpassEncoder.setPipeline(this.renderPipeline);
         renderpassEncoder.setBindGroup(0, this.uniformsBindgroup);

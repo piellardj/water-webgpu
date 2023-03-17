@@ -7,7 +7,7 @@ import { type ViewData } from "./camera";
 class AxesRenderer {
     private readonly device: GPUDevice;
     private readonly renderPipeline: GPURenderPipeline;
-    private readonly uniformsBuffer: WebGPU.Uniforms;
+    private readonly uniforms: WebGPU.Uniforms;
 
     private readonly verticesCount: number = 6;
     private readonly uniformsBindgroup: GPUBindGroup;
@@ -18,17 +18,13 @@ class AxesRenderer {
 
     public constructor(webgpuCanvas: WebGPU.Canvas) {
         this.device = webgpuCanvas.device;
-        this.uniformsBuffer = new WebGPU.Uniforms(this.device, [
-            { name: "mvp", type: WebGPU.Types.mat4x4 },
-        ]);
-
-        this.uniformsBuffer = new WebGPU.Uniforms(this.device, [
+        this.uniforms = new WebGPU.Uniforms(this.device, [
             { name: "mvp", type: WebGPU.Types.mat4x4 },
         ]);
 
         const shaderModule = WebGPU.ShaderModule.create(this.device, {
             code: ShaderSources.Rendering.Axes,
-            structs: [this.uniformsBuffer],
+            structs: [this.uniforms],
         });
 
         this.renderPipeline = this.device.createRenderPipeline({
@@ -60,7 +56,7 @@ class AxesRenderer {
             layout: this.renderPipeline.getBindGroupLayout(0),
             entries: [{
                 binding: 0,
-                resource: this.uniformsBuffer.bindingResource,
+                resource: this.uniforms.bindingResource,
             }]
         });
     }
@@ -69,8 +65,8 @@ class AxesRenderer {
         glMatrix.mat4.fromScaling(this.matrix, [this.size, this.size, this.size]);
         glMatrix.mat4.multiply(this.mvpMatrix, viewData.vpMatrix, this.matrix);
 
-        this.uniformsBuffer.setValueFromName("mvp", this.mvpMatrix);
-        this.uniformsBuffer.uploadToGPU();
+        this.uniforms.setValueFromName("mvp", this.mvpMatrix);
+        this.uniforms.uploadToGPU();
 
         renderpassEncoder.setPipeline(this.renderPipeline);
         renderpassEncoder.setBindGroup(0, this.uniformsBindgroup);

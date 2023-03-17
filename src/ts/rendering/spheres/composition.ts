@@ -10,13 +10,13 @@ class Composition {
     private readonly linearSampler: GPUSampler;
     private textureBindgroup: GPUBindGroup;
 
-    private readonly uniformsBuffer: WebGPU.Uniforms;
+    private readonly uniforms: WebGPU.Uniforms;
     private readonly uniformsBindgroup: GPUBindGroup;
 
     public constructor(webgpuCanvas: WebGPU.Canvas, deferredTexture: WebGPU.Texture) {
         this.device = webgpuCanvas.device;
 
-        this.uniformsBuffer = new WebGPU.Uniforms(this.device, [
+        this.uniforms = new WebGPU.Uniforms(this.device, [
             { name: "cameraRight", type: WebGPU.Types.vec3F32 },
             { name: "displayMode", type: WebGPU.Types.u32 },
             { name: "cameraUp", type: WebGPU.Types.vec3F32 },
@@ -29,7 +29,7 @@ class Composition {
 
         const shaderModule = WebGPU.ShaderModule.create(this.device, {
             code: ShaderSources.Rendering.Spheres.Composition,
-            structs: [this.uniformsBuffer],
+            structs: [this.uniforms],
         });
 
         this.renderPipeline = this.device.createRenderPipeline({
@@ -68,22 +68,22 @@ class Composition {
             entries: [
                 {
                     binding: 0,
-                    resource: this.uniformsBuffer.bindingResource,
+                    resource: this.uniforms.bindingResource,
                 }
             ]
         });
     }
 
     public render(renderpassEncoder: GPURenderPassEncoder, viewData: ViewData): void {
-        this.uniformsBuffer.setValueFromName("cameraRight", viewData.cameraRight);
-        this.uniformsBuffer.setValueFromName("displayMode", Parameters.displayMode);
-        this.uniformsBuffer.setValueFromName("cameraUp", viewData.cameraUp);
-        this.uniformsBuffer.setValueFromName("f0", Parameters.waterFresnel);
-        this.uniformsBuffer.setValueFromName("worldColor", Parameters.backgroundColor.slice(0, 3));
-        this.uniformsBuffer.setValueFromName("specularity", Parameters.waterSpecularity);
-        this.uniformsBuffer.setValueFromName("waterColor", Parameters.waterColor.slice(0, 3));
-        this.uniformsBuffer.setValueFromName("waterOpacity", Parameters.waterOpacity);
-        this.uniformsBuffer.uploadToGPU();
+        this.uniforms.setValueFromName("cameraRight", viewData.cameraRight);
+        this.uniforms.setValueFromName("displayMode", Parameters.displayMode);
+        this.uniforms.setValueFromName("cameraUp", viewData.cameraUp);
+        this.uniforms.setValueFromName("f0", Parameters.waterFresnel);
+        this.uniforms.setValueFromName("worldColor", Parameters.backgroundColor.slice(0, 3));
+        this.uniforms.setValueFromName("specularity", Parameters.waterSpecularity);
+        this.uniforms.setValueFromName("waterColor", Parameters.waterColor.slice(0, 3));
+        this.uniforms.setValueFromName("waterOpacity", Parameters.waterOpacity);
+        this.uniforms.uploadToGPU();
 
         renderpassEncoder.setPipeline(this.renderPipeline);
         renderpassEncoder.setBindGroup(0, this.textureBindgroup);

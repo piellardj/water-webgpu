@@ -2,7 +2,7 @@
 @group(0) @binding(1) var outputTexture: texture_storage_2d<rgba8unorm, write>;
 @group(0) @binding(2) var<uniform> uniforms: Uniforms;
 
-struct ComputeInput {
+struct ComputeIn {
     @builtin(workgroup_id) workgroupId: vec3<u32>,
     @builtin(local_invocation_id) localInvocationId: vec3<u32>,
     @builtin(global_invocation_id) globalInvocationId: vec3<u32>,
@@ -38,7 +38,7 @@ fn addContribution(currentFragmentDepth: f32, neighbourIndexInCache: i32, factor
 }
 
 @compute @workgroup_size(workgroupSize)
-fn main(in: ComputeInput) {
+fn main(in: ComputeIn) {
     let textureSize = vec2<i32>(textureDimensions(inputTexture));
     let globalInvocationId = vec2<i32>(in.globalInvocationId.xy) - vec2<i32>(2 * blurRadius * i32(in.workgroupId.x), 0);
 

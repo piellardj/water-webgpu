@@ -18,7 +18,7 @@ class Deferred {
 
     private readonly renderPasses: RenderPass[];
 
-    private readonly uniformsBuffer: WebGPU.Uniforms;
+    private readonly uniforms: WebGPU.Uniforms;
 
     public readonly texture: WebGPU.Texture;
     private readonly depthTexture: WebGPU.Texture;
@@ -33,7 +33,7 @@ class Deferred {
         this.texture = new WebGPU.Texture(this.device, "rgba8unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING);
         this.depthTexture = new WebGPU.Texture(this.device, "depth16unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING);
 
-        this.uniformsBuffer = new WebGPU.Uniforms(this.device, [
+        this.uniforms = new WebGPU.Uniforms(this.device, [
             { name: "mvp", type: WebGPU.Types.mat4x4 },
             { name: "cameraUp", type: WebGPU.Types.vec3F32 },
             { name: "sphereRadius", type: WebGPU.Types.f32 },
@@ -42,7 +42,7 @@ class Deferred {
 
         const shaderModule = WebGPU.ShaderModule.create(this.device, {
             code: ShaderSources.Rendering.Spheres.Spheres,
-            structs: [this.uniformsBuffer],
+            structs: [this.uniforms],
         });
 
         this.renderPasses = [];
@@ -78,7 +78,7 @@ class Deferred {
                 layout: pipeline.getBindGroupLayout(0),
                 entries: [{
                     binding: 0,
-                    resource: this.uniformsBuffer.bindingResource,
+                    resource: this.uniforms.bindingResource,
                 }]
             });
 
@@ -120,7 +120,7 @@ class Deferred {
                 layout: pipeline.getBindGroupLayout(0),
                 entries: [{
                     binding: 0,
-                    resource: this.uniformsBuffer.bindingResource,
+                    resource: this.uniforms.bindingResource,
                 }]
             });
 
@@ -136,11 +136,11 @@ class Deferred {
     public render(commandEncoder: GPUCommandEncoder, viewData: ViewData, spheresData: SpheresData): void {
         glMatrix.mat4.multiply(this.mvpMatrix, viewData.vpMatrix, this.matrix);
 
-        this.uniformsBuffer.setValueFromName("mvp", this.mvpMatrix);
-        this.uniformsBuffer.setValueFromName("cameraUp", viewData.cameraUp);
-        this.uniformsBuffer.setValueFromName("cameraRight", viewData.cameraRight);
-        this.uniformsBuffer.setValueFromName("sphereRadius", Parameters.spheresRadiusFactor * spheresData.radius);
-        this.uniformsBuffer.uploadToGPU();
+        this.uniforms.setValueFromName("mvp", this.mvpMatrix);
+        this.uniforms.setValueFromName("cameraUp", viewData.cameraUp);
+        this.uniforms.setValueFromName("cameraRight", viewData.cameraRight);
+        this.uniforms.setValueFromName("sphereRadius", Parameters.spheresRadiusFactor * spheresData.radius);
+        this.uniforms.uploadToGPU();
 
         for (const renderPass of this.renderPasses) {
             const renderpassEncoder = commandEncoder.beginRenderPass(renderPass.descriptor);

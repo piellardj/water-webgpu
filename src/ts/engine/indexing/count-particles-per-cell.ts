@@ -15,31 +15,31 @@ class CountParticlesPerCell {
 
     private readonly workgroupsCount: number;
 
-    private readonly uniformsBuffer: WebGPU.Uniforms;
+    private readonly uniforms: WebGPU.Uniforms;
     private readonly pipeline: GPUComputePipeline;
     private readonly bindgroup: GPUBindGroup;
 
     public constructor(device: GPUDevice, data: Data) {
         this.workgroupsCount = Math.ceil(data.particlesCount / CountParticlesPerCell.WORKGROUP_SIZE);
 
-        this.uniformsBuffer = new WebGPU.Uniforms(device, [
+        this.uniforms = new WebGPU.Uniforms(device, [
             { name: "gridSize", type: WebGPU.Types.vec3I32 },
             { name: "cellSize", type: WebGPU.Types.f32 },
             { name: "cellsStride", type: WebGPU.Types.vec3U32 },
             { name: "particlesCount", type: WebGPU.Types.u32 },
         ]);
-        this.uniformsBuffer.setValueFromName("gridSize", data.gridSize);
-        this.uniformsBuffer.setValueFromName("cellSize", data.cellSize);
-        this.uniformsBuffer.setValueFromName("cellsStride", [1, data.gridSize[0], data.gridSize[0] * data.gridSize[1]]);
-        this.uniformsBuffer.setValueFromName("particlesCount", data.particlesCount);
-        this.uniformsBuffer.uploadToGPU();
+        this.uniforms.setValueFromName("gridSize", data.gridSize);
+        this.uniforms.setValueFromName("cellSize", data.cellSize);
+        this.uniforms.setValueFromName("cellsStride", [1, data.gridSize[0], data.gridSize[0] * data.gridSize[1]]);
+        this.uniforms.setValueFromName("particlesCount", data.particlesCount);
+        this.uniforms.uploadToGPU();
 
         this.pipeline = device.createComputePipeline({
             layout: "auto",
             compute: {
                 module: WebGPU.ShaderModule.create(device, {
                     code: ShaderSources.Engine.Indexing.CountParticlesPerCell,
-                    structs: [this.uniformsBuffer],
+                    structs: [this.uniforms],
                 }),
                 entryPoint: "main",
                 constants: {
@@ -60,7 +60,7 @@ class CountParticlesPerCell {
                 },
                 {
                     binding: 2,
-                    resource: this.uniformsBuffer.bindingResource,
+                    resource: this.uniforms.bindingResource,
                 },
             ]
         });

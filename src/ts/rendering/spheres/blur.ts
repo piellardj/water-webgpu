@@ -9,8 +9,8 @@ class Blur {
     private readonly device: GPUDevice;
     private readonly temporaryTexture: WebGPU.Texture;
     private readonly pipeline: GPUComputePipeline;
-    private readonly uniformsBufferHorizontal: WebGPU.Uniforms;
-    private readonly uniformsBufferVertical: WebGPU.Uniforms;
+    private readonly uniformsHorizontal: WebGPU.Uniforms;
+    private readonly uniformsVertical: WebGPU.Uniforms;
     private bindgroupHorizontal: GPUBindGroup | null = null;
     private bindgroupVertical: GPUBindGroup | null = null;
 
@@ -22,20 +22,20 @@ class Blur {
         const uniformBufferAttributes = [
             { name: "direction", type: WebGPU.Types.vec2I32 },
         ];
-        this.uniformsBufferHorizontal = new WebGPU.Uniforms(device, uniformBufferAttributes);
-        this.uniformsBufferHorizontal.setValueFromName("direction", [1, 0]);
-        this.uniformsBufferHorizontal.uploadToGPU();
+        this.uniformsHorizontal = new WebGPU.Uniforms(device, uniformBufferAttributes);
+        this.uniformsHorizontal.setValueFromName("direction", [1, 0]);
+        this.uniformsHorizontal.uploadToGPU();
 
-        this.uniformsBufferVertical = new WebGPU.Uniforms(device, uniformBufferAttributes);
-        this.uniformsBufferVertical.setValueFromName("direction", [0, 1]);
-        this.uniformsBufferVertical.uploadToGPU();
+        this.uniformsVertical = new WebGPU.Uniforms(device, uniformBufferAttributes);
+        this.uniformsVertical.setValueFromName("direction", [0, 1]);
+        this.uniformsVertical.uploadToGPU();
 
         this.pipeline = this.device.createComputePipeline({
             layout: "auto",
             compute: {
                 module: WebGPU.ShaderModule.create(this.device, {
                     code: ShaderSources.Rendering.Spheres.Blur,
-                    structs: [this.uniformsBufferHorizontal],
+                    structs: [this.uniformsHorizontal],
                 }),
                 entryPoint: "main",
                 constants: {
@@ -95,7 +95,7 @@ class Blur {
                     resource: temporaryTextureView,
                 }, {
                     binding: 2,
-                    resource: this.uniformsBufferHorizontal.bindingResource,
+                    resource: this.uniformsHorizontal.bindingResource,
                 }
             ]
         });
@@ -110,7 +110,7 @@ class Blur {
                     resource: deferredTextureView,
                 }, {
                     binding: 2,
-                    resource: this.uniformsBufferVertical.bindingResource,
+                    resource: this.uniformsVertical.bindingResource,
                 }
             ]
         });
