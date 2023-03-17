@@ -23,7 +23,6 @@ class FillableMesh {
         this.rayCasterY = new RayCaster(ERayDirection.Y, triangles);
         this.rayCasterZ = new RayCaster(ERayDirection.Z, triangles);
 
-
         const boundingBoxMin: glMatrix.vec3 = [+100, +100, +100];
         const boundingBoxMax: glMatrix.vec3 = [-100, -100, -100];
 

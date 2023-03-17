@@ -36,10 +36,10 @@ class WebGPUCanvas {
         };
         this.context.configure(this.canvasConfiguration);
         this.depthTexture = new Texture(device, "depth16unorm", GPUTextureUsage.RENDER_ATTACHMENT);
-        
+
         this.textureFormat = this.canvasConfiguration.format;
         this.clearColor = { r: 0, g: 0, b: 0, a: 1 };
-        
+
         this.adjustSize();
     }
 

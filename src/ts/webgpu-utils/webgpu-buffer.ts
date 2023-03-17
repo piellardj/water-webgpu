@@ -83,7 +83,6 @@ class WebGPUBuffer {
     }
 }
 
-
 export {
     WebGPUBuffer,
 };

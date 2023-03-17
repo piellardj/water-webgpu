@@ -51,6 +51,13 @@
                 "SwitchCase": 1
             }
         ],
+        "no-multiple-empty-lines": [
+            "warn",
+            {
+                "max": 1
+            }
+        ],
+        "no-trailing-spaces": "warn",
         "semi": "error"
     }
 }
