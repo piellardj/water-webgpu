@@ -73,7 +73,7 @@ class Indexing {
         });
 
         this.countParticlesPerCell = new CountParticlesPerCell(device, {
-            cellsBuffer: this.cellsBuffer,
+            cellsBufferData,
             gridSize: data.gridSize,
             cellSize: data.cellSize,
             particlesBuffer: data.particlesBuffer,

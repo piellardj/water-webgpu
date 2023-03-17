@@ -1,9 +1,10 @@
 import * as glMatrix from "gl-matrix";
 import * as ShaderSources from "../../shader-sources";
 import * as WebGPU from "../../webgpu-utils/webgpu-utils";
+import { CellsBufferData } from "./indexing";
 
 type Data = {
-    cellsBuffer: WebGPU.Buffer;
+    cellsBufferData: CellsBufferData;
     gridSize: glMatrix.ReadonlyVec3,
     cellSize: number,
     particlesBuffer: WebGPU.Buffer;
@@ -22,6 +23,11 @@ class CountParticlesPerCell {
     public constructor(device: GPUDevice, data: Data) {
         this.workgroupsCount = Math.ceil(data.particlesCount / CountParticlesPerCell.WORKGROUP_SIZE);
 
+        const cellStructType = new WebGPU.Types.StructType("Cell", [
+            { name: "particlesCount", type: WebGPU.Types.atomicU32 },
+            { name: "offset", type: WebGPU.Types.u32 },
+        ]);
+
         this.uniforms = new WebGPU.Uniforms(device, [
             { name: "gridSize", type: WebGPU.Types.vec3I32 },
             { name: "cellSize", type: WebGPU.Types.f32 },
@@ -39,7 +45,7 @@ class CountParticlesPerCell {
             compute: {
                 module: WebGPU.ShaderModule.create(device, {
                     code: ShaderSources.Engine.Indexing.CountParticlesPerCell,
-                    structs: [this.uniforms],
+                    structs: [this.uniforms, cellStructType],
                 }),
                 entryPoint: "main",
                 constants: {
@@ -52,7 +58,7 @@ class CountParticlesPerCell {
             entries: [
                 {
                     binding: 0,
-                    resource: data.cellsBuffer.bindingResource,
+                    resource: data.cellsBufferData.cellsBufferBindingResource,
                 },
                 {
                     binding: 1,
