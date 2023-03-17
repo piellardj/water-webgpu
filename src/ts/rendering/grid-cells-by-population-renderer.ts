@@ -24,7 +24,7 @@ class GridCellsByPopulationRenderer {
         this.device = webgpuCanvas.device;
         this.matrix = modelMatrix;
 
-        const shaderModule = this.device.createShaderModule({ code: ShaderSources.Engine.Indexing.RenderCellsByPopulation });
+        const shaderModule = WebGPU.ShaderModule.create(this.device, { code: ShaderSources.Engine.Indexing.RenderCellsByPopulation });
 
         this.renderPipeline = this.device.createRenderPipeline({
             layout: "auto",

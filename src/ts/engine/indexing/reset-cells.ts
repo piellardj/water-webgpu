@@ -20,7 +20,7 @@ class ResetCells {
         this.pipeline = device.createComputePipeline({
             layout: "auto",
             compute: {
-                module: device.createShaderModule({ code: ShaderSources.Engine.Indexing.ResetCells }),
+                module: WebGPU.ShaderModule.create(device, { code: ShaderSources.Engine.Indexing.ResetCells }),
                 entryPoint: "main",
                 constants: {
                     cellsCount: data.cellsCount,

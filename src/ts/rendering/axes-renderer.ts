@@ -19,7 +19,7 @@ class AxesRenderer {
     public constructor(webgpuCanvas: WebGPU.Canvas) {
         this.device = webgpuCanvas.device;
 
-        const shaderModule = this.device.createShaderModule({ code: ShaderSources.Rendering.Axes });
+        const shaderModule = WebGPU.ShaderModule.create(this.device, { code: ShaderSources.Rendering.Axes });
 
         this.renderPipeline = this.device.createRenderPipeline({
             layout: "auto",

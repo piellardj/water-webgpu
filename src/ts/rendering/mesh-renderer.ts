@@ -20,7 +20,7 @@ class MeshRenderer {
         this.device = webgpuCanvas.device;
         this.matrix = modelMatrix;
 
-        const shaderModule = this.device.createShaderModule({ code: ShaderSources.Rendering.Mesh });
+        const shaderModule = WebGPU.ShaderModule.create(this.device, { code: ShaderSources.Rendering.Mesh });
 
         this.renderPipeline = this.device.createRenderPipeline({
             layout: "auto",

@@ -16,7 +16,7 @@ class Composition {
     public constructor(webgpuCanvas: WebGPU.Canvas, deferredTexture: WebGPU.Texture) {
         this.device = webgpuCanvas.device;
 
-        const shaderModule = this.device.createShaderModule({ code: ShaderSources.Rendering.Spheres.Composition });
+        const shaderModule = WebGPU.ShaderModule.create(this.device, { code: ShaderSources.Rendering.Spheres.Composition });
 
         this.renderPipeline = this.device.createRenderPipeline({
             layout: "auto",

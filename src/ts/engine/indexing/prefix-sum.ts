@@ -33,7 +33,12 @@ class PrefixSum {
             PrefixSum.reducePipeline = device.createComputePipeline({
                 layout: "auto",
                 compute: {
-                    module: device.createShaderModule({ code: ShaderSources.Engine.Indexing.PrefixSum.Reduce.replace("#INJECT(type)", data.type.typeName) }),
+                    module: WebGPU.ShaderModule.create(device, {
+                        code: ShaderSources.Engine.Indexing.PrefixSum.Reduce,
+                        injected: {
+                            "#INJECT(type)": data.type.typeName,
+                        }
+                    }),
                     entryPoint: "main",
                     constants: {
                         workgroupSize: PrefixSum.WORKGROUP_SIZE,
@@ -79,7 +84,12 @@ class PrefixSum {
                 PrefixSum.downPassPipeline = device.createComputePipeline({
                     layout: "auto",
                     compute: {
-                        module: device.createShaderModule({ code: ShaderSources.Engine.Indexing.PrefixSum.DownPass.replace("#INJECT(type)", data.type.typeName) }),
+                        module: WebGPU.ShaderModule.create(device, {
+                            code: ShaderSources.Engine.Indexing.PrefixSum.DownPass,
+                            injected: {
+                                "#INJECT(type)": data.type.typeName,
+                            }
+                        }),
                         entryPoint: "main",
                         constants: {
                             workgroupSize: PrefixSum.WORKGROUP_SIZE,

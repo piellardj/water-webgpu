@@ -22,7 +22,7 @@ class Blur {
         this.pipeline = this.device.createComputePipeline({
             layout: "auto",
             compute: {
-                module: this.device.createShaderModule({ code: ShaderSources.Rendering.Spheres.Blur }),
+                module: WebGPU.ShaderModule.create(this.device, { code: ShaderSources.Rendering.Spheres.Blur }),
                 entryPoint: "main",
                 constants: {
                     workgroupSize: Blur.WORKGROUP_SIZE,

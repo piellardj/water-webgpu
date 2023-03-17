@@ -37,7 +37,7 @@ class CountParticlesPerCell {
         this.pipeline = device.createComputePipeline({
             layout: "auto",
             compute: {
-                module: device.createShaderModule({ code: ShaderSources.Engine.Indexing.CountParticlesPerCell }),
+                module: WebGPU.ShaderModule.create(device, { code: ShaderSources.Engine.Indexing.CountParticlesPerCell }),
                 entryPoint: "main",
                 constants: {
                     workgroupSize: CountParticlesPerCell.WORKGROUP_SIZE,

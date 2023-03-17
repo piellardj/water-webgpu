@@ -1,3 +1,4 @@
+export { ArrayType } from "./array-type";
 export type { Type } from "./base-type";
 export { atomicI32 } from "./base-types/atomic-i32";
 export { atomicU32 } from "./base-types/atomic-u32";

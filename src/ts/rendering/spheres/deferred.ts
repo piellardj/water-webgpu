@@ -40,7 +40,7 @@ class Deferred {
             { name: "cameraRight", type: WebGPU.Types.vec3F32 },
         ]);
 
-        const shaderModule = this.device.createShaderModule({ code: ShaderSources.Rendering.Spheres.Spheres });
+        const shaderModule = WebGPU.ShaderModule.create(this.device, { code: ShaderSources.Rendering.Spheres.Spheres });
 
         this.renderPasses = [];
 

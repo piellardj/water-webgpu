@@ -27,7 +27,7 @@ class PreparePrefixSum {
         this.pipeline = device.createComputePipeline({
             layout: "auto",
             compute: {
-                module: device.createShaderModule({ code: ShaderSources.Engine.Indexing.PreparePrefixSum }),
+                module: WebGPU.ShaderModule.create(device, { code: ShaderSources.Engine.Indexing.PreparePrefixSum }),
                 entryPoint: "main",
                 constants: {
                     cellsCount: data.cellsCount,
