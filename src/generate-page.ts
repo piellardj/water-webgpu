@@ -63,7 +63,7 @@ const data: IDemopageData = {
                 },
                 {
                     type: Demopage.supportedControls.Select,
-                    title: "Grid cemms",
+                    title: "Grid cells",
                     id: "grid-cells-select-id",
                     placeholder: "<unknown>",
                     options: [
