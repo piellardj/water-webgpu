@@ -49,33 +49,11 @@ class Engine {
             usage: GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE,
         });
         this.cellsIndirectDrawBuffer = new WebGPU.Buffer(this.device, {
-            size: Uint32Array.BYTES_PER_ELEMENT * 4,
+            size: WebGPU.Types.indirectDrawBufferType.size,
             usage: GPUBufferUsage.INDIRECT | GPUBufferUsage.STORAGE,
         });
-        {
-            const cellsIndices: number[] = [];
-            for (const position of positions) {
-                const naiveCell: glMatrix.ReadonlyVec3 = [
-                    Math.floor(position[0] / this.cellSize),
-                    Math.floor(position[1] / this.cellSize),
-                    Math.floor(position[2] / this.cellSize),
-                ];
-                const cell: glMatrix.ReadonlyVec3 = [
-                    Math.max(0, Math.min(naiveCell[0], this.gridSize[0] - 1)),
-                    Math.max(0, Math.min(naiveCell[1], this.gridSize[1] - 1)),
-                    Math.max(0, Math.min(naiveCell[2], this.gridSize[2] - 1)),
-                ];
-                const cellIndex = cell[0] + this.gridSize[0] * (cell[1] + this.gridSize[1] * cell[2]);
-
-                if (!cellsIndices.includes(cellIndex)) {
-                    cellsIndices.push(cellIndex);
-                }
-            }
-            new Uint32Array(this.cellsIndirectDrawBuffer.getMappedRange()).set([24, cellsIndices.length, 0, 0]);
-            new Uint32Array(this.drawableCellsIndicesBuffer.getMappedRange()).set(cellsIndices);
-        }
+        new Uint32Array(this.cellsIndirectDrawBuffer.getMappedRange()).set([24, 0, 0, 0]);
         this.cellsIndirectDrawBuffer.unmap();
-        this.drawableCellsIndicesBuffer.unmap();
 
         this.particlesBuffer = new WebGPU.Buffer(this.device, {
             size: 4 * Float32Array.BYTES_PER_ELEMENT * this.particlesCount,

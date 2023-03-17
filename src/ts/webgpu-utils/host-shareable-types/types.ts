@@ -16,5 +16,6 @@ export { vec3U32 } from "./base-types/vec3-u32";
 export { vec4F32 } from "./base-types/vec4-f32";
 export { vec4I32 } from "./base-types/vec4-i32";
 export { vec4U32 } from "./base-types/vec4-u32";
+export { indirectDrawBufferType } from "./indirect-draw-buffer-type";
 export { StructType } from "./struct-type";
 
