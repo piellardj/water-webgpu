@@ -9,7 +9,7 @@ class WebGPUBuffer {
     private static readonly objectType: string = "GPUBuffer";
 
     private buffer: GPUBuffer | null = null;
-    private readonly size: GPUSize64;
+    public readonly size: GPUSize64;
     private readonly usage: GPUBufferUsageFlags;
 
     public constructor(

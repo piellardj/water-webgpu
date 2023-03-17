@@ -1,4 +1,4 @@
-alias Type = vec2<u32>;
+alias Type = #INJECT(type);
 
 struct Uniforms {    //           align(4) size(4)
     itemsCount: u32, // offset(0) align(4) size(4)

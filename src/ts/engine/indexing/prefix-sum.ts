@@ -3,6 +3,7 @@ import * as WebGPU from "../../webgpu-utils/webgpu-utils";
 
 type Data = {
     itemsBuffer: WebGPU.Buffer;
+    type: WebGPU.Types.Type;
     itemsCount: number;
 };
 
@@ -24,11 +25,15 @@ class PrefixSum {
     private readonly childPrefixSum: PrefixSum | null = null;
 
     public constructor(device: GPUDevice, data: Data) {
+        if (data.itemsBuffer.size !== data.type.size * data.itemsCount) {
+            throw new Error("Prefix sum: invalid data");
+        }
+
         if (!PrefixSum.reducePipeline) {
             PrefixSum.reducePipeline = device.createComputePipeline({
                 layout: "auto",
                 compute: {
-                    module: device.createShaderModule({ code: ShaderSources.Engine.Indexing.PrefixSum.Reduce }),
+                    module: device.createShaderModule({ code: ShaderSources.Engine.Indexing.PrefixSum.Reduce.replace("#INJECT(type)", data.type.typeName) }),
                     entryPoint: "main",
                     constants: {
                         workgroupSize: PrefixSum.WORKGROUP_SIZE,
@@ -49,7 +54,7 @@ class PrefixSum {
         this.dispatchSize = Math.ceil(data.itemsCount / PrefixSum.WORKGROUP_SIZE);
 
         this.localTotalsBuffer = new WebGPU.Buffer(device, {
-            size: (Uint32Array.BYTES_PER_ELEMENT * 2) * this.dispatchSize,
+            size: data.type.size * this.dispatchSize,
             usage: GPUBufferUsage.STORAGE,
         });
 
@@ -74,7 +79,7 @@ class PrefixSum {
                 PrefixSum.downPassPipeline = device.createComputePipeline({
                     layout: "auto",
                     compute: {
-                        module: device.createShaderModule({ code: ShaderSources.Engine.Indexing.PrefixSum.DownPass }),
+                        module: device.createShaderModule({ code: ShaderSources.Engine.Indexing.PrefixSum.DownPass.replace("#INJECT(type)", data.type.typeName) }),
                         entryPoint: "main",
                         constants: {
                             workgroupSize: PrefixSum.WORKGROUP_SIZE,
@@ -101,7 +106,8 @@ class PrefixSum {
 
             this.childPrefixSum = new PrefixSum(device, {
                 itemsBuffer: this.localTotalsBuffer,
-                itemsCount: this.dispatchSize
+                itemsCount: this.dispatchSize,
+                type: data.type,
             });
         }
     }

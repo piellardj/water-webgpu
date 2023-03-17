@@ -67,6 +67,7 @@ class Indexing {
         this.prefixSum = new PrefixSum(device, {
             itemsBuffer: this.preparePrefixSum.dataItemsBuffer,
             itemsCount: this.cellsCount,
+            type: WebGPU.Types.vec2U32,
         });
 
         this.finalizePrefixSum = new FinalizePrefixSum(device, {
