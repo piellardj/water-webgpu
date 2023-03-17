@@ -20,9 +20,9 @@ type Data = {
 type CellsDebugData = {
     readonly cellsBuffer: WebGPU.Buffer;
     readonly cellsCount: number;
-    readonly arrayStride: number;
-    readonly particlesCountAttributeOffset: number;
-    readonly particlesCountAttributeFormat: GPUVertexFormat;
+
+    readonly particlesCountAttribute: WebGPU.Types.VertexAttribute;
+
     readonly gridSize: glMatrix.ReadonlyVec3;
     readonly cellSize: number;
 };
@@ -110,9 +110,7 @@ class Indexing {
         return {
             cellsBuffer: this.cellsBuffer,
             cellsCount: this.cellsCount,
-            arrayStride: this.cellStructType.size,
-            particlesCountAttributeOffset: this.cellStructType.getAttributeOffset("particlesCount"),
-            particlesCountAttributeFormat: "uint32",
+            particlesCountAttribute: this.cellStructType.asVertexAttribute("particlesCount"),
             gridSize: this.gridSize,
             cellSize: this.cellSize,
         };

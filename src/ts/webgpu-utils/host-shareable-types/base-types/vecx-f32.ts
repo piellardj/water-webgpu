@@ -3,12 +3,14 @@ import { isArrayLike } from "../helpers";
 
 class VecXF32 implements Type {
     public readonly typeName: string;
+    public readonly gpuVertexFormat: GPUVertexFormat;
     public readonly align: number;
     public readonly size: number;
     private readonly n: number;
 
-    public constructor(n: number, align: number, size: number) {
+    public constructor(n: 2 | 3 | 4, align: number, size: number) {
         this.typeName = `vec${n}<f32>`;
+        this.gpuVertexFormat = `float32x${n}`;
         this.align = align;
         this.size = size;
 

@@ -6,9 +6,7 @@ import { type ViewData } from "./camera";
 type Data = {
     cellsBuffer: WebGPU.Buffer;
     cellsCount: number;
-    arrayStride: number;
-    particlesCountAttributeOffset: number;
-    particlesCountAttributeFormat: GPUVertexFormat;
+    particlesCountAttribute: WebGPU.Types.VertexAttribute;
     gridSize: glMatrix.ReadonlyVec3;
     cellSize: number;
 };
@@ -58,11 +56,11 @@ class GridCellsByPopulationRenderer {
                         attributes: [
                             {
                                 shaderLocation: 0,
-                                offset: data.particlesCountAttributeOffset,
-                                format: data.particlesCountAttributeFormat,
+                                offset: data.particlesCountAttribute.offset,
+                                format: data.particlesCountAttribute.format,
                             }
                         ],
-                        arrayStride: data.arrayStride,
+                        arrayStride: data.particlesCountAttribute.arrayStride,
                         stepMode: "instance",
                     }
                 ]

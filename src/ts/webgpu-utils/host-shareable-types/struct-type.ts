@@ -18,6 +18,12 @@ type Attribute = {
     readonly customSize?: number | undefined;
 };
 
+type VertexAttribute = {
+    arrayStride: number;
+    format: GPUVertexFormat;
+    offset: number;
+};
+
 class StructType implements Type {
     public readonly typeName: string;
     public readonly align: number;
@@ -113,10 +119,18 @@ class StructType implements Type {
         throw new Error(`Unknown struct attribute '${attributeName}'.`);
     }
 
-    public getAttributeOffset(attributeName: string): number {
+    public asVertexAttribute(attributeName: string): VertexAttribute {
         for (const attribute of this.attributes) {
             if (attribute.name === attributeName) {
-                return attribute.offset;
+                if (!attribute.type.gpuVertexFormat) {
+                    throw new Error(`Unsupported attribute type '${attribute.type.typeName}'.`);
+                }
+
+                return {
+                    arrayStride: this.size,
+                    format: attribute.type.gpuVertexFormat,
+                    offset: attribute.offset,
+                };
             }
         }
         throw new Error(`Unknown attribute '${attributeName}'.`);
@@ -169,6 +183,7 @@ ${attributesString}
 
 export type {
     AttributeDefinition,
+    VertexAttribute,
 };
 export {
     StructType,

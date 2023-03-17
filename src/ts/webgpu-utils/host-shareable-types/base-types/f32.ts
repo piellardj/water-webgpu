@@ -2,6 +2,7 @@ import { type Type } from "../base-type";
 
 class F32 implements Type {
     public readonly typeName: string = "f32";
+    public readonly gpuVertexFormat: GPUVertexFormat = "float32";
     public readonly align: number = 4;
     public readonly size: number = 4;
 

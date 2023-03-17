@@ -10,9 +10,7 @@ type SpheresData = {
     readonly radius: number;
     readonly count: number;
     readonly buffer: GPUBuffer;
-    readonly arrayStride: number;
-    readonly positionAttributeOffset: number;
-    readonly positionAttributeFormat: GPUVertexFormat;
+    readonly positionAttribute: WebGPU.Types.VertexAttribute;
 };
 
 type CellsData = {
@@ -102,9 +100,7 @@ class Engine {
             radius: this.spheresRadius,
             count: this.particles.particlesCount,
             buffer: this.particles.particlesBuffer.gpuBuffer,
-            arrayStride: this.particles.particlesStructType.size,
-            positionAttributeOffset: this.particles.particlesStructType.getAttributeOffset("position"),
-            positionAttributeFormat: "float32x3",
+            positionAttribute: this.particles.particlesStructType.asVertexAttribute("position"),
         };
     }
 

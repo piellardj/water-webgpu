@@ -203,11 +203,11 @@ class Deferred {
                         attributes: [
                             {
                                 shaderLocation: 0,
-                                offset: spheresData.positionAttributeOffset,
-                                format: spheresData.positionAttributeFormat,
+                                offset: spheresData.positionAttribute.offset,
+                                format: spheresData.positionAttribute.format,
                             }
                         ],
-                        arrayStride: spheresData.arrayStride,
+                        arrayStride: spheresData.positionAttribute.arrayStride,
                         stepMode: "instance",
                     }
                 ]
