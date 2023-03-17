@@ -1,10 +1,10 @@
 /// <reference types="./webgpu-utils/wgsl-type"/>
 
 import CountParticlesPerCell from "../shaders/engine/indexing/count-particles-per-cell.wgsl";
+import FinalizePrefixSum from "../shaders/engine/indexing/finalize-prefix-sum.wgsl";
 import DownPass from "../shaders/engine/indexing/prefix-sum/down-pass.wgsl";
-import FinalizePrefixSum from "../shaders/engine/indexing/prefix-sum/finalize.wgsl";
-import PreparePrefixSum from "../shaders/engine/indexing/prefix-sum/prepare.wgsl";
 import Reduce from "../shaders/engine/indexing/prefix-sum/reduce.wgsl";
+import PreparePrefixSum from "../shaders/engine/indexing/prepare-prefix-sum.wgsl";
 import RenderCellsByPopulation from "../shaders/engine/indexing/render-cells-by-population.wgsl";
 import ResetCells from "../shaders/engine/indexing/reset-cells.wgsl";
 
