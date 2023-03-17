@@ -1,13 +1,9 @@
-struct DataBuffer {
-    items: array<vec2<u32>>,
-};
-
 struct Uniforms {    //           align(4) size(4)
     itemsCount: u32, // offset(0) align(4) size(4)
 };
 
-@group(0) @binding(0) var<storage,read_write> inputBuffer: DataBuffer;
-@group(0) @binding(1) var<storage,read_write> outputBuffer: DataBuffer; // each cell stores the total for the corresponding workgroup
+@group(0) @binding(0) var<storage,read_write> inputBuffer: array<vec2<u32>>;
+@group(0) @binding(1) var<storage,read_write> outputBuffer: array<vec2<u32>>; // each cell stores the total for the corresponding workgroup
 @group(0) @binding(2) var<uniform> uniforms: Uniforms;
 
 override workgroupSize: u32; // = 128u;
@@ -30,7 +26,7 @@ fn main(in: ComputeIn) {
 
     // load workgroup cache
     if (globalIndex < uniforms.itemsCount) {
-        workgroupCache[localIndex] = inputBuffer.items[globalIndex];
+        workgroupCache[localIndex] = inputBuffer[globalIndex];
     } else {
         workgroupCache[localIndex] = vec2<u32>(0u);
     }
@@ -45,7 +41,7 @@ fn main(in: ComputeIn) {
     }
 
     if (localIndex == workgroupSize - 1u) {
-        outputBuffer.items[workgroupIndex] = workgroupCache[localIndex];
+        outputBuffer[workgroupIndex] = workgroupCache[localIndex];
         workgroupCache[localIndex] = vec2<u32>(0u); // exclusive prefix sum
     }
 
@@ -64,6 +60,6 @@ fn main(in: ComputeIn) {
 
     // store result
     if (globalIndex < uniforms.itemsCount) {
-        inputBuffer.items[globalIndex] = workgroupCache[localIndex];
+        inputBuffer[globalIndex] = workgroupCache[localIndex];
     }
 }

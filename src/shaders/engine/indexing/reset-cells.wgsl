@@ -2,11 +2,8 @@ struct Cell {            //           align(4) size(8)
     particlesCount: u32, // offset(0) align(4) size(4)
     offset: u32,         // offset(4) align(4) size(4)
 };
-struct CellsBuffer {
-    cells: array<Cell>, // stride(8)
-};
 
-@group(0) @binding(0) var<storage,read_write> cellsBuffer: CellsBuffer;
+@group(0) @binding(0) var<storage,read_write> cellsBuffer: array<Cell>;
 
 override cellsCount: u32;
 override workgroupSize: i32;
@@ -23,6 +20,6 @@ fn main(in: ComputeIn) {
         var output: Cell;
         output.particlesCount = 0u;
         output.offset = 0u;
-        cellsBuffer.cells[cellIndex] = output;
+        cellsBuffer[cellIndex] = output;
     }
 }

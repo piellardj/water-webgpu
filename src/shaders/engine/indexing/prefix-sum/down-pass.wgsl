@@ -1,13 +1,9 @@
-struct DataBuffer {
-    items: array<vec2<u32>>,
-};
-
 struct Uniforms {    //           align(4) size(4)
     itemsCount: u32, // offset(0) align(4) size(4)
 };
 
-@group(0) @binding(0) var<storage,read> workgroupOffset: DataBuffer;
-@group(0) @binding(1) var<storage,read_write> outputBuffer: DataBuffer;
+@group(0) @binding(0) var<storage,read> workgroupOffset: array<vec2<u32>>;
+@group(0) @binding(1) var<storage,read_write> outputBuffer: array<vec2<u32>>;
 @group(0) @binding(2) var<uniform> uniforms: Uniforms;
 
 override workgroupSize: i32;
@@ -23,6 +19,6 @@ fn main(in: ComputeIn) {
     let workgroupIndex = in.workgroupId.x;
 
     if (globalIndex < uniforms.itemsCount) {
-        outputBuffer.items[globalIndex] = outputBuffer.items[globalIndex] + workgroupOffset.items[workgroupIndex];
+        outputBuffer[globalIndex] = outputBuffer[globalIndex] + workgroupOffset[workgroupIndex];
     }
 }

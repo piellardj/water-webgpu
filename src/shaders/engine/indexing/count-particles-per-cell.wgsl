@@ -2,16 +2,10 @@ struct Cell {                    //           align(4) size(8)
     particlesCount: atomic<u32>, // offset(0) align(4) size(4)
     offset: u32,                 // offset(4) align(4) size(4)
 };
-struct CellsBuffer {
-    cells: array<Cell>, // stride(8)
-};
 
 struct Particle {            //            align(16) size(16)
     position: vec3<f32>,     // offset(0)  align(16) size(12)
     indexInCell: u32,        // offset(12) align(4)  size(4)
-};
-struct ParticlesBuffer {
-    particles: array<Particle>, // stride(16)
 };
 
 struct Uniforms {           //            align(16) size(32)
@@ -21,8 +15,8 @@ struct Uniforms {           //            align(16) size(32)
     particlesCount: u32,    // offset(28) align(4)  size(4) 
 };
 
-@group(0) @binding(0) var<storage,read_write> cellsBuffer: CellsBuffer;
-@group(0) @binding(1) var<storage,read_write> particlesBuffer: ParticlesBuffer;
+@group(0) @binding(0) var<storage,read_write> cellsBuffer: array<Cell>;
+@group(0) @binding(1) var<storage,read_write> particlesBuffer: array<Particle>;
 @group(0) @binding(2) var<uniform> uniforms: Uniforms;
 
 override workgroupSize: i32;
@@ -36,12 +30,12 @@ fn main(in: ComputeIn) {
     let particleId = in.globalInvocationId.x;
 
     if (particleId < uniforms.particlesCount) {
-        let position = particlesBuffer.particles[particleId].position;
+        let position = particlesBuffer[particleId].position;
 
         let naiveCellId = vec3<i32>(position / uniforms.cellSize);
         let cellId = clamp(naiveCellId, vec3<i32>(0), uniforms.gridSize - 1);
         let cellIndex: u32 = dot(vec3<u32>(cellId), uniforms.cellsStride);
 
-        particlesBuffer.particles[particleId].indexInCell = atomicAdd(&cellsBuffer.cells[cellIndex].particlesCount, 1u);
+        particlesBuffer[particleId].indexInCell = atomicAdd(&cellsBuffer[cellIndex].particlesCount, 1u);
     }
 }
