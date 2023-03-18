@@ -67,7 +67,16 @@ const data: IDemopageData = {
                     type: Demopage.supportedControls.Button,
                     label: "Reset",
                     id: "reset-button-id",
-                }
+                },
+                {
+                    type: Demopage.supportedControls.Range,
+                    title: "Gravity",
+                    id: "gravity-range-id",
+                    min: -1,
+                    max: 1,
+                    value: 0.9,
+                    step: 0.1,
+                },
             ],
         },
         {

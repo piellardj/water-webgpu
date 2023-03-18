@@ -4,6 +4,7 @@ import { ParticlesBufferData } from "../engine";
 
 type Data = {
     particlesBufferData: ParticlesBufferData;
+    particleRadius: number;
 };
 
 class Integration {
@@ -22,8 +23,12 @@ class Integration {
         this.uniforms = new WebGPU.Uniforms(device, [
             { name: "dt", type: WebGPU.Types.f32 },
             { name: "particlesCount", type: WebGPU.Types.u32 },
+            { name: "particleRadius", type: WebGPU.Types.f32 },
+            { name: "damping", type: WebGPU.Types.f32 },
         ]);
         this.uniforms.setValueFromName("particlesCount", data.particlesBufferData.particlesCount);
+        this.uniforms.setValueFromName("particleRadius", data.particleRadius);
+        this.uniforms.setValueFromName("damping", 0.9);
 
         this.pipeline = device.createComputePipeline({
             layout: "auto",

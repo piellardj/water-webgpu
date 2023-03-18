@@ -1,4 +1,5 @@
 import * as ShaderSources from "../../shader-sources";
+import { Parameters } from "../../ui/parameters";
 import * as WebGPU from "../../webgpu-utils/webgpu-utils";
 import { ParticlesBufferData } from "../engine";
 
@@ -20,6 +21,7 @@ class Acceleration {
         this.workgroupsCount = Math.ceil(data.particlesBufferData.particlesCount / Acceleration.WORKGROUP_SIZE);
 
         this.uniforms = new WebGPU.Uniforms(device, [
+            { name: "gravity", type: WebGPU.Types.vec3F32 },
             { name: "dt", type: WebGPU.Types.f32 },
             { name: "particlesCount", type: WebGPU.Types.u32 },
         ]);
@@ -54,6 +56,7 @@ class Acceleration {
     }
 
     public compute(commandEncoder: GPUCommandEncoder, dt: number): void {
+        this.uniforms.setValueFromName("gravity", [0, 0, -Parameters.gravity]);
         this.uniforms.setValueFromName("dt", dt);
         this.uniforms.uploadToGPU();
 

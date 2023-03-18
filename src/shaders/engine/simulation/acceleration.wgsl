@@ -7,13 +7,11 @@ struct ComputeIn {
     @builtin(global_invocation_id) globalInvocationId : vec3<u32>,
 };
 
-const GRAVITY = vec3<f32>(0, 0, -0.1);
-
 @compute @workgroup_size(workgroupSize)
 fn main(in: ComputeIn) {
     let particleId = in.globalInvocationId.x;
 
     if (particleId < uniforms.particlesCount) {
-        particlesBuffer[particleId].acceleration = GRAVITY;
+        particlesBuffer[particleId].acceleration = uniforms.gravity;
     }
 }

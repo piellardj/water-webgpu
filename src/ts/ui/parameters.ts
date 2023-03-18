@@ -5,6 +5,7 @@ const controlId = {
     TIMESTEP_RANGE: "timestep-range-id",
     STEPS_PER_FRAME_RANGE: "iterations-per-frame-range-id",
     RESET_BUTTON: "reset-button-id",
+    GRAVITY_RANGE: "gravity-range-id",
 
     BACKGROUND_COLORPICKER: "background-color-id",
     INDICATORS_CHECKBOX: "indicators-checkbox-id",
@@ -77,6 +78,10 @@ abstract class Parameters {
 
     public static get stepsPerFrame(): number {
         return Page.Range.getValue(controlId.STEPS_PER_FRAME_RANGE);
+    }
+
+    public static get gravity(): number {
+        return Page.Range.getValue(controlId.GRAVITY_RANGE);
     }
 
     public static get backgroundColor(): ColorNormalized {

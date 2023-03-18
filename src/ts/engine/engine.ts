@@ -35,7 +35,7 @@ class Engine {
     public readonly mesh: Mesh;
 
     private readonly particles: ParticlesBufferData;
-    private readonly spheresRadius: number = 0.01;
+    private readonly spheresRadius: number = 0.05;
 
     private readonly cellSize: number = 0.05;
     private readonly gridSize: glMatrix.ReadonlyVec3 = [Math.ceil(1 / this.cellSize), Math.ceil(1 / this.cellSize), Math.ceil(1 / this.cellSize)];
@@ -103,6 +103,7 @@ class Engine {
         });
         this.integration = new Integration(this.device, {
             particlesBufferData: this.particles,
+            particleRadius: this.spheresRadius,
         });
 
         this.indexing = new Indexing(this.device, {
