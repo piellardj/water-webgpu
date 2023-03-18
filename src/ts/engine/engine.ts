@@ -6,6 +6,7 @@ import * as InitialPositions from "./initial-conditions/initial-positions";
 import { Mesh } from "./initial-conditions/models/mesh";
 import * as Models from "./initial-conditions/models/models";
 import { Acceleration } from "./simulation/acceleration";
+import { Initialization } from "./simulation/initialization";
 import { Integration } from "./simulation/integration";
 
 type SpheresData = {
@@ -40,6 +41,9 @@ class Engine {
     private readonly gridSize: glMatrix.ReadonlyVec3 = [Math.ceil(1 / this.cellSize), Math.ceil(1 / this.cellSize), Math.ceil(1 / this.cellSize)];
     private readonly drawableCellsIndicesBuffer: WebGPU.Buffer;
     private readonly cellsIndirectDrawBuffer: WebGPU.Buffer;
+
+    private readonly initialization: Initialization;
+    private needsInitialization: boolean = true;
 
     private readonly acceleration: Acceleration;
     private readonly integration: Integration;
@@ -82,21 +86,17 @@ class Engine {
             size: particlesStructType.size * particlesCount,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE,
         });
-        const particlesData = particlesBuffer.getMappedRange();
-        positions.forEach((position: glMatrix.vec3, index: number) => {
-            const offset = particlesStructType.size * index;
-            const data = {
-                position,
-                indexInCell: 0,
-            };
-            particlesStructType.setValue(particlesData, offset, data);
-        });
-        particlesBuffer.unmap();
+
         this.particles = {
             particlesCount,
             particlesStructType,
             particlesBuffer,
         };
+
+        this.initialization = new Initialization(this.device, {
+            initialPositions: positions,
+            particlesBufferData: this.particles,
+        });
 
         this.acceleration = new Acceleration(this.device, {
             particlesBufferData: this.particles,
@@ -115,6 +115,12 @@ class Engine {
     }
 
     public compute(commandEncoder: GPUCommandEncoder, dt: number): void {
+        if (this.needsInitialization) {
+            this.initialization.compute(commandEncoder);
+            this.needsInitialization = false;
+            this.needsIndexing = true;
+        }
+
         this.indexIfNeeded(commandEncoder);
 
         dt /= 1000;
@@ -124,6 +130,10 @@ class Engine {
         this.needsIndexing = true;
 
         this.indexIfNeeded(commandEncoder);
+    }
+
+    public reset(): void {
+        this.needsInitialization = true;
     }
 
     private indexIfNeeded(commandEncoder: GPUCommandEncoder): void {

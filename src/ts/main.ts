@@ -13,6 +13,8 @@ function main(device: GPUDevice, canvas: HTMLCanvasElement, _canvasContainer: HT
     const framesCounter = new FrameCounter();
     framesCounter.onChange = Indicators.setAverageFps;
 
+    Parameters.onResetObservers.push(() => scene.reset());
+
     let lastTime = performance.now();
     function mainLoop(): void {
         framesCounter.registerFrame();

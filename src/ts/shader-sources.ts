@@ -10,6 +10,7 @@ import ReorderParticles from "../shaders/engine/indexing/reorder-particles.wgsl"
 import ResetCells from "../shaders/engine/indexing/reset-cells.wgsl";
 
 import Acceleration from "../shaders/engine/simulation/acceleration.wgsl";
+import Initialization from "../shaders/engine/simulation/initialization.wgsl";
 import Integration from "../shaders/engine/simulation/integration.wgsl";
 
 import Axes from "../shaders/rendering/axes.wgsl";
@@ -35,6 +36,7 @@ const engine = {
     },
     Simulation: {
         Acceleration,
+        Initialization,
         Integration,
     },
 };

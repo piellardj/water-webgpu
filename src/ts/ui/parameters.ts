@@ -1,6 +1,8 @@
 /// <reference types="../page-interface-generated" />
 
 const controlId = {
+    RESET_BUTTON: "reset-button-id",
+
     BACKGROUND_COLORPICKER: "background-color-id",
     INDICATORS_CHECKBOX: "indicators-checkbox-id",
     AXES_CHECKBOX: "axes-checkbox-id",
@@ -53,7 +55,15 @@ enum EGridDisplayMode {
     FINAL = 2,
 }
 
+Page.Button.addObserver(controlId.RESET_BUTTON, () => {
+    for (const observer of Parameters.onResetObservers) {
+        observer();
+    }
+});
+
 abstract class Parameters {
+    public static readonly onResetObservers: VoidFunction[] = [];
+
     public static get backgroundColor(): ColorNormalized {
         return buildColor(controlId.BACKGROUND_COLORPICKER);
     }

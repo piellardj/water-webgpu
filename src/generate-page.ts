@@ -37,6 +37,16 @@ const data: IDemopageData = {
     },
     controlsSections: [
         {
+            title: "Engine",
+            controls: [
+                {
+                    type: Demopage.supportedControls.Button,
+                    label: "Reset",
+                    id: "reset-button-id",
+                }
+            ],
+        },
+        {
             title: "Rendering",
             controls: [
                 {

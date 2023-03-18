@@ -79,6 +79,10 @@ class Scene {
         renderpassEncoder.end();
     }
 
+    public reset(): void {
+        this.engine.reset();
+    }
+
     public setSize(width: number, height: number): boolean {
         return this.spheresRenderer.setSize(width, height);
     }
