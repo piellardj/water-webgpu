@@ -40,10 +40,10 @@ class ReorderParticles {
         }
 
         this.uniforms = new WebGPU.Uniforms(device, [
-            { name: "particlesCount", type: WebGPU.Types.u32 },
-            { name: "cellSize", type: WebGPU.Types.f32 },
             { name: "gridSize", type: WebGPU.Types.vec3I32 },
+            { name: "cellSize", type: WebGPU.Types.f32 },
             { name: "cellsStride", type: WebGPU.Types.vec3U32 },
+            { name: "particlesCount", type: WebGPU.Types.u32 },
         ]);
         this.uniforms.setValueFromName("gridSize", data.gridSize);
         this.uniforms.setValueFromName("cellSize", data.cellSize);

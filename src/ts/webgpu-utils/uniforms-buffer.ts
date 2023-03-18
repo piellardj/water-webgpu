@@ -1,3 +1,4 @@
+import { iterateOnAllPermutations } from "./helpers/utils";
 import { type AttributeDefinition, StructType } from "./host-shareable-types/struct-type";
 import { WebGPUBuffer } from "./webgpu-buffer";
 
@@ -11,6 +12,13 @@ class UniformsBuffer {
     public constructor(device: GPUDevice, attributesDefinitions: AttributeDefinition[]) {
         this.device = device;
         this.structType = new StructType("Uniforms", attributesDefinitions);
+
+        const bestPermutation = UniformsBuffer.compact(attributesDefinitions);
+        const bestStructType = new StructType("Uniforms", bestPermutation);
+        if (bestStructType.size < this.structType.size) {
+            console.warn(`Uniforms could be more compact.\nCurrent is of size ${this.structType.size}:\n${this.structType}\n\nwhile best is of size ${bestStructType.size}:\n${bestStructType}`);
+        }
+
         this.data = new ArrayBuffer(this.structType.size);
         this.gpuBuffer = new WebGPUBuffer(this.device, {
             size: this.structType.size,
@@ -36,6 +44,21 @@ class UniformsBuffer {
 
     public toString(): string {
         return this.structType.toString();
+    }
+
+    public static compact(attributesDefinitions: AttributeDefinition[]): AttributeDefinition[] {
+        let bestPermutation = attributesDefinitions;
+        let minSize = new StructType("Uniforms", attributesDefinitions).size;
+
+        for (const permutation of iterateOnAllPermutations(attributesDefinitions)) {
+            let size = new StructType("Uniforms", permutation).size;
+            if (size < minSize) {
+                minSize = size;
+                bestPermutation = permutation;
+            }
+        }
+
+        return bestPermutation;
     }
 }
 
