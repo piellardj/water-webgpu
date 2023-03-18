@@ -9,6 +9,9 @@ import RenderCellsByPopulation from "../shaders/engine/indexing/render-cells-by-
 import ReorderParticles from "../shaders/engine/indexing/reorder-particles.wgsl";
 import ResetCells from "../shaders/engine/indexing/reset-cells.wgsl";
 
+import Acceleration from "../shaders/engine/simulation/acceleration.wgsl";
+import Integration from "../shaders/engine/simulation/integration.wgsl";
+
 import Axes from "../shaders/rendering/axes.wgsl";
 import Cube from "../shaders/rendering/cube.wgsl";
 import GridCells from "../shaders/rendering/grid-cells.wgsl";
@@ -29,6 +32,10 @@ const engine = {
             DownPass,
             Reduce,
         },
+    },
+    Simulation: {
+        Acceleration,
+        Integration,
     },
 };
 

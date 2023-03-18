@@ -13,15 +13,20 @@ function main(device: GPUDevice, canvas: HTMLCanvasElement, _canvasContainer: HT
     const framesCounter = new FrameCounter();
     framesCounter.onChange = Indicators.setAverageFps;
 
+    let lastTime = performance.now();
     function mainLoop(): void {
         framesCounter.registerFrame();
+
+        const now = performance.now();
+        const dt = now - lastTime;
+        lastTime = now;
 
         webgpuCanvas.setClearColor(Parameters.backgroundColor);
         webgpuCanvas.adjustSize();
         scene.setSize(webgpuCanvas.width, webgpuCanvas.height);
 
         const commandEncoder = device.createCommandEncoder();
-        scene.update(commandEncoder);
+        scene.update(commandEncoder, dt);
         scene.render(commandEncoder, camera.viewData);
         device.queue.submit([commandEncoder.finish()]);
 

@@ -1,5 +1,5 @@
 import * as glMatrix from "gl-matrix";
-import { Mesh } from "../engine/models/mesh";
+import { Mesh } from "../engine/initial-conditions/models/mesh";
 import * as ShaderSources from "../shader-sources";
 import * as WebGPU from "../webgpu-utils/webgpu-utils";
 import { type ViewData } from "./camera";

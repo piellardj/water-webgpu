@@ -41,8 +41,8 @@ class Scene {
         glMatrix.mat4.translate(this.modelMatrix, this.modelMatrix, [-0.5, -0.5, -0.5]);
     }
 
-    public update(commandEncoder: GPUCommandEncoder): void {
-        this.engine.compute(commandEncoder);
+    public update(commandEncoder: GPUCommandEncoder, dt: number): void {
+        this.engine.compute(commandEncoder, dt);
     }
 
     public render(commandEncoder: GPUCommandEncoder, viewData: ViewData): void {
