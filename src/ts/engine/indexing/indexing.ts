@@ -5,6 +5,7 @@ import { CountParticlesPerCell } from "./count-particles-per-cell";
 import { FinalizePrefixSum } from "./finalize-prefix-sum";
 import { PrefixSum } from "./prefix-sum";
 import { PreparePrefixSum } from "./prepare-prefix-sum";
+import { ReorderParticles } from "./reorder-particles";
 import { ResetCells } from "./reset-cells";
 
 type Data = {
@@ -46,6 +47,7 @@ class Indexing {
     private readonly preparePrefixSum: PreparePrefixSum;
     private readonly prefixSum: PrefixSum;
     private readonly finalizePrefixSum: FinalizePrefixSum;
+    private readonly reorderParticles: ReorderParticles;
 
     public constructor(device: GPUDevice, data: Data) {
         this.cellsCount = data.gridSize[0] * data.gridSize[1] * data.gridSize[2];
@@ -95,6 +97,13 @@ class Indexing {
             cellsIndirectDrawBuffer: data.cellsIndirectDrawBuffer,
             drawableCellsIndicesBuffer: data.drawableCellsIndicesBuffer,
         });
+
+        this.reorderParticles = new ReorderParticles(device, {
+            particlesBufferData: data.particlesBufferData,
+            cellsBufferData,
+            gridSize: data.gridSize,
+            cellSize: data.cellSize,
+        });
     }
 
     public compute(commandEncoder: GPUCommandEncoder): void {
@@ -104,6 +113,8 @@ class Indexing {
         this.preparePrefixSum.compute(commandEncoder);
         this.prefixSum.compute(commandEncoder);
         this.finalizePrefixSum.compute(commandEncoder);
+
+        this.reorderParticles.compute(commandEncoder);
     }
 
     public get gridCellsDebugData(): CellsDebugData {

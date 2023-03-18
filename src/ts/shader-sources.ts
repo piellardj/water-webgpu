@@ -6,6 +6,7 @@ import DownPass from "../shaders/engine/indexing/prefix-sum/down-pass.wgsl";
 import Reduce from "../shaders/engine/indexing/prefix-sum/reduce.wgsl";
 import PreparePrefixSum from "../shaders/engine/indexing/prepare-prefix-sum.wgsl";
 import RenderCellsByPopulation from "../shaders/engine/indexing/render-cells-by-population.wgsl";
+import ReorderParticles from "../shaders/engine/indexing/reorder-particles.wgsl";
 import ResetCells from "../shaders/engine/indexing/reset-cells.wgsl";
 
 import Axes from "../shaders/rendering/axes.wgsl";
@@ -22,6 +23,7 @@ const engine = {
         FinalizePrefixSum,
         PreparePrefixSum,
         RenderCellsByPopulation,
+        ReorderParticles,
         ResetCells,
         PrefixSum: {
             DownPass,

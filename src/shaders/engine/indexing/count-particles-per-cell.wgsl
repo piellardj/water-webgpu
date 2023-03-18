@@ -8,17 +8,19 @@ struct ComputeIn {
     @builtin(global_invocation_id) globalInvocationId : vec3<u32>,
 };
 
+fn computeCellIndex(position: vec3<f32>) -> u32 {
+    let naiveCellId = vec3<i32>(position / uniforms.cellSize);
+    let cellId = clamp(naiveCellId, vec3<i32>(0), uniforms.gridSize - 1);
+    return dot(vec3<u32>(cellId), uniforms.cellsStride);
+}
+
 @compute @workgroup_size(workgroupSize)
 fn main(in: ComputeIn) {
     let particleId = in.globalInvocationId.x;
 
     if (particleId < uniforms.particlesCount) {
         let position = particlesBuffer[particleId].position;
-
-        let naiveCellId = vec3<i32>(position / uniforms.cellSize);
-        let cellId = clamp(naiveCellId, vec3<i32>(0), uniforms.gridSize - 1);
-        let cellIndex: u32 = dot(vec3<u32>(cellId), uniforms.cellsStride);
-
+        let cellIndex: u32 = computeCellIndex(position);
         particlesBuffer[particleId].indexInCell = atomicAdd(&cellsBuffer[cellIndex].particlesCount, 1u);
     }
 }
