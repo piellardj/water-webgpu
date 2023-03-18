@@ -57,7 +57,12 @@ class Engine {
             size: WebGPU.Types.indirectDrawBufferType.size,
             usage: GPUBufferUsage.INDIRECT | GPUBufferUsage.STORAGE,
         });
-        new Uint32Array(this.cellsIndirectDrawBuffer.getMappedRange()).set([24, 0, 0, 0]);
+        WebGPU.Types.indirectDrawBufferType.setValue(this.cellsIndirectDrawBuffer.getMappedRange(), 0, {
+            vertexCount: 24,
+            instancesCount: 0, // will be dynamically computed on GPU
+            firstVertex: 0,    // will be dynamically computed on GPU
+            firstInstance: 0,  // will be dynamically computed on GPU
+        });
         this.cellsIndirectDrawBuffer.unmap();
 
         const particlesCount = positions.length;
@@ -69,11 +74,14 @@ class Engine {
             size: particlesStructType.size * particlesCount,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE,
         });
-        const positionsData = new Float32Array(particlesBuffer.getMappedRange());
+        const particlesData = particlesBuffer.getMappedRange();
         positions.forEach((position: glMatrix.vec3, index: number) => {
-            const data = [position[0], position[1], position[2], 0];
-            const offset = 4 * index;
-            positionsData.set(data, offset);
+            const offset = particlesStructType.size * index;
+            const data = {
+                position,
+                indexInCell: 0,
+            };
+            particlesStructType.setValue(particlesData, offset, data);
         });
         particlesBuffer.unmap();
         this.particles = {
