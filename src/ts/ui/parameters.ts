@@ -1,6 +1,9 @@
 /// <reference types="../page-interface-generated" />
 
 const controlId = {
+    PAUSE_CHECKBOX: "pause-checkbox-id",
+    TIMESTEP_RANGE: "timestep-range-id",
+    STEPS_PER_FRAME_RANGE: "iterations-per-frame-range-id",
     RESET_BUTTON: "reset-button-id",
 
     BACKGROUND_COLORPICKER: "background-color-id",
@@ -63,6 +66,18 @@ Page.Button.addObserver(controlId.RESET_BUTTON, () => {
 
 abstract class Parameters {
     public static readonly onResetObservers: VoidFunction[] = [];
+
+    public static get paused(): boolean {
+        return Page.Checkbox.isChecked(controlId.PAUSE_CHECKBOX);
+    }
+
+    public static get timestep(): number {
+        return Page.Range.getValue(controlId.TIMESTEP_RANGE);
+    }
+
+    public static get stepsPerFrame(): number {
+        return Page.Range.getValue(controlId.STEPS_PER_FRAME_RANGE);
+    }
 
     public static get backgroundColor(): ColorNormalized {
         return buildColor(controlId.BACKGROUND_COLORPICKER);

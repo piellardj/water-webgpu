@@ -15,20 +15,24 @@ function main(device: GPUDevice, canvas: HTMLCanvasElement, _canvasContainer: HT
 
     Parameters.onResetObservers.push(() => scene.reset());
 
-    let lastTime = performance.now();
     function mainLoop(): void {
         framesCounter.registerFrame();
-
-        const now = performance.now();
-        const dt = now - lastTime;
-        lastTime = now;
 
         webgpuCanvas.setClearColor(Parameters.backgroundColor);
         webgpuCanvas.adjustSize();
         scene.setSize(webgpuCanvas.width, webgpuCanvas.height);
 
         const commandEncoder = device.createCommandEncoder();
-        scene.update(commandEncoder, dt);
+
+        if (Parameters.paused) {
+            scene.update(commandEncoder, 0);
+        } else {
+            const timestep = Parameters.timestep;
+            for (let i = Parameters.stepsPerFrame; i > 0; i--) {
+                scene.update(commandEncoder, timestep);
+            }
+        }
+
         scene.render(commandEncoder, camera.viewData);
         device.queue.submit([commandEncoder.finish()]);
 

@@ -123,13 +123,13 @@ class Engine {
 
         this.indexIfNeeded(commandEncoder);
 
-        dt /= 1000;
+        if (dt > 0) {
+            this.acceleration.compute(commandEncoder, dt);
+            this.integration.compute(commandEncoder, dt);
+            this.needsIndexing = true;
 
-        this.acceleration.compute(commandEncoder, dt);
-        this.integration.compute(commandEncoder, dt);
-        this.needsIndexing = true;
-
-        this.indexIfNeeded(commandEncoder);
+            this.indexIfNeeded(commandEncoder);
+        }
     }
 
     public reset(): void {
