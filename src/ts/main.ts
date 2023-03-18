@@ -1,6 +1,7 @@
 import { Camera } from "./rendering/camera";
 import { Scene } from "./scene";
 import { FrameCounter } from "./ui/frame-counter";
+import * as Indicators from "./ui/indicators";
 import { Parameters } from "./ui/parameters";
 import * as WebGPU from "./webgpu-utils/webgpu-utils";
 
@@ -10,7 +11,7 @@ function main(device: GPUDevice, canvas: HTMLCanvasElement, _canvasContainer: HT
     const scene = new Scene(webgpuCanvas);
 
     const framesCounter = new FrameCounter();
-    framesCounter.onChange = (fps: number) => Page.Canvas.setIndicatorText("average-fps", `${fps.toFixed()} fps`);
+    framesCounter.onChange = Indicators.setAverageFps;
 
     function mainLoop(): void {
         framesCounter.registerFrame();

@@ -7,6 +7,7 @@ import { GridCellsByPopulationRenderer } from "./rendering/grid-cells-by-populat
 import { GridCellsRenderer } from "./rendering/grid-cells-renderer";
 import { MeshRenderer } from "./rendering/mesh-renderer";
 import { SpheresRenderer } from "./rendering/spheres/spheres-renderer";
+import * as Indicators from "./ui/indicators";
 import { EGridDisplayMode, Parameters } from "./ui/parameters";
 import * as WebGPU from "./webgpu-utils/webgpu-utils";
 
@@ -33,6 +34,9 @@ class Scene {
         this.spheresRenderer = new SpheresRenderer(webgpuCanvas, this.modelMatrix, this.engine.spheresData);
         this.meshRenderer = new MeshRenderer(webgpuCanvas, this.modelMatrix, this.engine.mesh);
         this.gridCellsRenderer = new GridCellsRenderer(webgpuCanvas, this.modelMatrix);
+
+        Indicators.setParticlesCount(this.engine.spheresData.count);
+        Indicators.setGridSize(this.engine.gridCellsData.gridSize);
 
         glMatrix.mat4.translate(this.modelMatrix, this.modelMatrix, [-0.5, -0.5, -0.5]);
     }

@@ -21,6 +21,14 @@ const data: IDemopageData = {
             id: "average-fps",
             label: "Average FPS"
         },
+        {
+            id: "particles-count",
+            label: "Particles count"
+        },
+        {
+            id: "grid",
+            label: "Grid"
+        },
     ],
     canvas: {
         width: 512,
