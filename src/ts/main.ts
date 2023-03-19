@@ -10,6 +10,7 @@ function main(device: GPUDevice, canvas: HTMLCanvasElement, _canvasContainer: HT
     const camera = new Camera();
     const scene = new Scene(webgpuCanvas, {
         spheresRadius: Parameters.spheresRadius,
+        obstacle: Parameters.obstacle,
     });
 
     const framesCounter = new FrameCounter();
@@ -18,6 +19,7 @@ function main(device: GPUDevice, canvas: HTMLCanvasElement, _canvasContainer: HT
     Parameters.onResetObservers.push(() => scene.reinitialize());
 
     Parameters.onSphereSizeChange.push(() => scene.setSpheresSize(Parameters.spheresRadius));
+    Parameters.onObstacleChange.push(() => scene.setObstacle(Parameters.obstacle));
 
     function mainLoop(): void {
         framesCounter.registerFrame();

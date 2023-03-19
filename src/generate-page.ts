@@ -98,6 +98,23 @@ const data: IDemopageData = {
                     value: 0.9,
                     step: 0.1,
                 },
+                {
+                    type: Demopage.supportedControls.Select,
+                    title: "Obstacles",
+                    id: "obstacles-select-id",
+                    placeholder: "<unknown>",
+                    options: [
+                        {
+                            value: "none",
+                            label: "None",
+                        },
+                        {
+                            value: "capsules",
+                            label: "Capsules",
+                            checked: true,
+                        },
+                    ],
+                },
             ],
         },
         {

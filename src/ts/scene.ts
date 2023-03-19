@@ -11,11 +11,12 @@ import { MeshRenderable } from "./rendering/mesh/mesh-renderable";
 import { MeshRenderer } from "./rendering/mesh/mesh-renderer";
 import { SpheresRenderer } from "./rendering/spheres/spheres-renderer";
 import * as Indicators from "./ui/indicators";
-import { EGridDisplayMode, Parameters } from "./ui/parameters";
+import { EGridDisplayMode, EObstacleType, Parameters } from "./ui/parameters";
 import * as WebGPU from "./webgpu-utils/webgpu-utils";
 
 type Data = {
     spheresRadius: number;
+    obstacle: EObstacleType;
 };
 
 class Scene {
@@ -33,7 +34,7 @@ class Scene {
     private readonly gridCellsPerPopulationRenderer: GridCellsByPopulationRenderer;
 
     private particlesContainerMesh: Mesh;
-    private obstaclesMesh: Mesh;
+    private obstaclesMesh: Mesh | null = null;
 
     private readonly meshRenderer: MeshRenderer;
     private readonly particlesMeshes: MeshRenderable[] = [];
@@ -48,12 +49,14 @@ class Scene {
         this.meshRenderer = new MeshRenderer(webgpuCanvas);
         this.gridCellsRenderer = new GridCellsRenderer(webgpuCanvas);
         this.gridCellsPerPopulationRenderer = new GridCellsByPopulationRenderer(this.webgpuCanvas, Engine.cellBufferDescriptor);
-        
-        this.particlesContainerMesh = Mesh.load(Models.Shapes);
-        this.obstaclesMesh = Mesh.load(Models.Lighthouse2);
 
+        this.particlesContainerMesh = Mesh.load(Models.Shapes);
         this.particlesMeshes.push(this.meshRenderer.createMeshRenderable(this.particlesContainerMesh));
-        this.obstacleMeshes.push(this.meshRenderer.createMeshRenderable(this.obstaclesMesh));
+
+        this.obstaclesMesh = Scene.loadObstacleMesh(data.obstacle);
+        if (this.obstaclesMesh) {
+            this.obstacleMeshes.push(this.meshRenderer.createMeshRenderable(this.obstaclesMesh));
+        }
 
         this.engine = new Engine(webgpuCanvas.device, {
             particlesContainerMesh: this.particlesContainerMesh,
@@ -150,8 +153,39 @@ class Scene {
         Indicators.setGridSize(this.engine.gridData.gridSize);
     }
 
+    public setObstacle(obstacle: EObstacleType): void {
+        for (const renderableMesh of this.obstacleMeshes) {
+            renderableMesh.free();
+        }
+        this.obstacleMeshes.length = 0;
+
+        this.obstaclesMesh = Scene.loadObstacleMesh(obstacle);
+        if (this.obstaclesMesh) {
+            this.obstacleMeshes.push(this.meshRenderer.createMeshRenderable(this.obstaclesMesh));
+        }
+
+        this.engine.reset({
+            particlesContainerMesh: this.particlesContainerMesh,
+            obstaclesMesh: this.obstaclesMesh,
+            spheresRadius: this.engine.spheresBuffer.sphereRadius,
+        });
+        Indicators.setParticlesCount(this.engine.spheresBuffer.instancesCount);
+        Indicators.setGridSize(this.engine.gridData.gridSize);
+    }
+
     public setCanvasSize(width: number, height: number): boolean {
         return this.spheresRenderer.setSize(width, height);
+    }
+
+    private static loadObstacleMesh(obstacle: EObstacleType): Mesh | null {
+        switch (obstacle) {
+            case EObstacleType.NONE:
+                return null;
+            case EObstacleType.CAPSULES:
+                return Mesh.load(Models.Capsules);
+            default:
+                throw new Error();
+        }
     }
 }
 

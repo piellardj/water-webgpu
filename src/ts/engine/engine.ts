@@ -10,7 +10,7 @@ import { Integration } from "./simulation/integration";
 
 type Data = {
     particlesContainerMesh: Mesh;
-    obstaclesMesh: Mesh;
+    obstaclesMesh: Mesh | null;
     spheresRadius: number;
 };
 
@@ -193,8 +193,11 @@ class Engine {
         const particlesFillableMesh = new FillableMesh(data.particlesContainerMesh.triangles);
         const particlesPositions = InitialPositions.fillMesh(data.spheresRadius, particlesFillableMesh);
 
-        const obstaclesFillableMesh = new FillableMesh(data.obstaclesMesh.triangles);
-        const obstaclesPositions = InitialPositions.fillMesh(data.spheresRadius, obstaclesFillableMesh);
+        let obstaclesPositions: glMatrix.vec3[] = [];
+        if (data.obstaclesMesh) {
+            const obstaclesFillableMesh = new FillableMesh(data.obstaclesMesh.triangles);
+            obstaclesPositions = InitialPositions.fillMesh(data.spheresRadius, obstaclesFillableMesh);
+        }
 
         const particlesCount = particlesPositions.length + obstaclesPositions.length;
         const particlesBuffer = new WebGPU.Buffer(this.device, {

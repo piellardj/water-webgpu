@@ -7,6 +7,7 @@ const controlId = {
     RESET_BUTTON: "reset-button-id",
     SPHERE_RADIUS_TABS: "sphere-radius-tabs-id",
     GRAVITY_RANGE: "gravity-range-id",
+    OBSTACLE_SELECT: "obstacles-select-id",
 
     OBSTACLE_MESH_CHECKBOX: "obstacle-mesh-checkbox-id",
     OBSTACLE_SPHERES_CHECKBOX: "obstacle-spheres-checkbox-id",
@@ -63,8 +64,8 @@ enum EGridDisplayMode {
 }
 
 enum EObstacleType {
-    NONE = "0",
-    LIGHTHOUSE = "1",
+    NONE = "none",
+    CAPSULES = "capsules",
 }
 
 Page.Button.addObserver(controlId.RESET_BUTTON, () => {
@@ -78,9 +79,16 @@ Page.Tabs.addObserver(controlId.SPHERE_RADIUS_TABS, () => {
     }
 });
 
+Page.Select.addObserver(controlId.OBSTACLE_SELECT, () => {
+    for (const observer of Parameters.onObstacleChange) {
+        observer();
+    }
+});
+
 abstract class Parameters {
     public static readonly onResetObservers: VoidFunction[] = [];
     public static readonly onSphereSizeChange: VoidFunction[] = [];
+    public static readonly onObstacleChange: VoidFunction[] = [];
 
     public static get paused(): boolean {
         return Page.Checkbox.isChecked(controlId.PAUSE_CHECKBOX);
@@ -104,6 +112,14 @@ abstract class Parameters {
 
     public static get gravity(): number {
         return Page.Range.getValue(controlId.GRAVITY_RANGE);
+    }
+
+    public static get obstacle(): EObstacleType {
+        const value = Page.Select.getValue(controlId.OBSTACLE_SELECT);
+        if (!value) {
+            throw new Error();
+        }
+        return value as EObstacleType;
     }
 
     public static get backgroundColor(): ColorNormalized {
