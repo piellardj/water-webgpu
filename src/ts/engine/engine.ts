@@ -58,18 +58,18 @@ class Engine {
 
         const fillableMesh = new FillableMesh(this.mesh.triangles);
         const positions = InitialPositions.fillMesh(this.spheresRadius, fillableMesh);
-        positions.push(...positions.map(v => {
-            return [v[0] + 0.1, v[1] + 0.1, v[2] + 0.1] as glMatrix.vec3;
-        }));
-        positions.push(...positions.map(v => {
-            return [v[0] + 0.07, v[1] + 0.07, v[2] + 0.07] as glMatrix.vec3;
-        }));
-        positions.push(...positions.map(v => {
-            return [v[0] + 0.04, v[1] + 0.04, v[2] + 0.04] as glMatrix.vec3;
-        }));
-        positions.push(...positions.map(v => {
-            return [v[0] + 0.06, v[1] + 0.06, v[2] + 0.06] as glMatrix.vec3;
-        }));
+        // positions.push(...positions.map(v => {
+        //     return [v[0] + 0.1, v[1] + 0.1, v[2] + 0.1] as glMatrix.vec3;
+        // }));
+        // positions.push(...positions.map(v => {
+        //     return [v[0] + 0.07, v[1] + 0.07, v[2] + 0.07] as glMatrix.vec3;
+        // }));
+        // positions.push(...positions.map(v => {
+        //     return [v[0] + 0.04, v[1] + 0.04, v[2] + 0.04] as glMatrix.vec3;
+        // }));
+        // positions.push(...positions.map(v => {
+        //     return [v[0] + 0.06, v[1] + 0.06, v[2] + 0.06] as glMatrix.vec3;
+        // }));
 
         this.drawableCellsIndicesBuffer = new WebGPU.Buffer(this.device, {
             size: Uint32Array.BYTES_PER_ELEMENT * this.gridSize[0] * this.gridSize[1] * this.gridSize[2],
@@ -90,6 +90,7 @@ class Engine {
         const particlesCount = positions.length;
         const particlesStructType = new WebGPU.Types.StructType("Particle", [
             { name: "position", type: WebGPU.Types.vec3F32 },
+            { name: "weight", type: WebGPU.Types.f32 },
             { name: "velocity", type: WebGPU.Types.vec3F32 },
             { name: "acceleration", type: WebGPU.Types.vec3F32 },
             { name: "indexInCell", type: WebGPU.Types.u32 },

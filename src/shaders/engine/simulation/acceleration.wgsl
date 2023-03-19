@@ -48,7 +48,7 @@ fn main(in: ComputeIn) {
                             let penetration = 2.0 * uniforms.particleRadius - distance;
      
                             if (penetration > 0.0) {
-                                particle.acceleration += 0.48 * penetration * normalize(fromVector) / uniforms.dt;
+                                particle.acceleration += (0.96 * particle.weight / (particle.weight + neighbour.weight)) * penetration * normalize(fromVector) / uniforms.dt;
                             }
                         }
                     }

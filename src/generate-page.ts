@@ -153,7 +153,7 @@ const data: IDemopageData = {
             ],
         },
         {
-            title: "Rendering",
+            title: "Spheres",
             controls: [
                 {
                     type: Demopage.supportedControls.Checkbox,

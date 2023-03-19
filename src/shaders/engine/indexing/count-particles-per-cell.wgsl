@@ -8,9 +8,13 @@ struct ComputeIn {
     @builtin(global_invocation_id) globalInvocationId : vec3<u32>,
 };
 
-fn computeCellIndex(position: vec3<f32>) -> u32 {
+fn computeCellId(position: vec3<f32>) -> vec3<i32> {
     let naiveCellId = vec3<i32>(position / uniforms.cellSize);
-    let cellId = clamp(naiveCellId, vec3<i32>(0), uniforms.gridSize - 1);
+    return clamp(naiveCellId, vec3<i32>(0), uniforms.gridSize - 1);
+}
+
+fn computeCellIndex(position: vec3<f32>) -> u32 {
+    let cellId = computeCellId(position);
     return dot(vec3<u32>(cellId), uniforms.cellsStride);
 }
 

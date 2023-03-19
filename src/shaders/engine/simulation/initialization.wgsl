@@ -1,4 +1,4 @@
-@group(0) @binding(0) var<storage,read> positionsBuffer: array<vec3<f32>>; // stride(16)
+@group(0) @binding(0) var<storage,read> initialParticlesBuffer: array<InitialParticle>;
 @group(0) @binding(1) var<storage,read_write> particlesBuffer: array<Particle>;
 @group(0) @binding(2) var<uniform> uniforms: Uniforms;
 
@@ -13,8 +13,11 @@ fn main(in: ComputeIn) {
     let particleId = in.globalInvocationId.x;
 
     if (particleId < uniforms.particlesCount) {
+        var initialParticle = initialParticlesBuffer[particleId];
+
         var particle: Particle;
-        particle.position = positionsBuffer[particleId];
+        particle.position = initialParticle.position;
+        particle.weight = initialParticle.weight;
         particle.velocity = vec3<f32>(0);
         particle.acceleration = vec3<f32>(0);
         particlesBuffer[particleId] = particle;

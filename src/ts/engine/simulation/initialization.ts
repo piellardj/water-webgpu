@@ -33,13 +33,23 @@ class Initialization {
         this.uniforms.setValueFromName("particlesCount", data.particlesBufferData.particlesCount);
         this.uniforms.uploadToGPU();
 
+        const initialParticleStructType = new WebGPU.Types.StructType("InitialParticle", [
+            {name: "position", type: WebGPU.Types.vec3F32},
+            {name: "weight", type: WebGPU.Types.f32},
+        ]);
+
         this.positionsBuffer = new WebGPU.Buffer(device, {
-            size: 16 * data.initialPositions.length,
+            size: initialParticleStructType.size * data.initialPositions.length,
             usage: GPUBufferUsage.STORAGE,
         });
-        const positionsData = new Float32Array(this.positionsBuffer.getMappedRange());
+        const positionsData = this.positionsBuffer.getMappedRange();
         data.initialPositions.forEach((position: glMatrix.ReadonlyVec3, index: number) => {
-            positionsData.set(position, 4 * index);
+            const offset = index * initialParticleStructType.size;
+            const data = {
+                position,
+                weight: 1, 
+            };
+            initialParticleStructType.setValue(positionsData, offset, data);
         });
         this.positionsBuffer.unmap();
 
@@ -48,7 +58,7 @@ class Initialization {
             compute: {
                 module: WebGPU.ShaderModule.create(device, {
                     code: ShaderSources.Engine.Simulation.Initialization,
-                    structs: [data.particlesBufferData.particlesStructType, this.uniforms],
+                    structs: [data.particlesBufferData.particlesStructType, this.uniforms, initialParticleStructType],
                 }),
                 entryPoint: "main",
                 constants: {
