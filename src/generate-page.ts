@@ -49,24 +49,45 @@ const data: IDemopageData = {
                     type: Demopage.supportedControls.Range,
                     title: "Timestep",
                     id: "timestep-range-id",
-                    min: 0.001,
-                    max: 0.02,
-                    value: 0.005,
-                    step: 0.001
+                    min: 0.0005,
+                    max: 0.01,
+                    value: 0.001,
+                    step: 0.0005,
                 },
                 {
                     type: Demopage.supportedControls.Range,
                     title: "Steps per frame",
                     id: "iterations-per-frame-range-id",
                     min: 1,
-                    max: 5,
-                    value: 1,
+                    max: 10,
+                    value: 5,
                     step: 1
                 },
                 {
                     type: Demopage.supportedControls.Button,
                     label: "Reset",
                     id: "reset-button-id",
+                },
+                {
+                    type: Demopage.supportedControls.Tabs,
+                    title: "Sphere radius",
+                    id: "sphere-radius-tabs-id",
+                    unique: true,
+                    options: [
+                        {
+                            value: "0.005",
+                            label: "Small",
+                        },
+                        {
+                            value: "0.01",
+                            label: "Medium",
+                            checked: true,
+                        },
+                        {
+                            value: "0.02",
+                            label: "Large",
+                        },
+                    ]
                 },
                 {
                     type: Demopage.supportedControls.Range,

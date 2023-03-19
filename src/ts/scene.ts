@@ -14,6 +14,10 @@ import * as Indicators from "./ui/indicators";
 import { EGridDisplayMode, Parameters } from "./ui/parameters";
 import * as WebGPU from "./webgpu-utils/webgpu-utils";
 
+type Data = {
+    spheresRadius: number;
+};
+
 class Scene {
     private readonly webgpuCanvas: WebGPU.Canvas;
 
@@ -28,17 +32,15 @@ class Scene {
     private readonly gridCellsRenderer: GridCellsRenderer;
     private readonly gridCellsPerPopulationRenderer: GridCellsByPopulationRenderer;
 
+    private particlesContainerMesh: Mesh;
+    private obstaclesMesh: Mesh;
+
     private readonly meshRenderer: MeshRenderer;
     private readonly particlesMeshes: MeshRenderable[] = [];
     private readonly obstacleMeshes: MeshRenderable[] = [];
 
-    public constructor(webgpuCanvas: WebGPU.Canvas) {
+    public constructor(webgpuCanvas: WebGPU.Canvas, data: Data) {
         this.webgpuCanvas = webgpuCanvas;
-
-        const particlesContainerMesh = Mesh.load(Models.Shapes);
-        const obstaclesMesh = Mesh.load(Models.Lighthouse2);
-
-        this.engine = new Engine(webgpuCanvas.device, { particlesContainerMesh, obstaclesMesh });
 
         this.axesRenderer = new AxesRenderer(webgpuCanvas);
         this.cubeRenderer = new CubeRenderer(webgpuCanvas);
@@ -46,10 +48,18 @@ class Scene {
         this.meshRenderer = new MeshRenderer(webgpuCanvas);
         this.gridCellsRenderer = new GridCellsRenderer(webgpuCanvas);
         this.gridCellsPerPopulationRenderer = new GridCellsByPopulationRenderer(this.webgpuCanvas, Engine.cellBufferDescriptor);
+        
+        this.particlesContainerMesh = Mesh.load(Models.Shapes);
+        this.obstaclesMesh = Mesh.load(Models.Lighthouse2);
 
-        this.particlesMeshes.push(this.meshRenderer.createMeshRenderable(particlesContainerMesh));
-        this.obstacleMeshes.push(this.meshRenderer.createMeshRenderable(obstaclesMesh));
+        this.particlesMeshes.push(this.meshRenderer.createMeshRenderable(this.particlesContainerMesh));
+        this.obstacleMeshes.push(this.meshRenderer.createMeshRenderable(this.obstaclesMesh));
 
+        this.engine = new Engine(webgpuCanvas.device, {
+            particlesContainerMesh: this.particlesContainerMesh,
+            obstaclesMesh: this.obstaclesMesh,
+            spheresRadius: data.spheresRadius
+        });
         Indicators.setParticlesCount(this.engine.spheresBuffer.instancesCount);
         Indicators.setGridSize(this.engine.gridData.gridSize);
     }
@@ -126,11 +136,21 @@ class Scene {
         renderpassEncoder.end();
     }
 
-    public reset(): void {
-        this.engine.reset();
+    public reinitialize(): void {
+        this.engine.reinitialize();
     }
 
-    public setSize(width: number, height: number): boolean {
+    public setSpheresSize(size: number): void {
+        this.engine.reset({
+            particlesContainerMesh: this.particlesContainerMesh,
+            obstaclesMesh: this.obstaclesMesh,
+            spheresRadius: size,
+        });
+        Indicators.setParticlesCount(this.engine.spheresBuffer.instancesCount);
+        Indicators.setGridSize(this.engine.gridData.gridSize);
+    }
+
+    public setCanvasSize(width: number, height: number): boolean {
         return this.spheresRenderer.setSize(width, height);
     }
 }

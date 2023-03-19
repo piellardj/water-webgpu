@@ -8,19 +8,23 @@ import * as WebGPU from "./webgpu-utils/webgpu-utils";
 function main(device: GPUDevice, canvas: HTMLCanvasElement, _canvasContainer: HTMLElement): void {
     const webgpuCanvas = new WebGPU.Canvas(canvas);
     const camera = new Camera();
-    const scene = new Scene(webgpuCanvas);
+    const scene = new Scene(webgpuCanvas, {
+        spheresRadius: Parameters.spheresRadius,
+    });
 
     const framesCounter = new FrameCounter();
     framesCounter.onChange = Indicators.setAverageFps;
 
-    Parameters.onResetObservers.push(() => scene.reset());
+    Parameters.onResetObservers.push(() => scene.reinitialize());
+
+    Parameters.onSphereSizeChange.push(() => scene.setSpheresSize(Parameters.spheresRadius));
 
     function mainLoop(): void {
         framesCounter.registerFrame();
 
         webgpuCanvas.setClearColor(Parameters.backgroundColor);
         webgpuCanvas.adjustSize();
-        scene.setSize(webgpuCanvas.width, webgpuCanvas.height);
+        scene.setCanvasSize(webgpuCanvas.width, webgpuCanvas.height);
 
         const commandEncoder = device.createCommandEncoder();
 

@@ -5,6 +5,7 @@ const controlId = {
     TIMESTEP_RANGE: "timestep-range-id",
     STEPS_PER_FRAME_RANGE: "iterations-per-frame-range-id",
     RESET_BUTTON: "reset-button-id",
+    SPHERE_RADIUS_TABS: "sphere-radius-tabs-id",
     GRAVITY_RANGE: "gravity-range-id",
 
     OBSTACLE_MESH_CHECKBOX: "obstacle-mesh-checkbox-id",
@@ -71,10 +72,15 @@ Page.Button.addObserver(controlId.RESET_BUTTON, () => {
         observer();
     }
 });
+Page.Tabs.addObserver(controlId.SPHERE_RADIUS_TABS, () => {
+    for (const observer of Parameters.onSphereSizeChange) {
+        observer();
+    }
+});
 
 abstract class Parameters {
     public static readonly onResetObservers: VoidFunction[] = [];
-    public static readonly onObstacleChangeObservers: VoidFunction[] = [];
+    public static readonly onSphereSizeChange: VoidFunction[] = [];
 
     public static get paused(): boolean {
         return Page.Checkbox.isChecked(controlId.PAUSE_CHECKBOX);
@@ -86,6 +92,14 @@ abstract class Parameters {
 
     public static get stepsPerFrame(): number {
         return Page.Range.getValue(controlId.STEPS_PER_FRAME_RANGE);
+    }
+
+    public static get spheresRadius(): number {
+        const value = Page.Tabs.getValues(controlId.SPHERE_RADIUS_TABS)[0];
+        if (!value) {
+            throw new Error();
+        }
+        return +value;
     }
 
     public static get gravity(): number {

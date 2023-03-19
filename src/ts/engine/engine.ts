@@ -11,6 +11,7 @@ import { Integration } from "./simulation/integration";
 type Data = {
     particlesContainerMesh: Mesh;
     obstaclesMesh: Mesh;
+    spheresRadius: number;
 };
 
 type SpheresBufferDescriptor = {
@@ -31,6 +32,17 @@ type ParticlesBufferData = {
     readonly particlesCount: number;
 };
 
+type ResetResult = {
+    particlesBuffer: WebGPU.Buffer;
+    particlesCount: number;
+
+    particlesPositions: glMatrix.vec3[];
+    obstaclesPositions: glMatrix.vec3[];
+
+    cellSize: number;
+    gridSize: glMatrix.ReadonlyVec3;
+};
+
 class Engine {
     private static readonly particleStructType = new WebGPU.Types.StructType("Particle", [
         { name: "position", type: WebGPU.Types.vec3F32 },
@@ -47,67 +59,66 @@ class Engine {
 
     private readonly device: GPUDevice;
 
-    private readonly particles: ParticlesBufferData;
-    private readonly spheresRadius: number = 0.005;
+    private particlesBuffer: WebGPU.Buffer;
+    private particlesCount: number;
 
-    private readonly cellSize: number = Math.max(0.01, 2 * this.spheresRadius);
-    private readonly gridSize: glMatrix.ReadonlyVec3 = [Math.ceil(1 / this.cellSize), Math.ceil(1 / this.cellSize), Math.ceil(1 / this.cellSize)];
+    private spheresRadius: number;
+    private cellSize: number;
+    private gridSize: glMatrix.ReadonlyVec3;
 
     private readonly initialization: Initialization;
-    private needsInitialization: boolean = true;
+    private needsInitialization: boolean;
 
     private readonly acceleration: Acceleration;
     private readonly integration: Integration;
 
     private readonly indexing: Indexing;
-    private needsIndexing: boolean = true;
+    private needsIndexing: boolean;
 
     public constructor(device: GPUDevice, data: Data) {
         this.device = device;
 
-        const particlesFillableMesh = new FillableMesh(data.particlesContainerMesh.triangles);
-        const particlesPositions = InitialPositions.fillMesh(this.spheresRadius, particlesFillableMesh);
+        const resetResult = this.applyReset(data);
+        this.particlesBuffer = resetResult.particlesBuffer;
+        this.particlesCount = resetResult.particlesCount;
+        this.spheresRadius = data.spheresRadius;
+        this.cellSize = resetResult.cellSize;
+        this.gridSize = resetResult.gridSize;
 
-        const obstaclesFillableMesh = new FillableMesh(data.obstaclesMesh.triangles);
-        const obstaclesPositions = InitialPositions.fillMesh(this.spheresRadius, obstaclesFillableMesh);
-
-        const particlesCount = particlesPositions.length + obstaclesPositions.length;
-        const particlesBuffer = new WebGPU.Buffer(this.device, {
-            size: Engine.particleStructType.size * particlesCount,
-            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE,
-        });
-
-        this.particles = {
-            particlesCount,
+        const particlesBufferData: ParticlesBufferData = {
+            particlesBuffer: this.particlesBuffer,
+            particlesCount: this.particlesCount,
             particlesStructType: Engine.particleStructType,
-            particlesBuffer,
         };
 
         this.initialization = new Initialization(this.device, {
-            particlesPositions,
-            obstaclesPositions,
-            particlesBufferData: this.particles,
+            particlesPositions: resetResult.particlesPositions,
+            obstaclesPositions: resetResult.obstaclesPositions,
+            particlesBufferData,
         });
 
         this.indexing = new Indexing(this.device, {
             gridSize: this.gridSize,
             cellSize: this.cellSize,
-            particlesBufferData: this.particles,
+            particlesBufferData,
         });
 
         this.acceleration = new Acceleration(this.device, {
             gridSize: this.gridSize,
             cellSize: this.cellSize,
             cellsBufferData: this.indexing.cellsBufferData,
-            particlesBufferData: this.particles,
+            particlesBufferData,
             particleRadius: this.spheresRadius,
             weightThreshold: Engine.getMaxWeight(false),
         });
         this.integration = new Integration(this.device, {
-            particlesBufferData: this.particles,
+            particlesBufferData,
             particleRadius: this.spheresRadius,
             weightThreshold: Engine.getMaxWeight(false),
         });
+
+        this.needsInitialization = true;
+        this.needsIndexing = true;
     }
 
     public compute(commandEncoder: GPUCommandEncoder, dt: number): void {
@@ -128,8 +139,73 @@ class Engine {
         }
     }
 
-    public reset(): void {
+    public reinitialize(): void {
         this.needsInitialization = true;
+    }
+
+    public reset(data: Data): void {
+        this.particlesBuffer.free();
+
+        const resetResult = this.applyReset(data);
+        this.particlesBuffer = resetResult.particlesBuffer;
+        this.particlesCount = resetResult.particlesCount;
+        this.spheresRadius = data.spheresRadius;
+        this.cellSize = resetResult.cellSize;
+        this.gridSize = resetResult.gridSize;
+
+        const particlesBufferData: ParticlesBufferData = {
+            particlesBuffer: this.particlesBuffer,
+            particlesCount: this.particlesCount,
+            particlesStructType: Engine.particleStructType,
+        };
+
+        this.initialization.reset({
+            particlesPositions: resetResult.particlesPositions,
+            obstaclesPositions: resetResult.obstaclesPositions,
+            particlesBufferData,
+        });
+
+        this.indexing.reset({
+            gridSize: this.gridSize,
+            cellSize: this.cellSize,
+            particlesBufferData,
+        });
+
+        this.acceleration.reset({
+            gridSize: this.gridSize,
+            cellSize: this.cellSize,
+            cellsBufferData: this.indexing.cellsBufferData,
+            particlesBufferData,
+            particleRadius: this.spheresRadius,
+            weightThreshold: Engine.getMaxWeight(false),
+        });
+        this.integration.reset({
+            particlesBufferData,
+            particleRadius: this.spheresRadius,
+            weightThreshold: Engine.getMaxWeight(false),
+        });
+
+        this.needsInitialization = true;
+        this.needsIndexing = true;
+    }
+
+    private applyReset(data: Data): ResetResult {
+        const particlesFillableMesh = new FillableMesh(data.particlesContainerMesh.triangles);
+        const particlesPositions = InitialPositions.fillMesh(data.spheresRadius, particlesFillableMesh);
+
+        const obstaclesFillableMesh = new FillableMesh(data.obstaclesMesh.triangles);
+        const obstaclesPositions = InitialPositions.fillMesh(data.spheresRadius, obstaclesFillableMesh);
+
+        const particlesCount = particlesPositions.length + obstaclesPositions.length;
+        const particlesBuffer = new WebGPU.Buffer(this.device, {
+            size: Engine.particleStructType.size * particlesCount,
+            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE,
+        });
+
+        const cellSize = Math.max(0.01, 2.05 * data.spheresRadius);
+        const gridSize: glMatrix.vec3 = [Math.ceil(1 / cellSize), Math.ceil(1 / cellSize), Math.ceil(1 / cellSize)];
+
+        return { particlesBuffer, particlesCount, particlesPositions, obstaclesPositions, cellSize, gridSize };
     }
 
     public static getMaxWeight(includeObstacles: boolean): number {
@@ -154,8 +230,8 @@ class Engine {
 
     public get spheresBuffer(): SpheresBuffer {
         return {
-            gpuBuffer: this.particles.particlesBuffer.gpuBuffer,
-            instancesCount: this.particles.particlesCount,
+            gpuBuffer: this.particlesBuffer.gpuBuffer,
+            instancesCount: this.particlesCount,
             sphereRadius: this.spheresRadius,
         };
     }
