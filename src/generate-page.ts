@@ -148,6 +148,11 @@ const data: IDemopageData = {
                     id: "domain-display-checkbox-id",
                     checked: true,
                 },
+                {
+                    type: Demopage.supportedControls.Button,
+                    label: "Reset",
+                    id: "domain-reset-button-id",
+                },
             ],
         },
         {

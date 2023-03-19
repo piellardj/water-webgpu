@@ -7,12 +7,13 @@ const controlId = {
     RESET_BUTTON: "reset-button-id",
     SPHERE_RADIUS_TABS: "sphere-radius-tabs-id",
     GRAVITY_RANGE: "gravity-range-id",
-    
+
     DOMAIN_ANIMATION_SELECT: "domain-animation-select-id",
     DOMAIN_ROTATION_RANGE: "domain-rotation-range-id",
     DOMAIN_CONTRACTION_RANGE: "domain-contraction-range-id",
     DOMAIN_DISPLAY_CHECKBOX: "domain-display-checkbox-id",
-    
+    DOMAIN_RESET_BUTTON: "domain-reset-button-id",
+
     OBSTACLE_SELECT: "obstacles-select-id",
     OBSTACLE_MESH_CHECKBOX: "obstacle-mesh-checkbox-id",
     OBSTACLE_SPHERES_CHECKBOX: "obstacle-spheres-checkbox-id",
@@ -83,12 +84,16 @@ Page.Button.addObserver(controlId.RESET_BUTTON, () => {
         observer();
     }
 });
+Page.Button.addObserver(controlId.DOMAIN_RESET_BUTTON, () => {
+    for (const observer of Parameters.onDomainResetObservers) {
+        observer();
+    }
+});
 Page.Tabs.addObserver(controlId.SPHERE_RADIUS_TABS, () => {
     for (const observer of Parameters.onSphereSizeChange) {
         observer();
     }
 });
-
 Page.Select.addObserver(controlId.OBSTACLE_SELECT, () => {
     for (const observer of Parameters.onObstacleChange) {
         observer();
@@ -97,6 +102,7 @@ Page.Select.addObserver(controlId.OBSTACLE_SELECT, () => {
 
 abstract class Parameters {
     public static readonly onResetObservers: VoidFunction[] = [];
+    public static readonly onDomainResetObservers: VoidFunction[] = [];
     public static readonly onSphereSizeChange: VoidFunction[] = [];
     public static readonly onObstacleChange: VoidFunction[] = [];
 

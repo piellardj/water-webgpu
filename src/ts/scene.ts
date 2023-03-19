@@ -155,6 +155,10 @@ class Scene {
 
     public reinitialize(): void {
         this.engine.reinitialize();
+        this.reinitializeDomain();
+    }
+
+    public reinitializeDomain(): void {
         this.rotationPeriod = 0;
         this.contractionPeriod = 0;
         Parameters.domainRotation = this.rotationPeriod;

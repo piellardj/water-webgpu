@@ -17,7 +17,7 @@ function main(device: GPUDevice, canvas: HTMLCanvasElement, _canvasContainer: HT
     framesCounter.onChange = Indicators.setAverageFps;
 
     Parameters.onResetObservers.push(() => scene.reinitialize());
-
+    Parameters.onDomainResetObservers.push(() => scene.reinitializeDomain());
     Parameters.onSphereSizeChange.push(() => scene.setSpheresSize(Parameters.spheresRadius));
     Parameters.onObstacleChange.push(() => scene.setObstacle(Parameters.obstacleType));
 
