@@ -7,13 +7,13 @@ const controlId = {
     RESET_BUTTON: "reset-button-id",
     SPHERE_RADIUS_TABS: "sphere-radius-tabs-id",
     GRAVITY_RANGE: "gravity-range-id",
-    OBSTACLE_SELECT: "obstacles-select-id",
-
-    DOMAIN_DISPLAY_CHECKBOX: "domain-display-checkbox-id",
+    
     DOMAIN_ANIMATION_SELECT: "domain-animation-select-id",
     DOMAIN_ROTATION_RANGE: "domain-rotation-range-id",
     DOMAIN_CONTRACTION_RANGE: "domain-contraction-range-id",
-
+    DOMAIN_DISPLAY_CHECKBOX: "domain-display-checkbox-id",
+    
+    OBSTACLE_SELECT: "obstacles-select-id",
     OBSTACLE_MESH_CHECKBOX: "obstacle-mesh-checkbox-id",
     OBSTACLE_SPHERES_CHECKBOX: "obstacle-spheres-checkbox-id",
 
@@ -124,18 +124,6 @@ abstract class Parameters {
         return Page.Range.getValue(controlId.GRAVITY_RANGE);
     }
 
-    public static get obstacle(): EObstacleType {
-        const value = Page.Select.getValue(controlId.OBSTACLE_SELECT);
-        if (!value) {
-            throw new Error();
-        }
-        return value as EObstacleType;
-    }
-
-    public static get domainDisplay(): boolean {
-        return Page.Checkbox.isChecked(controlId.DOMAIN_DISPLAY_CHECKBOX);
-    }
-
     public static get domainAnimation(): EAnimationType {
         const value = Page.Select.getValue(controlId.DOMAIN_ANIMATION_SELECT);
         if (!value) {
@@ -159,6 +147,25 @@ abstract class Parameters {
         return Page.Range.getValue(controlId.DOMAIN_CONTRACTION_RANGE);
     }
 
+    public static get domainDisplay(): boolean {
+        return Page.Checkbox.isChecked(controlId.DOMAIN_DISPLAY_CHECKBOX);
+    }
+
+    public static get obstacleType(): EObstacleType {
+        const value = Page.Select.getValue(controlId.OBSTACLE_SELECT);
+        if (!value) {
+            throw new Error();
+        }
+        return value as EObstacleType;
+    }
+    public static get obstacleDisplayAsMesh(): boolean {
+        return Page.Checkbox.isChecked(controlId.OBSTACLE_MESH_CHECKBOX);
+    }
+    public static get obstacleDisplayAsSpheres(): boolean {
+        return Page.Checkbox.isChecked(controlId.OBSTACLE_SPHERES_CHECKBOX);
+    }
+
+
     public static get backgroundColor(): ColorNormalized {
         return buildColor(controlId.BACKGROUND_COLORPICKER);
     }
@@ -167,12 +174,6 @@ abstract class Parameters {
         return Page.Checkbox.isChecked(controlId.AXES_CHECKBOX);
     }
 
-    public static get showObstacleMesh(): boolean {
-        return Page.Checkbox.isChecked(controlId.OBSTACLE_MESH_CHECKBOX);
-    }
-    public static get showObstacleSpheres(): boolean {
-        return Page.Checkbox.isChecked(controlId.OBSTACLE_SPHERES_CHECKBOX);
-    }
 
     public static get showParticlesMesh(): boolean {
         return false;

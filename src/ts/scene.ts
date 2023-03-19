@@ -99,7 +99,7 @@ class Scene {
                 gpuBuffer: this.engine.spheresBuffer.gpuBuffer,
                 instancesCount: this.engine.spheresBuffer.instancesCount,
                 sphereRadius: this.engine.spheresBuffer.sphereRadius,
-                maxDisplayedWeight: Engine.getMaxWeight(Parameters.showObstacleSpheres),
+                maxDisplayedWeight: Engine.getMaxWeight(Parameters.obstacleDisplayAsSpheres),
             });
         }
 
@@ -117,7 +117,7 @@ class Scene {
 
         {
             const renderableMeshes: MeshRenderable[] = [];
-            if (Parameters.showObstacleMesh) {
+            if (Parameters.obstacleDisplayAsMesh) {
                 renderableMeshes.push(...this.obstacleMeshes);
             }
             if (Parameters.showParticlesMesh) {
@@ -158,7 +158,7 @@ class Scene {
         this.rotationPeriod = 0;
         this.contractionPeriod = 0;
         Parameters.domainRotation = this.rotationPeriod;
-        Parameters.domainContraction = this.contractionPeriod;
+        Parameters.domainContraction = 1;
     }
 
     public setSpheresSize(size: number): void {

@@ -98,34 +98,11 @@ const data: IDemopageData = {
                     value: 0.9,
                     step: 0.1,
                 },
-                {
-                    type: Demopage.supportedControls.Select,
-                    title: "Obstacles",
-                    id: "obstacles-select-id",
-                    placeholder: "<unknown>",
-                    options: [
-                        {
-                            value: "none",
-                            label: "None",
-                        },
-                        {
-                            value: "capsules",
-                            label: "Capsules",
-                            checked: true,
-                        },
-                    ],
-                },
             ],
         },
         {
             title: "Domain",
             controls: [
-                {
-                    type: Demopage.supportedControls.Checkbox,
-                    title: "Display",
-                    id: "domain-display-checkbox-id",
-                    checked: true,
-                },
                 {
                     type: Demopage.supportedControls.Select,
                     title: "Animation",
@@ -165,20 +142,43 @@ const data: IDemopageData = {
                     value: 1,
                     step: 0.001,
                 },
+                {
+                    type: Demopage.supportedControls.Checkbox,
+                    title: "Display box",
+                    id: "domain-display-checkbox-id",
+                    checked: true,
+                },
             ],
         },
         {
             title: "Obstacles",
             controls: [
                 {
+                    type: Demopage.supportedControls.Select,
+                    title: "Obstacles",
+                    id: "obstacles-select-id",
+                    placeholder: "<unknown>",
+                    options: [
+                        {
+                            value: "none",
+                            label: "None",
+                        },
+                        {
+                            value: "capsules",
+                            label: "Capsules",
+                            checked: true,
+                        },
+                    ],
+                },
+                {
                     type: Demopage.supportedControls.Checkbox,
-                    title: "Show mesh",
+                    title: "Display mesh",
                     id: "obstacle-mesh-checkbox-id",
                     checked: true,
                 },
                 {
                     type: Demopage.supportedControls.Checkbox,
-                    title: "Show spheres",
+                    title: "Display spheres",
                     id: "obstacle-spheres-checkbox-id",
                 },
             ],
