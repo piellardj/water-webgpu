@@ -118,7 +118,7 @@ class Scene {
             case EGridDisplayMode.COLOR_BY_POPULATION:
                 this.gridCellsPerPopulationRenderer.render(renderpassEncoder, {
                     mvpMatrix: this.mvpMatrix,
-                    gpuBuffer: this.engine.cellsBufferData.gpuBuffer,
+                    gpuBuffer: this.engine.cellsBufferData.cellsBuffer.gpuBuffer,
                     gridData: this.engine.gridData,
                 });
                 break;

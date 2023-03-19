@@ -7,6 +7,16 @@ type Data = {
     itemsCount: number;
 };
 
+type ResetResult = {
+    dispatchSize: number;
+    localTotalsBuffer: WebGPU.Buffer;
+
+    reduceBindgroup: GPUBindGroup;
+    downPassBindgroup: GPUBindGroup | null;
+
+    childPrefixSum: PrefixSum | null;
+};
+
 class PrefixSum {
     private static readonly MAX_WORKGROUP_LEVEL = 8;
     private static readonly WORKGROUP_SIZE = 1 << (PrefixSum.MAX_WORKGROUP_LEVEL - 1);
@@ -14,26 +24,23 @@ class PrefixSum {
     private static reducePipeline: GPUComputePipeline;
     private static downPassPipeline: GPUComputePipeline | null = null;
 
-    private readonly dispatchSize: number;
-    private readonly itemsBuffer: WebGPU.Buffer;
+    private readonly device: GPUDevice;
     private readonly uniforms: WebGPU.Uniforms;
-    private readonly localTotalsBuffer: WebGPU.Buffer;
 
-    private readonly reduceBindgroup: GPUBindGroup;
-    private readonly downPassBindgroup: GPUBindGroup | null = null;
+    private dispatchSize: number;
+    private localTotalsBuffer: WebGPU.Buffer;
 
-    private readonly childPrefixSum: PrefixSum | null = null;
+    private reduceBindgroup: GPUBindGroup;
+    private downPassBindgroup: GPUBindGroup | null = null;
+
+    private childPrefixSum: PrefixSum | null = null;
 
     public constructor(device: GPUDevice, data: Data) {
-        if (data.itemsBuffer.size !== data.type.size * data.itemsCount) {
-            throw new Error("Prefix sum: invalid data");
-        }
+        this.device = device;
 
         this.uniforms = new WebGPU.Uniforms(device, [
             { name: "itemsCount", type: WebGPU.Types.u32 },
         ]);
-        this.uniforms.setValueFromName("itemsCount", data.itemsCount);
-        this.uniforms.uploadToGPU();
 
         if (!PrefixSum.reducePipeline) {
             PrefixSum.reducePipeline = device.createComputePipeline({
@@ -55,73 +62,14 @@ class PrefixSum {
             });
         }
 
-        this.itemsBuffer = data.itemsBuffer;
+        const resetResult = this.applyReset(data);
+        this.dispatchSize = resetResult.dispatchSize;
+        this.localTotalsBuffer = resetResult.localTotalsBuffer;
 
-        this.dispatchSize = Math.ceil(data.itemsCount / PrefixSum.WORKGROUP_SIZE);
+        this.reduceBindgroup = resetResult.reduceBindgroup;
+        this.downPassBindgroup = resetResult.downPassBindgroup;
 
-        this.localTotalsBuffer = new WebGPU.Buffer(device, {
-            size: data.type.size * this.dispatchSize,
-            usage: GPUBufferUsage.STORAGE,
-        });
-
-        this.reduceBindgroup = device.createBindGroup({
-            layout: PrefixSum.reducePipeline.getBindGroupLayout(0),
-            entries: [
-                {
-                    binding: 0,
-                    resource: this.itemsBuffer.bindingResource,
-                }, {
-                    binding: 1,
-                    resource: this.localTotalsBuffer.bindingResource,
-                }, {
-                    binding: 2,
-                    resource: this.uniforms.bindingResource,
-                }
-            ]
-        });
-
-        if (this.dispatchSize > 1) { // I will need another prefix sum on the totals
-            if (!PrefixSum.downPassPipeline) {
-                PrefixSum.downPassPipeline = device.createComputePipeline({
-                    layout: "auto",
-                    compute: {
-                        module: WebGPU.ShaderModule.create(device, {
-                            code: ShaderSources.Engine.Indexing.PrefixSum.DownPass,
-                            aliases: {
-                                "Type": data.type.typeName,
-                            },
-                            structs: [this.uniforms],
-                        }),
-                        entryPoint: "main",
-                        constants: {
-                            workgroupSize: PrefixSum.WORKGROUP_SIZE,
-                        },
-                    }
-                });
-            }
-
-            this.downPassBindgroup = device.createBindGroup({
-                layout: PrefixSum.downPassPipeline.getBindGroupLayout(0),
-                entries: [
-                    {
-                        binding: 0,
-                        resource: this.localTotalsBuffer.bindingResource,
-                    }, {
-                        binding: 1,
-                        resource: this.itemsBuffer.bindingResource,
-                    }, {
-                        binding: 2,
-                        resource: this.uniforms.bindingResource,
-                    }
-                ]
-            });
-
-            this.childPrefixSum = new PrefixSum(device, {
-                itemsBuffer: this.localTotalsBuffer,
-                itemsCount: this.dispatchSize,
-                type: data.type,
-            });
-        }
+        this.childPrefixSum = resetResult.childPrefixSum;
     }
 
     public compute(commandEncoder: GPUCommandEncoder): void {
@@ -166,6 +114,103 @@ class PrefixSum {
             pass.setBindGroup(0, this.downPassBindgroup);
             pass.dispatchWorkgroups(this.dispatchSize);
         }
+    }
+
+    public reset(data: Data): void {
+        const resetResult = this.applyReset(data);
+        this.dispatchSize = resetResult.dispatchSize;
+        this.localTotalsBuffer.free();
+        this.localTotalsBuffer = resetResult.localTotalsBuffer;
+
+        this.reduceBindgroup = resetResult.reduceBindgroup;
+        this.downPassBindgroup = resetResult.downPassBindgroup;
+
+        let child = this.childPrefixSum;
+        while (child) {
+            child.uniforms.free();
+            child = child.childPrefixSum;
+        }
+        this.childPrefixSum = resetResult.childPrefixSum;
+    }
+
+    private applyReset(data: Data): ResetResult {
+        if (data.itemsBuffer.size !== data.type.size * data.itemsCount) {
+            throw new Error("Prefix sum: invalid data");
+        }
+
+        this.uniforms.setValueFromName("itemsCount", data.itemsCount);
+        this.uniforms.uploadToGPU();
+
+        const dispatchSize = Math.ceil(data.itemsCount / PrefixSum.WORKGROUP_SIZE);
+
+        const localTotalsBuffer = new WebGPU.Buffer(this.device, {
+            size: data.type.size * dispatchSize,
+            usage: GPUBufferUsage.STORAGE,
+        });
+
+        const reduceBindgroup = this.device.createBindGroup({
+            layout: PrefixSum.reducePipeline.getBindGroupLayout(0),
+            entries: [
+                {
+                    binding: 0,
+                    resource: data.itemsBuffer.bindingResource,
+                }, {
+                    binding: 1,
+                    resource: localTotalsBuffer.bindingResource,
+                }, {
+                    binding: 2,
+                    resource: this.uniforms.bindingResource,
+                }
+            ]
+        });
+
+        let childPrefixSum: PrefixSum | null = null;
+        let downPassBindgroup: GPUBindGroup | null = null;
+
+        if (dispatchSize > 1) { // I will need another prefix sum on the totals
+            if (!PrefixSum.downPassPipeline) {
+                PrefixSum.downPassPipeline = this.device.createComputePipeline({
+                    layout: "auto",
+                    compute: {
+                        module: WebGPU.ShaderModule.create(this.device, {
+                            code: ShaderSources.Engine.Indexing.PrefixSum.DownPass,
+                            aliases: {
+                                "Type": data.type.typeName,
+                            },
+                            structs: [this.uniforms],
+                        }),
+                        entryPoint: "main",
+                        constants: {
+                            workgroupSize: PrefixSum.WORKGROUP_SIZE,
+                        },
+                    }
+                });
+            }
+
+            downPassBindgroup = this.device.createBindGroup({
+                layout: PrefixSum.downPassPipeline.getBindGroupLayout(0),
+                entries: [
+                    {
+                        binding: 0,
+                        resource: localTotalsBuffer.bindingResource,
+                    }, {
+                        binding: 1,
+                        resource: data.itemsBuffer.bindingResource,
+                    }, {
+                        binding: 2,
+                        resource: this.uniforms.bindingResource,
+                    }
+                ]
+            });
+
+            childPrefixSum = new PrefixSum(this.device, {
+                itemsBuffer: localTotalsBuffer,
+                itemsCount: dispatchSize,
+                type: data.type,
+            });
+        }
+
+        return { dispatchSize, localTotalsBuffer, reduceBindgroup, downPassBindgroup, childPrefixSum };
     }
 }
 

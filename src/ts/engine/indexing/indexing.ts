@@ -21,8 +21,7 @@ type CellsBufferDescriptor = {
 };
 
 type CellsBufferData = {
-    readonly gpuBuffer: GPUBuffer;
-    readonly cellsBufferBindingResource: GPUBindingResource;
+    readonly cellsBuffer: WebGPU.Buffer;
     readonly cellStructType: WebGPU.Types.StructType;
     readonly cellsCount: number;
 };
@@ -37,6 +36,13 @@ type GridData = {
     readonly cellSize: number;
 }
 
+type ResetResult = {
+    cellsCount: number;
+    cellsBuffer: WebGPU.Buffer;
+    nonEmptyCellsIndicesBuffer: WebGPU.Buffer;
+    gridData: GridData;
+};
+
 class Indexing {
     private static readonly cellStructType = new WebGPU.Types.StructType("Cell", [
         { name: "particlesCount", type: WebGPU.Types.u32 },
@@ -47,11 +53,13 @@ class Indexing {
         bufferArrayStride: Indexing.cellStructType.size,
     };
 
-    private readonly cellsCount: number;
+    private cellsBuffer: WebGPU.Buffer;
+    private nonEmptyCellsIndicesBuffer: WebGPU.Buffer;
+    public gridData: GridData;
+    private cellsCount: number;
 
-    private readonly cellsBuffer: WebGPU.Buffer;
+    private readonly device: GPUDevice;
 
-    private readonly nonEmptyCellsIndicesBuffer: WebGPU.Buffer;
     private readonly cellsIndirectDrawBuffer: WebGPU.Buffer;
 
     private readonly resetCells: ResetCells;
@@ -61,23 +69,8 @@ class Indexing {
     private readonly finalizePrefixSum: FinalizePrefixSum;
     private readonly reorderParticles: ReorderParticles;
 
-    public readonly cellsBufferData: CellsBufferData;
-
-    public readonly nonEmptyCellsBuffers: NonEmptyCellsBuffers;
-    public readonly gridData: GridData;
-
     public constructor(device: GPUDevice, data: Data) {
-        this.cellsCount = data.gridSize[0] * data.gridSize[1] * data.gridSize[2];
-
-        this.cellsBuffer = new WebGPU.Buffer(device, {
-            size: Indexing.cellStructType.size * this.cellsCount,
-            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX,
-        });
-
-        this.nonEmptyCellsIndicesBuffer = new WebGPU.Buffer(device, {
-            size: Uint32Array.BYTES_PER_ELEMENT * this.cellsCount,
-            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE,
-        });
+        this.device = device;
 
         this.cellsIndirectDrawBuffer = new WebGPU.Buffer(device, {
             size: WebGPU.Types.indirectDrawBufferType.size,
@@ -91,12 +84,11 @@ class Indexing {
         });
         this.cellsIndirectDrawBuffer.unmap();
 
-        this.cellsBufferData = {
-            gpuBuffer: this.cellsBuffer.gpuBuffer,
-            cellsBufferBindingResource: this.cellsBuffer.bindingResource,
-            cellStructType: Indexing.cellStructType,
-            cellsCount: this.cellsCount,
-        };
+        const resetResult = this.applyReset(data);
+        this.cellsCount = resetResult.cellsCount;
+        this.cellsBuffer = resetResult.cellsBuffer;
+        this.nonEmptyCellsIndicesBuffer = resetResult.nonEmptyCellsIndicesBuffer;
+        this.gridData = resetResult.gridData;
 
         this.resetCells = new ResetCells(device, {
             cellsBufferData: this.cellsBufferData,
@@ -132,15 +124,6 @@ class Indexing {
             gridSize: data.gridSize,
             cellSize: data.cellSize,
         });
-
-        this.nonEmptyCellsBuffers = {
-            nonEmptyCellsIndicesBuffer: this.nonEmptyCellsIndicesBuffer.gpuBuffer,
-            cellsIndirectDrawBuffer: this.cellsIndirectDrawBuffer.gpuBuffer,
-        };
-        this.gridData = {
-            gridSize: data.gridSize,
-            cellSize: data.cellSize,
-        };
     }
 
     public compute(commandEncoder: GPUCommandEncoder): void {
@@ -152,6 +135,88 @@ class Indexing {
         this.finalizePrefixSum.compute(commandEncoder);
 
         this.reorderParticles.compute(commandEncoder);
+    }
+
+    public reset(data: Data): void {
+        const resetResult = this.applyReset(data);
+
+        this.cellsCount = resetResult.cellsCount;
+        this.cellsBuffer.free();
+        this.cellsBuffer = resetResult.cellsBuffer;
+        this.nonEmptyCellsIndicesBuffer.free();
+        this.nonEmptyCellsIndicesBuffer = resetResult.nonEmptyCellsIndicesBuffer;
+        this.gridData = resetResult.gridData;
+
+        this.resetCells.reset({
+            cellsBufferData: this.cellsBufferData,
+        });
+
+        this.countParticlesPerCell.reset({
+            cellsBufferData: this.cellsBufferData,
+            gridSize: data.gridSize,
+            cellSize: data.cellSize,
+            particlesBufferData: data.particlesBufferData,
+        });
+
+        this.preparePrefixSum.reset({
+            cellsBufferData: this.cellsBufferData,
+        });
+
+        this.prefixSum.reset({
+            itemsBuffer: this.preparePrefixSum.dataItemsBuffer,
+            itemsCount: this.cellsCount,
+            type: WebGPU.Types.vec2U32,
+        });
+
+        this.finalizePrefixSum.reset({
+            dataItemsBuffer: this.preparePrefixSum.dataItemsBuffer,
+            cellsBufferData: this.cellsBufferData,
+            cellsIndirectDrawBuffer: this.cellsIndirectDrawBuffer,
+            nonEmptyCellsIndicesBuffer: this.nonEmptyCellsIndicesBuffer,
+        });
+
+        this.reorderParticles.reset({
+            particlesBufferData: data.particlesBufferData,
+            cellsBufferData: this.cellsBufferData,
+            gridSize: data.gridSize,
+            cellSize: data.cellSize,
+        });
+    }
+
+    private applyReset(data: Data): ResetResult {
+        const cellsCount = data.gridSize[0] * data.gridSize[1] * data.gridSize[2];
+
+        const cellsBuffer = new WebGPU.Buffer(this.device, {
+            size: Indexing.cellStructType.size * cellsCount,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX,
+        });
+
+        const nonEmptyCellsIndicesBuffer = new WebGPU.Buffer(this.device, {
+            size: Uint32Array.BYTES_PER_ELEMENT * cellsCount,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE,
+        });
+
+        const gridData = {
+            gridSize: data.gridSize,
+            cellSize: data.cellSize,
+        };
+
+        return { cellsCount, cellsBuffer, nonEmptyCellsIndicesBuffer, gridData };
+    }
+
+    public get nonEmptyCellsBuffers(): NonEmptyCellsBuffers {
+        return {
+            nonEmptyCellsIndicesBuffer: this.nonEmptyCellsIndicesBuffer.gpuBuffer,
+            cellsIndirectDrawBuffer: this.cellsIndirectDrawBuffer.gpuBuffer,
+        };
+    }
+
+    public get cellsBufferData(): CellsBufferData {
+        return {
+            cellsBuffer: this.cellsBuffer,
+            cellStructType: Indexing.cellStructType,
+            cellsCount: this.cellsCount,
+        };
     }
 }
 

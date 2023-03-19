@@ -1,6 +1,6 @@
 @group(0) @binding(0) var<storage,read_write> cellsBuffer: array<Cell>;
+@group(0) @binding(1) var<uniform> uniforms: Uniforms;
 
-override cellsCount: u32;
 override workgroupSize: i32;
 
 struct ComputeIn {
@@ -11,7 +11,7 @@ struct ComputeIn {
 fn main(in: ComputeIn) {
     let cellIndex = in.globalInvocationId.x;
 
-    if (cellIndex < cellsCount) {
+    if (cellIndex < uniforms.cellsCount) {
         var output: Cell;
         output.particlesCount = 0u;
         output.offset = 0u;

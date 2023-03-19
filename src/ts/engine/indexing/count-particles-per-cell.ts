@@ -12,17 +12,23 @@ type Data = {
     particlesBufferData: ParticlesBufferData,
 };
 
+type ResetResult = {
+    workgroupsCount: number;
+    bindgroup: GPUBindGroup;
+};
+
 class CountParticlesPerCell {
     private static readonly WORKGROUP_SIZE: number = 128;
 
-    private readonly workgroupsCount: number;
-
+    private readonly device: GPUDevice;
     private readonly uniforms: WebGPU.Uniforms;
     private readonly pipeline: GPUComputePipeline;
-    private readonly bindgroup: GPUBindGroup;
+
+    private workgroupsCount: number;
+    private bindgroup: GPUBindGroup;
 
     public constructor(device: GPUDevice, data: Data) {
-        this.workgroupsCount = Math.ceil(data.particlesBufferData.particlesCount / CountParticlesPerCell.WORKGROUP_SIZE);
+        this.device = device;
 
         const cellStructType = new WebGPU.Types.StructType("Cell", [
             { name: "particlesCount", type: WebGPU.Types.atomicU32 },
@@ -35,11 +41,6 @@ class CountParticlesPerCell {
             { name: "cellsStride", type: WebGPU.Types.vec3U32 },
             { name: "particlesCount", type: WebGPU.Types.u32 },
         ]);
-        this.uniforms.setValueFromName("gridSize", data.gridSize);
-        this.uniforms.setValueFromName("cellSize", data.cellSize);
-        this.uniforms.setValueFromName("cellsStride", [1, data.gridSize[0], data.gridSize[0] * data.gridSize[1]]);
-        this.uniforms.setValueFromName("particlesCount", data.particlesBufferData.particlesCount);
-        this.uniforms.uploadToGPU();
 
         this.pipeline = device.createComputePipeline({
             layout: "auto",
@@ -54,12 +55,41 @@ class CountParticlesPerCell {
                 },
             },
         });
-        this.bindgroup = device.createBindGroup({
+
+        const resetResult = this.applyReset(data);
+        this.workgroupsCount = resetResult.workgroupsCount;
+        this.bindgroup = resetResult.bindgroup;
+    }
+
+    public compute(commandEncoder: GPUCommandEncoder): void {
+        const computePass = commandEncoder.beginComputePass();
+        computePass.setPipeline(this.pipeline);
+        computePass.setBindGroup(0, this.bindgroup);
+        computePass.dispatchWorkgroups(this.workgroupsCount);
+        computePass.end();
+    }
+
+    public reset(data: Data): void {
+        const resetResult = this.applyReset(data);
+        this.workgroupsCount = resetResult.workgroupsCount;
+        this.bindgroup = resetResult.bindgroup;
+    }
+
+    private applyReset(data: Data): ResetResult {
+        this.uniforms.setValueFromName("gridSize", data.gridSize);
+        this.uniforms.setValueFromName("cellSize", data.cellSize);
+        this.uniforms.setValueFromName("cellsStride", [1, data.gridSize[0], data.gridSize[0] * data.gridSize[1]]);
+        this.uniforms.setValueFromName("particlesCount", data.particlesBufferData.particlesCount);
+        this.uniforms.uploadToGPU();
+
+        const workgroupsCount = Math.ceil(data.particlesBufferData.particlesCount / CountParticlesPerCell.WORKGROUP_SIZE);
+
+        const bindgroup = this.device.createBindGroup({
             layout: this.pipeline.getBindGroupLayout(0),
             entries: [
                 {
                     binding: 0,
-                    resource: data.cellsBufferData.cellsBufferBindingResource,
+                    resource: data.cellsBufferData.cellsBuffer.bindingResource,
                 },
                 {
                     binding: 1,
@@ -71,14 +101,8 @@ class CountParticlesPerCell {
                 },
             ]
         });
-    }
 
-    public compute(commandEncoder: GPUCommandEncoder): void {
-        const computePass = commandEncoder.beginComputePass();
-        computePass.setPipeline(this.pipeline);
-        computePass.setBindGroup(0, this.bindgroup);
-        computePass.dispatchWorkgroups(this.workgroupsCount);
-        computePass.end();
+        return { workgroupsCount, bindgroup };
     }
 }
 

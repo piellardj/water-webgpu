@@ -102,7 +102,7 @@ class Acceleration {
                 },
                 {
                     binding: 1,
-                    resource: data.cellsBufferData.cellsBufferBindingResource,
+                    resource: data.cellsBufferData.cellsBuffer.bindingResource,
                 },
                 {
                     binding: 2,
