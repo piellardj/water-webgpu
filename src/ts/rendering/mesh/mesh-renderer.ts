@@ -8,6 +8,8 @@ type RenderData = {
     readonly meshes: MeshRenderable[];
     readonly modelMatrix: glMatrix.ReadonlyMat4;
     readonly mvpMatrix: glMatrix.ReadonlyMat4;
+    readonly displayNormals: boolean;
+    readonly lightDirection: glMatrix.ReadonlyVec3;
 };
 
 class MeshRenderer {
@@ -23,6 +25,8 @@ class MeshRenderer {
         this.uniforms = new WebGPU.Uniforms(this.device, [
             { name: "mvp", type: WebGPU.Types.mat4x4 },
             { name: "modelMatrix", type: WebGPU.Types.mat4x4 },
+            { name: "lightDirection", type: WebGPU.Types.vec3F32 },
+            { name: "displayMode", type: WebGPU.Types.u32 },
         ]);
 
         const shaderModule = WebGPU.ShaderModule.create(this.device, {
@@ -91,6 +95,9 @@ class MeshRenderer {
         if (renderData.meshes.length === 0) {
             return;
         }
+
+        this.uniforms.setValueFromName("displayMode", renderData.displayNormals ? 1 : 0);
+        this.uniforms.setValueFromName("lightDirection", renderData.lightDirection);
 
         renderpassEncoder.setPipeline(this.renderPipeline);
 

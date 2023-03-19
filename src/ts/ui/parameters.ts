@@ -19,6 +19,7 @@ const controlId = {
     OBSTACLE_SPHERES_CHECKBOX: "obstacle-spheres-checkbox-id",
 
     RENDER_BACKGROUND_COLORPICKER: "render-background-color-id",
+    RENDER_MODE_TABS: "render-mode-tabs-id",
     RENDER_WATER_COLOR_COLORPICKER: "render-water-color-id",
     RENDER_WATER_OPACITY_RANGE: "render-water-opacity-range-id",
     RENDER_INDICATORS_CHECKBOX: "render-indicators-checkbox-id",
@@ -30,11 +31,11 @@ const controlId = {
     ENGINE_TIMESTEP_RANGE: "engine-timestep-range-id",
     ENGINE_STEPS_PER_FRAME_RANGE: "engine-iterations-per-frame-range-id",
 
-    BLUR_CHECKBOX: "blur-checkbox-id",
-    SPHERES_RADIUS_RANGE: "spheres-radius-checkbox-id",
-    DISPLAY_MODE_SELECT: "display-mode-select-id",
-    SPECULARITY_RANGE: "specularity-range-id",
-    FRESNEL_RANGE: "fresnel-range-id",
+    DEBUG_BLUR_CHECKBOX: "debug-blur-checkbox-id",
+    DEBUG_SPHERES_RADIUS_RANGE: "debug-spheres-radius-range-id",
+    DEBUG_DISPLAY_MODE_SELECT: "debug-display-mode-select-id",
+    DEBUG_SPECULARITY_RANGE: "debug-specularity-range-id",
+    DEBUG_FRESNEL_RANGE: "debug-fresnel-range-id",
 };
 
 function updateIndicatorsVisibility(): void {
@@ -61,8 +62,9 @@ enum EDisplayMode {
     CSREENSPACE_NORMALS = 1,
     WORLDSPACE_NORMALS = 2,
     WATER_DEPTH = 3,
-    WATER = 3,
-    DEPTH = 4,
+    WATER = 4,
+    DEPTH = 5,
+    BALLS = 6,
 }
 
 enum EGridDisplayMode {
@@ -221,15 +223,25 @@ abstract class Parameters {
     }
 
     public static get blur(): boolean {
-        return Page.Checkbox.isChecked(controlId.BLUR_CHECKBOX);
+        if (Parameters.isInDebug) {
+            return Page.Checkbox.isChecked(controlId.DEBUG_BLUR_CHECKBOX);
+        } else {
+            return Parameters.displayMode === EDisplayMode.WATER;
+        }
     }
 
     public static get spheresRadiusFactor(): number {
-        return Page.Range.getValue(controlId.SPHERES_RADIUS_RANGE);
+        return Page.Range.getValue(controlId.DEBUG_SPHERES_RADIUS_RANGE);
     }
 
     public static get displayMode(): EDisplayMode {
-        const value = Page.Select.getValue(controlId.DISPLAY_MODE_SELECT);
+        let value: string | null;
+        if (Parameters.isInDebug) {
+            value = Page.Select.getValue(controlId.DEBUG_DISPLAY_MODE_SELECT);
+        } else {
+            value = Page.Tabs.getValues(controlId.RENDER_MODE_TABS)[0];
+        }
+
         if (!value) {
             throw new Error();
         }
@@ -237,11 +249,11 @@ abstract class Parameters {
     }
 
     public static get waterSpecularity(): number {
-        return Page.Range.getValue(controlId.SPECULARITY_RANGE);
+        return Page.Range.getValue(controlId.DEBUG_SPECULARITY_RANGE);
     }
 
     public static get waterFresnel(): number {
-        return Page.Range.getValue(controlId.FRESNEL_RANGE);
+        return Page.Range.getValue(controlId.DEBUG_FRESNEL_RANGE);
     }
 }
 
@@ -282,6 +294,7 @@ updateObstacleAnimationVisibility();
 Page.Sections.setVisibility("debug-section-id", Parameters.isInDebug);
 
 export {
+    EDisplayMode,
     EDomainAnimationType,
     EGridDisplayMode,
     EObstacleAnimationType,

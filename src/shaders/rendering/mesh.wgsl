@@ -25,6 +25,16 @@ struct FragmentOut {
 @fragment
 fn main_fragment(in: VertexOut) -> FragmentOut {
     var output: FragmentOut;
-    output.color = vec4<f32>(0.5 + 0.5 * in.worldNormal, 1.0);
+
+    var finalColor = 0.5 + 0.5 * in.worldNormal;
+
+    if (uniforms.displayMode == 0u) {
+        const albedo = vec3<f32>(1);
+        let ambiant =  0.2;
+        let diffuse = 0.8 * (0.5 + 0.5 * dot(in.worldNormal, uniforms.lightDirection));
+        finalColor = albedo * (ambiant + diffuse);
+    }
+
+    output.color = vec4<f32>(finalColor, 1.0);
     return output;
 }

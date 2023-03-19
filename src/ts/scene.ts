@@ -11,7 +11,7 @@ import { MeshRenderable } from "./rendering/mesh/mesh-renderable";
 import { MeshRenderer } from "./rendering/mesh/mesh-renderer";
 import { SpheresRenderer } from "./rendering/spheres/spheres-renderer";
 import * as Indicators from "./ui/indicators";
-import { EDomainAnimationType, EGridDisplayMode, EObstacleAnimationType, EObstacleType, EParticlesQuantity, Parameters } from "./ui/parameters";
+import { EDisplayMode, EDomainAnimationType, EGridDisplayMode, EObstacleAnimationType, EObstacleType, EParticlesQuantity, Parameters } from "./ui/parameters";
 import * as WebGPU from "./webgpu-utils/webgpu-utils";
 
 type Data = {
@@ -105,6 +105,8 @@ class Scene {
         glMatrix.mat4.translate(this.modelMatrix, this.modelMatrix, [-0.5, -0.5, -0.5]);
         glMatrix.mat4.multiply(this.mvpMatrix, viewData.vpMatrix, this.modelMatrix);
 
+        const lightDirection: glMatrix.ReadonlyVec3 = [0, Math.SQRT1_2, Math.SQRT1_2];
+
         if (Parameters.particlesDisplay) {
             this.spheresRenderer.renderDeferred(commandEncoder, viewData, {
                 modelMatrix: this.modelMatrix,
@@ -139,6 +141,8 @@ class Scene {
                 meshes: renderableMeshes,
                 mvpMatrix: this.mvpMatrix,
                 modelMatrix: this.modelMatrix,
+                displayNormals: Parameters.displayMode !== EDisplayMode.WATER,
+                lightDirection,
             });
         }
 
@@ -250,8 +254,8 @@ class Scene {
                 return Mesh.load(Models.Particles.XXX);
             case EParticlesQuantity.XXXX:
                 return Mesh.load(Models.Particles.XXXX);
-                case EParticlesQuantity.XXXXX:
-                    return Mesh.load(Models.Particles.XXXXX);
+            case EParticlesQuantity.XXXXX:
+                return Mesh.load(Models.Particles.XXXXX);
             default:
                 throw new Error();
         }

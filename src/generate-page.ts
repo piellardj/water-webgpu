@@ -230,6 +230,23 @@ const data: IDemopageData = {
                     defaultValueHex: "#CA8BBC",
                 },
                 {
+                    type: Demopage.supportedControls.Tabs,
+                    title: "Mode",
+                    id: "render-mode-tabs-id",
+                    unique: true,
+                    options: [
+                        {
+                            value: "4",
+                            label: "Water",
+                            checked: true,
+                        },
+                        {
+                            value: "2",
+                            label: "Balls",
+                        },
+                    ]
+                },
+                {
                     type: Demopage.supportedControls.ColorPicker,
                     title: "Water color",
                     id: "render-water-color-id",
@@ -331,7 +348,7 @@ const data: IDemopageData = {
                 {
                     type: Demopage.supportedControls.Range,
                     title: "Radius",
-                    id: "spheres-radius-checkbox-id",
+                    id: "debug-spheres-radius-range-id",
                     min: 0,
                     max: 2,
                     value: 1,
@@ -340,12 +357,12 @@ const data: IDemopageData = {
                 {
                     type: Demopage.supportedControls.Checkbox,
                     title: "Blur",
-                    id: "blur-checkbox-id",
+                    id: "debug-blur-checkbox-id",
                 },
                 {
                     type: Demopage.supportedControls.Select,
                     title: "Display mode",
-                    id: "display-mode-select-id",
+                    id: "debug-display-mode-select-id",
                     placeholder: "<unknown>",
                     options: [
                         {
@@ -378,7 +395,7 @@ const data: IDemopageData = {
                 {
                     type: Demopage.supportedControls.Range,
                     title: "Specularity",
-                    id: "specularity-range-id",
+                    id: "debug-specularity-range-id",
                     min: 0,
                     max: 1,
                     value: 0.8,
@@ -387,7 +404,7 @@ const data: IDemopageData = {
                 {
                     type: Demopage.supportedControls.Range,
                     title: "Fresnel",
-                    id: "fresnel-range-id",
+                    id: "debug-fresnel-range-id",
                     min: 0,
                     max: 1,
                     value: 1,
