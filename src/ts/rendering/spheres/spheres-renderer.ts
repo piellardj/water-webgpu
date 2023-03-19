@@ -1,25 +1,24 @@
-import * as glMatrix from "gl-matrix";
-import { type SpheresData } from "../../engine/engine";
+import { SpheresBufferDescriptor } from "../../engine/engine";
 import { Parameters } from "../../ui/parameters";
 import * as WebGPU from "../../webgpu-utils/webgpu-utils";
 import { type ViewData } from "../camera";
 import { Blur } from "./blur";
 import { Composition } from "./composition";
-import { Deferred } from "./deferred";
+import { Deferred, type RenderData } from "./deferred";
 
 class SpheresRenderer {
     private readonly deferredRenderer: Deferred;
     private readonly blur: Blur;
     private readonly compositionRenderer: Composition;
 
-    public constructor(webgpuCanvas: WebGPU.Canvas, modelMatrix: glMatrix.ReadonlyMat4, spheresData: SpheresData) {
-        this.deferredRenderer = new Deferred(webgpuCanvas, modelMatrix, spheresData);
+    public constructor(webgpuCanvas: WebGPU.Canvas, bufferDescriptor: SpheresBufferDescriptor) {
+        this.deferredRenderer = new Deferred(webgpuCanvas, bufferDescriptor);
         this.blur = new Blur(webgpuCanvas.device, this.deferredRenderer.texture);
         this.compositionRenderer = new Composition(webgpuCanvas, this.deferredRenderer.texture);
     }
 
-    public renderDeferred(commandEncoder: GPUCommandEncoder, viewData: ViewData): void {
-        this.deferredRenderer.render(commandEncoder, viewData);
+    public renderDeferred(commandEncoder: GPUCommandEncoder, viewData: ViewData, data: RenderData): void {
+        this.deferredRenderer.render(commandEncoder, viewData, data);
 
         if (Parameters.blur) {
             this.blur.compute(commandEncoder);

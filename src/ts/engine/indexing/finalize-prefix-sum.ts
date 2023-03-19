@@ -8,7 +8,7 @@ type Data = {
     cellsBufferData: CellsBufferData,
 
     cellsIndirectDrawBuffer: WebGPU.Buffer,
-    drawableCellsIndicesBuffer: WebGPU.Buffer,
+    nonEmptyCellsIndicesBuffer: WebGPU.Buffer,
 };
 
 class FinalizePrefixSum {
@@ -53,7 +53,7 @@ class FinalizePrefixSum {
                 },
                 {
                     binding: 3,
-                    resource: data.drawableCellsIndicesBuffer.bindingResource,
+                    resource: data.nonEmptyCellsIndicesBuffer.bindingResource,
                 },
             ]
         });

@@ -1,35 +1,23 @@
 import * as glMatrix from "gl-matrix";
+import { CellsBufferDescriptor, GridData } from "../engine/engine";
 import * as ShaderSources from "../shader-sources";
 import * as WebGPU from "../webgpu-utils/webgpu-utils";
-import { type ViewData } from "./camera";
 
-type Data = {
-    cellsBuffer: WebGPU.Buffer;
-    cellsCount: number;
-    particlesCountAttribute: WebGPU.Types.VertexAttribute;
-    gridSize: glMatrix.ReadonlyVec3;
-    cellSize: number;
+type RenderData = {
+    readonly mvpMatrix: glMatrix.ReadonlyMat4;
+    readonly gpuBuffer: GPUBuffer;
+    readonly gridData: GridData;
 };
 
 class GridCellsByPopulationRenderer {
     private readonly device: GPUDevice;
 
-    private readonly cellsCount: number;
-    private readonly cellsBuffer: WebGPU.Buffer;
-
     private readonly renderPipeline: GPURenderPipeline;
     private readonly uniforms: WebGPU.Uniforms;
     private readonly uniformsBindgroup: GPUBindGroup;
 
-    private readonly matrix: glMatrix.ReadonlyMat4;
-    private readonly mvpMatrix: glMatrix.mat4 = glMatrix.mat4.create();
-
-    public constructor(webgpuCanvas: WebGPU.Canvas, modelMatrix: glMatrix.ReadonlyMat4, data: Data) {
+    public constructor(webgpuCanvas: WebGPU.Canvas, bufferDescriptor: CellsBufferDescriptor) {
         this.device = webgpuCanvas.device;
-        this.matrix = modelMatrix;
-
-        this.cellsCount = data.cellsCount;
-        this.cellsBuffer = data.cellsBuffer;
 
         this.uniforms = new WebGPU.Uniforms(this.device, [
             { name: "mvp", type: WebGPU.Types.mat4x4 },
@@ -38,8 +26,6 @@ class GridCellsByPopulationRenderer {
             { name: "cellSize", type: WebGPU.Types.f32 },
         ]);
         this.uniforms.setValueFromName("color", [1, 1, 1, 1]);
-        this.uniforms.setValueFromName("gridSize", data.gridSize);
-        this.uniforms.setValueFromName("cellSize", data.cellSize);
 
         const shaderModule = WebGPU.ShaderModule.create(this.device, {
             code: ShaderSources.Engine.Indexing.RenderCellsByPopulation,
@@ -56,11 +42,11 @@ class GridCellsByPopulationRenderer {
                         attributes: [
                             {
                                 shaderLocation: 0,
-                                offset: data.particlesCountAttribute.offset,
-                                format: data.particlesCountAttribute.format,
+                                offset: bufferDescriptor.particlesCountAttribute.offset,
+                                format: bufferDescriptor.particlesCountAttribute.format,
                             }
                         ],
-                        arrayStride: data.particlesCountAttribute.arrayStride,
+                        arrayStride: bufferDescriptor.bufferArrayStride,
                         stepMode: "instance",
                     }
                 ]
@@ -104,16 +90,16 @@ class GridCellsByPopulationRenderer {
         });
     }
 
-    public render(renderpassEncoder: GPURenderPassEncoder, viewData: ViewData): void {
-        glMatrix.mat4.multiply(this.mvpMatrix, viewData.vpMatrix, this.matrix);
-
-        this.uniforms.setValueFromName("mvp", this.mvpMatrix);
+    public render(renderpassEncoder: GPURenderPassEncoder, data: RenderData): void {
+        this.uniforms.setValueFromName("mvp", data.mvpMatrix);
+        this.uniforms.setValueFromName("gridSize", data.gridData.gridSize);
+        this.uniforms.setValueFromName("cellSize", data.gridData.cellSize);
         this.uniforms.uploadToGPU();
 
         renderpassEncoder.setPipeline(this.renderPipeline);
         renderpassEncoder.setBindGroup(0, this.uniformsBindgroup);
-        renderpassEncoder.setVertexBuffer(0, this.cellsBuffer.gpuBuffer);
-        renderpassEncoder.draw(24, this.cellsCount);
+        renderpassEncoder.setVertexBuffer(0, data.gpuBuffer);
+        renderpassEncoder.draw(24, data.gridData.gridSize[0] * data.gridData.gridSize[1] * data.gridData.gridSize[2]);
     }
 }
 

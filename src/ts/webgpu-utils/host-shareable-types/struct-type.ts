@@ -19,7 +19,6 @@ type Attribute = {
 };
 
 type VertexAttribute = {
-    arrayStride: number;
     format: GPUVertexFormat;
     offset: number;
 };
@@ -127,7 +126,6 @@ class StructType implements Type {
                 }
 
                 return {
-                    arrayStride: this.size,
                     format: attribute.type.gpuVertexFormat,
                     offset: attribute.offset,
                 };

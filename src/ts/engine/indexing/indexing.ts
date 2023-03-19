@@ -9,38 +9,42 @@ import { ReorderParticles } from "./reorder-particles";
 import { ResetCells } from "./reset-cells";
 
 type Data = {
-    gridSize: glMatrix.ReadonlyVec3;
-    cellSize: number;
-
-    particlesBufferData: ParticlesBufferData
-
-    cellsIndirectDrawBuffer: WebGPU.Buffer,
-    drawableCellsIndicesBuffer: WebGPU.Buffer,
-};
-
-type CellsDebugData = {
-    readonly cellsBuffer: WebGPU.Buffer;
-    readonly cellsCount: number;
-
-    readonly particlesCountAttribute: WebGPU.Types.VertexAttribute;
-
     readonly gridSize: glMatrix.ReadonlyVec3;
     readonly cellSize: number;
+
+    readonly particlesBufferData: ParticlesBufferData
+};
+
+type CellsBufferDescriptor = {
+    readonly particlesCountAttribute: WebGPU.Types.VertexAttribute;
+    readonly bufferArrayStride: number;
 };
 
 type CellsBufferData = {
+    readonly gpuBuffer: GPUBuffer;
     readonly cellsBufferBindingResource: GPUBindingResource;
     readonly cellStructType: WebGPU.Types.StructType;
     readonly cellsCount: number;
 };
 
+type NonEmptyCellsBuffers = {
+    readonly nonEmptyCellsIndicesBuffer: GPUBuffer;
+    readonly cellsIndirectDrawBuffer: GPUBuffer;
+}
+
+type GridData = {
+    readonly gridSize: glMatrix.ReadonlyVec3;
+    readonly cellSize: number;
+}
+
 class Indexing {
     private readonly cellsCount: number;
-    private readonly gridSize: glMatrix.ReadonlyVec3;
-    private readonly cellSize: number;
 
     private readonly cellStructType: WebGPU.Types.StructType;
     private readonly cellsBuffer: WebGPU.Buffer;
+
+    private readonly nonEmptyCellsIndicesBuffer: WebGPU.Buffer;
+    private readonly cellsIndirectDrawBuffer: WebGPU.Buffer;
 
     private readonly resetCells: ResetCells;
     private readonly countParticlesPerCell: CountParticlesPerCell;
@@ -49,12 +53,14 @@ class Indexing {
     private readonly finalizePrefixSum: FinalizePrefixSum;
     private readonly reorderParticles: ReorderParticles;
 
+    public readonly cellsBufferDescriptor: CellsBufferDescriptor;
     public readonly cellsBufferData: CellsBufferData;
+
+    public readonly nonEmptyCellsBuffers: NonEmptyCellsBuffers;
+    public readonly gridData: GridData;
 
     public constructor(device: GPUDevice, data: Data) {
         this.cellsCount = data.gridSize[0] * data.gridSize[1] * data.gridSize[2];
-        this.gridSize = data.gridSize;
-        this.cellSize = data.cellSize;
 
         this.cellStructType = new WebGPU.Types.StructType("Cell", [
             { name: "particlesCount", type: WebGPU.Types.u32 },
@@ -66,7 +72,25 @@ class Indexing {
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX,
         });
 
+        this.nonEmptyCellsIndicesBuffer = new WebGPU.Buffer(device, {
+            size: Uint32Array.BYTES_PER_ELEMENT * this.cellsCount,
+            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE,
+        });
+
+        this.cellsIndirectDrawBuffer = new WebGPU.Buffer(device, {
+            size: WebGPU.Types.indirectDrawBufferType.size,
+            usage: GPUBufferUsage.INDIRECT | GPUBufferUsage.STORAGE,
+        });
+        WebGPU.Types.indirectDrawBufferType.setValue(this.cellsIndirectDrawBuffer.getMappedRange(), 0, {
+            vertexCount: 24,
+            instancesCount: 0, // will be dynamically computed on GPU
+            firstVertex: 0,    // will be dynamically computed on GPU
+            firstInstance: 0,  // will be dynamically computed on GPU
+        });
+        this.cellsIndirectDrawBuffer.unmap();
+
         this.cellsBufferData = {
+            gpuBuffer: this.cellsBuffer.gpuBuffer,
             cellsBufferBindingResource: this.cellsBuffer.bindingResource,
             cellStructType: this.cellStructType,
             cellsCount: this.cellsCount,
@@ -96,8 +120,8 @@ class Indexing {
         this.finalizePrefixSum = new FinalizePrefixSum(device, {
             dataItemsBuffer: this.preparePrefixSum.dataItemsBuffer,
             cellsBufferData: this.cellsBufferData,
-            cellsIndirectDrawBuffer: data.cellsIndirectDrawBuffer,
-            drawableCellsIndicesBuffer: data.drawableCellsIndicesBuffer,
+            cellsIndirectDrawBuffer: this.cellsIndirectDrawBuffer,
+            nonEmptyCellsIndicesBuffer: this.nonEmptyCellsIndicesBuffer,
         });
 
         this.reorderParticles = new ReorderParticles(device, {
@@ -106,6 +130,20 @@ class Indexing {
             gridSize: data.gridSize,
             cellSize: data.cellSize,
         });
+
+        this.cellsBufferDescriptor = {
+            particlesCountAttribute: this.cellStructType.asVertexAttribute("particlesCount"),
+            bufferArrayStride: this.cellStructType.size,
+        };
+
+        this.nonEmptyCellsBuffers = {
+            nonEmptyCellsIndicesBuffer: this.nonEmptyCellsIndicesBuffer.gpuBuffer,
+            cellsIndirectDrawBuffer: this.cellsIndirectDrawBuffer.gpuBuffer,
+        };
+        this.gridData = {
+            gridSize: data.gridSize,
+            cellSize: data.cellSize,
+        };
     }
 
     public compute(commandEncoder: GPUCommandEncoder): void {
@@ -118,21 +156,13 @@ class Indexing {
 
         this.reorderParticles.compute(commandEncoder);
     }
-
-    public get gridCellsDebugData(): CellsDebugData {
-        return {
-            cellsBuffer: this.cellsBuffer,
-            cellsCount: this.cellsCount,
-            particlesCountAttribute: this.cellStructType.asVertexAttribute("particlesCount"),
-            gridSize: this.gridSize,
-            cellSize: this.cellSize,
-        };
-    }
 }
 
 export type {
     CellsBufferData,
-    CellsDebugData,
+    CellsBufferDescriptor,
+    GridData,
+    NonEmptyCellsBuffers,
 };
 export {
     Indexing,

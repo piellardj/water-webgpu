@@ -1,5 +1,5 @@
 import * as glMatrix from "gl-matrix";
-import { type SpheresData } from "../../engine/engine";
+import { SpheresBufferDescriptor } from "../../engine/engine";
 import * as ShaderSources from "../../shader-sources";
 import { Parameters } from "../../ui/parameters";
 import * as WebGPU from "../../webgpu-utils/webgpu-utils";
@@ -13,6 +13,14 @@ type RenderPass = {
     readonly uniformsBindgroup: GPUBindGroup;
 }
 
+type RenderData = {
+    readonly mvpMatrix: glMatrix.ReadonlyMat4;
+    readonly gpuBuffer: GPUBuffer;
+    readonly instancesCount: number;
+    readonly sphereRadius: number;
+    readonly maxDisplayedWeight: number;
+};
+
 class Deferred {
     private readonly device: GPUDevice;
 
@@ -23,26 +31,8 @@ class Deferred {
     public readonly texture: WebGPU.Texture;
     private readonly depthTexture: WebGPU.Texture;
 
-    private readonly sphereRadius: number;
-    private readonly positionsBuffer: GPUBuffer;
-    private readonly spheresCount: number;
-
-    private readonly weightToOnlyShowWater: number;
-    private readonly weightToShowEverything: number;
-
-    private readonly matrix: glMatrix.ReadonlyMat4;
-    private readonly mvpMatrix: glMatrix.mat4 = glMatrix.mat4.create();
-
-    public constructor(webgpuCanvas: WebGPU.Canvas, modelMatrix: glMatrix.ReadonlyMat4, spheresData: SpheresData) {
+    public constructor(webgpuCanvas: WebGPU.Canvas, bufferDescriptor: SpheresBufferDescriptor) {
         this.device = webgpuCanvas.device;
-        this.matrix = modelMatrix;
-
-        this.sphereRadius = spheresData.radius;
-        this.positionsBuffer = spheresData.buffer;
-        this.spheresCount = spheresData.count;
-
-        this.weightToOnlyShowWater = spheresData.weightThresholdToOnlyShowWater;
-        this.weightToShowEverything = spheresData.weightThresholdToShowEverything;
 
         this.texture = new WebGPU.Texture(this.device, "rgba8unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING);
         this.depthTexture = new WebGPU.Texture(this.device, "depth16unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING);
@@ -82,7 +72,7 @@ class Deferred {
                 depthStencilAttachment: depthAttachment,
             };
             const writeMask = GPUColorWrite.RED | GPUColorWrite.GREEN | GPUColorWrite.ALPHA;
-            const pipelineDescriptor = this.createDeferredDescriptor(shaderModule, "main_fragment_rga", spheresData, writeMask);
+            const pipelineDescriptor = this.createDeferredDescriptor(shaderModule, "main_fragment_rga", bufferDescriptor, writeMask);
             pipelineDescriptor.depthStencil = {
                 depthWriteEnabled: true,
                 depthCompare: "less",
@@ -129,7 +119,7 @@ class Deferred {
                     operation: "add",
                 }
             };
-            const pipelineDescriptor = this.createDeferredDescriptor(shaderModule, "main_fragment_b", spheresData, writeMask, additiveBlend);
+            const pipelineDescriptor = this.createDeferredDescriptor(shaderModule, "main_fragment_b", bufferDescriptor, writeMask, additiveBlend);
             const pipeline = this.device.createRenderPipeline(pipelineDescriptor);
             const uniformsBindgroup = this.device.createBindGroup({
                 layout: pipeline.getBindGroupLayout(0),
@@ -148,14 +138,12 @@ class Deferred {
         }
     }
 
-    public render(commandEncoder: GPUCommandEncoder, viewData: ViewData): void {
-        glMatrix.mat4.multiply(this.mvpMatrix, viewData.vpMatrix, this.matrix);
-
-        this.uniforms.setValueFromName("mvp", this.mvpMatrix);
+    public render(commandEncoder: GPUCommandEncoder, viewData: ViewData, data: RenderData): void {
+        this.uniforms.setValueFromName("mvp", data.mvpMatrix);
         this.uniforms.setValueFromName("cameraUp", viewData.cameraUp);
         this.uniforms.setValueFromName("cameraRight", viewData.cameraRight);
-        this.uniforms.setValueFromName("sphereRadius", Parameters.spheresRadiusFactor * this.sphereRadius);
-        this.uniforms.setValueFromName("weightThreshold", Parameters.showObstacleSpheres ? this.weightToShowEverything : this.weightToOnlyShowWater);
+        this.uniforms.setValueFromName("sphereRadius", Parameters.spheresRadiusFactor * data.sphereRadius);
+        this.uniforms.setValueFromName("weightThreshold", data.maxDisplayedWeight);
         this.uniforms.uploadToGPU();
 
         for (const renderPass of this.renderPasses) {
@@ -163,9 +151,9 @@ class Deferred {
             renderpassEncoder.setViewport(0, 0, this.texture.getWidth(), this.texture.getHeight(), 0, 1);
             renderpassEncoder.setScissorRect(0, 0, this.texture.getWidth(), this.texture.getHeight());
             renderpassEncoder.setPipeline(renderPass.pipeline);
-            renderpassEncoder.setVertexBuffer(0, this.positionsBuffer);
+            renderpassEncoder.setVertexBuffer(0, data.gpuBuffer);
             renderpassEncoder.setBindGroup(0, renderPass.uniformsBindgroup);
-            renderpassEncoder.draw(6, this.spheresCount);
+            renderpassEncoder.draw(6, data.instancesCount);
             renderpassEncoder.end();
         }
     }
@@ -192,7 +180,7 @@ class Deferred {
         return somethingChanged;
     }
 
-    private createDeferredDescriptor(shaderModule: GPUShaderModule, fragmentMain: string, spheresData: SpheresData, writeMask: GPUColorWriteFlags, blend?: GPUBlendState): GPURenderPipelineDescriptor {
+    private createDeferredDescriptor(shaderModule: GPUShaderModule, fragmentMain: string, bufferDescriptor: SpheresBufferDescriptor, writeMask: GPUColorWriteFlags, blend?: GPUBlendState): GPURenderPipelineDescriptor {
         const colorTarget: GPUColorTargetState = {
             format: this.texture.format,
             writeMask,
@@ -211,16 +199,16 @@ class Deferred {
                         attributes: [
                             {
                                 shaderLocation: 0,
-                                offset: spheresData.positionAttribute.offset,
-                                format: spheresData.positionAttribute.format,
+                                offset: bufferDescriptor.positionAttribute.offset,
+                                format: bufferDescriptor.positionAttribute.format,
                             },
                             {
                                 shaderLocation: 1,
-                                offset: spheresData.weightAttribute.offset,
-                                format: spheresData.weightAttribute.format,
+                                offset: bufferDescriptor.weightAttribute.offset,
+                                format: bufferDescriptor.weightAttribute.format,
                             }
                         ],
-                        arrayStride: spheresData.positionAttribute.arrayStride,
+                        arrayStride: bufferDescriptor.bufferArrayStride,
                         stepMode: "instance",
                     }
                 ]
@@ -238,6 +226,9 @@ class Deferred {
     }
 }
 
+export type {
+    RenderData,
+};
 export {
     Deferred,
 };

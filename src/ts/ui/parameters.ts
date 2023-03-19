@@ -61,6 +61,11 @@ enum EGridDisplayMode {
     FINAL = 2,
 }
 
+enum EObstacleType {
+    NONE = "0",
+    LIGHTHOUSE = "1",
+}
+
 Page.Button.addObserver(controlId.RESET_BUTTON, () => {
     for (const observer of Parameters.onResetObservers) {
         observer();
@@ -69,6 +74,7 @@ Page.Button.addObserver(controlId.RESET_BUTTON, () => {
 
 abstract class Parameters {
     public static readonly onResetObservers: VoidFunction[] = [];
+    public static readonly onObstacleChangeObservers: VoidFunction[] = [];
 
     public static get paused(): boolean {
         return Page.Checkbox.isChecked(controlId.PAUSE_CHECKBOX);
@@ -101,9 +107,12 @@ abstract class Parameters {
     public static get showObstacleMesh(): boolean {
         return Page.Checkbox.isChecked(controlId.OBSTACLE_MESH_CHECKBOX);
     }
-
     public static get showObstacleSpheres(): boolean {
         return Page.Checkbox.isChecked(controlId.OBSTACLE_SPHERES_CHECKBOX);
+    }
+
+    public static get showParticlesMesh(): boolean {
+        return false;
     }
 
     public static get projection(): EProjection {
@@ -157,6 +166,7 @@ abstract class Parameters {
 
 export {
     EGridDisplayMode,
+    EObstacleType,
     EProjection,
     Parameters,
 };

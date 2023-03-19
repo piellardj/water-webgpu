@@ -1,7 +1,10 @@
 import * as glMatrix from "gl-matrix";
 import * as ShaderSources from "../shader-sources";
 import * as WebGPU from "../webgpu-utils/webgpu-utils";
-import { type ViewData } from "./camera";
+
+type RenderData = {
+    readonly mvpMatrix: glMatrix.ReadonlyMat4;
+};
 
 class CubeRenderer {
     private readonly device: GPUDevice;
@@ -10,12 +13,8 @@ class CubeRenderer {
 
     private readonly uniformsBindgroup: GPUBindGroup;
 
-    private readonly matrix: glMatrix.ReadonlyMat4;
-    private readonly mvpMatrix: glMatrix.mat4 = glMatrix.mat4.create();
-
-    public constructor(webgpuCanvas: WebGPU.Canvas, modelMatrix: glMatrix.ReadonlyMat4) {
+    public constructor(webgpuCanvas: WebGPU.Canvas) {
         this.device = webgpuCanvas.device;
-        this.matrix = modelMatrix;
 
         this.uniforms = new WebGPU.Uniforms(this.device, [
             { name: "mvp", type: WebGPU.Types.mat4x4 },
@@ -60,10 +59,8 @@ class CubeRenderer {
         });
     }
 
-    public render(renderpassEncoder: GPURenderPassEncoder, viewData: ViewData): void {
-        glMatrix.mat4.multiply(this.mvpMatrix, viewData.vpMatrix, this.matrix);
-
-        this.uniforms.setValueFromName("mvp", this.mvpMatrix);
+    public render(renderpassEncoder: GPURenderPassEncoder, renderData: RenderData): void {
+        this.uniforms.setValueFromName("mvp", renderData.mvpMatrix);
         this.uniforms.uploadToGPU();
 
         renderpassEncoder.setPipeline(this.renderPipeline);

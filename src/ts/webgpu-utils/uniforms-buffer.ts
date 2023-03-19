@@ -46,12 +46,16 @@ class UniformsBuffer {
         return this.structType.toString();
     }
 
+    public free(): void {
+        this.gpuBuffer.free();
+    }
+
     public static compact(attributesDefinitions: AttributeDefinition[]): AttributeDefinition[] {
         let bestPermutation = attributesDefinitions;
         let minSize = new StructType("Uniforms", attributesDefinitions).size;
 
         for (const permutation of iterateOnAllPermutations(attributesDefinitions)) {
-            let size = new StructType("Uniforms", permutation).size;
+            const size = new StructType("Uniforms", permutation).size;
             if (size < minSize) {
                 minSize = size;
                 bestPermutation = permutation;

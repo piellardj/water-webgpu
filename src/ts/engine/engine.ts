@@ -1,7 +1,6 @@
 import * as glMatrix from "gl-matrix";
-import { Parameters } from "../ui/parameters";
 import * as WebGPU from "../webgpu-utils/webgpu-utils";
-import { Indexing, type CellsDebugData } from "./indexing/indexing";
+import { CellsBufferData, CellsBufferDescriptor, GridData, Indexing, NonEmptyCellsBuffers } from "./indexing/indexing";
 import { FillableMesh } from "./initial-conditions/fillable-mesh";
 import * as InitialPositions from "./initial-conditions/initial-positions";
 import { Mesh } from "./initial-conditions/models/mesh";
@@ -10,22 +9,17 @@ import { Acceleration } from "./simulation/acceleration";
 import { Initialization } from "./simulation/initialization";
 import { Integration } from "./simulation/integration";
 
-type SpheresData = {
-    readonly radius: number;
-    readonly count: number;
-    readonly buffer: GPUBuffer;
+type SpheresBufferDescriptor = {
     readonly positionAttribute: WebGPU.Types.VertexAttribute;
     readonly weightAttribute: WebGPU.Types.VertexAttribute;
-    readonly weightThresholdToOnlyShowWater: number;
-    readonly weightThresholdToShowEverything: number;
+    readonly bufferArrayStride: number;
 };
 
-type CellsData = {
-    readonly cellSize: number;
-    readonly gridSize: glMatrix.ReadonlyVec3;
-    readonly cellsIndicesBuffer: GPUBuffer;
-    readonly cellsIndirectDrawBuffer: GPUBuffer;
-}
+type SpheresBuffer = {
+    readonly gpuBuffer: GPUBuffer;
+    readonly instancesCount: number;
+    readonly sphereRadius: number;
+};
 
 type ParticlesBufferData = {
     readonly particlesBuffer: WebGPU.Buffer;
@@ -44,8 +38,6 @@ class Engine {
 
     private readonly cellSize: number = Math.max(0.01, 2 * this.spheresRadius);
     private readonly gridSize: glMatrix.ReadonlyVec3 = [Math.ceil(1 / this.cellSize), Math.ceil(1 / this.cellSize), Math.ceil(1 / this.cellSize)];
-    private readonly drawableCellsIndicesBuffer: WebGPU.Buffer;
-    private readonly cellsIndirectDrawBuffer: WebGPU.Buffer;
 
     private readonly initialization: Initialization;
     private needsInitialization: boolean = true;
@@ -56,27 +48,11 @@ class Engine {
     private readonly indexing: Indexing;
     private needsIndexing: boolean = true;
 
+    public readonly spheresBufferDescriptor: SpheresBufferDescriptor;
+    public readonly spheresBuffer: SpheresBuffer;
+
     public constructor(device: GPUDevice) {
         this.device = device;
-
-        // grid cells
-        {
-            this.drawableCellsIndicesBuffer = new WebGPU.Buffer(this.device, {
-                size: Uint32Array.BYTES_PER_ELEMENT * this.gridSize[0] * this.gridSize[1] * this.gridSize[2],
-                usage: GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE,
-            });
-            this.cellsIndirectDrawBuffer = new WebGPU.Buffer(this.device, {
-                size: WebGPU.Types.indirectDrawBufferType.size,
-                usage: GPUBufferUsage.INDIRECT | GPUBufferUsage.STORAGE,
-            });
-            WebGPU.Types.indirectDrawBufferType.setValue(this.cellsIndirectDrawBuffer.getMappedRange(), 0, {
-                vertexCount: 24,
-                instancesCount: 0, // will be dynamically computed on GPU
-                firstVertex: 0,    // will be dynamically computed on GPU
-                firstInstance: 0,  // will be dynamically computed on GPU
-            });
-            this.cellsIndirectDrawBuffer.unmap();
-        }
 
         this.particlesInitialMesh = Mesh.load(Models.Shapes);
         const particlesFillableMesh = new FillableMesh(this.particlesInitialMesh.triangles);
@@ -115,8 +91,6 @@ class Engine {
             gridSize: this.gridSize,
             cellSize: this.cellSize,
             particlesBufferData: this.particles,
-            cellsIndirectDrawBuffer: this.cellsIndirectDrawBuffer,
-            drawableCellsIndicesBuffer: this.drawableCellsIndicesBuffer,
         });
 
         this.acceleration = new Acceleration(this.device, {
@@ -125,13 +99,24 @@ class Engine {
             cellsBufferData: this.indexing.cellsBufferData,
             particlesBufferData: this.particles,
             particleRadius: this.spheresRadius,
-            weightThreshold: Initialization.PARTICLE_WEIGHT_THRESHOLD,
+            weightThreshold: Engine.getMaxWeight(false),
         });
         this.integration = new Integration(this.device, {
             particlesBufferData: this.particles,
             particleRadius: this.spheresRadius,
-            weightThreshold: Initialization.PARTICLE_WEIGHT_THRESHOLD,
+            weightThreshold: Engine.getMaxWeight(false),
         });
+
+        this.spheresBufferDescriptor = {
+            positionAttribute: this.particles.particlesStructType.asVertexAttribute("position"),
+            weightAttribute: this.particles.particlesStructType.asVertexAttribute("weight"),
+            bufferArrayStride: this.particles.particlesStructType.size,
+        };
+        this.spheresBuffer = {
+            gpuBuffer: this.particles.particlesBuffer.gpuBuffer,
+            instancesCount: this.particles.particlesCount,
+            sphereRadius: this.spheresRadius,
+        };
     }
 
     public compute(commandEncoder: GPUCommandEncoder, dt: number): void {
@@ -156,42 +141,42 @@ class Engine {
         this.needsInitialization = true;
     }
 
+    public static getMaxWeight(includeObstacles: boolean): number {
+        if (includeObstacles) {
+            return Initialization.PARTICLE_WEIGHT_OBSTACLE + 1000;
+        }
+        return Initialization.PARTICLE_WEIGHT_THRESHOLD;
+    }
+
+    public get cellBufferDescriptor(): CellsBufferDescriptor {
+        return this.indexing.cellsBufferDescriptor;
+    }
+    public get cellsBufferData(): CellsBufferData {
+        return this.indexing.cellsBufferData;
+    }
+    public get nonEmptyCellsBuffers(): NonEmptyCellsBuffers {
+        return this.indexing.nonEmptyCellsBuffers;
+    }
+    public get gridData(): GridData {
+        return this.indexing.gridData;
+    }
+
     private indexIfNeeded(commandEncoder: GPUCommandEncoder): void {
         if (this.needsIndexing) {
             this.indexing.compute(commandEncoder);
             this.needsIndexing = false;
         }
     }
-
-    public get spheresData(): SpheresData {
-        return {
-            radius: this.spheresRadius,
-            count: this.particles.particlesCount,
-            buffer: this.particles.particlesBuffer.gpuBuffer,
-            positionAttribute: this.particles.particlesStructType.asVertexAttribute("position"),
-            weightAttribute: this.particles.particlesStructType.asVertexAttribute("weight"),
-            weightThresholdToOnlyShowWater: Initialization.PARTICLE_WEIGHT_THRESHOLD,
-            weightThresholdToShowEverything: Initialization.PARTICLE_WEIGHT_OBSTACLE + 10,
-        };
-    }
-
-    public get gridCellsData(): CellsData {
-        return {
-            cellSize: this.cellSize,
-            gridSize: this.gridSize,
-            cellsIndicesBuffer: this.drawableCellsIndicesBuffer.gpuBuffer,
-            cellsIndirectDrawBuffer: this.cellsIndirectDrawBuffer.gpuBuffer,
-        };
-    }
-    public get gridCellsDebugData(): CellsDebugData {
-        return this.indexing.gridCellsDebugData;
-    }
 }
 
 export type {
-    CellsData,
     ParticlesBufferData,
-    SpheresData,
+    CellsBufferData,
+    CellsBufferDescriptor,
+    GridData,
+    NonEmptyCellsBuffers,
+    SpheresBuffer,
+    SpheresBufferDescriptor,
 };
 export {
     Engine,

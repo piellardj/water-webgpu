@@ -1,24 +1,24 @@
 import * as glMatrix from "gl-matrix";
-import { Mesh } from "../engine/initial-conditions/models/mesh";
-import * as ShaderSources from "../shader-sources";
-import * as WebGPU from "../webgpu-utils/webgpu-utils";
-import { type ViewData } from "./camera";
+import { Mesh } from "../../engine/initial-conditions/models/mesh";
+import * as ShaderSources from "../../shader-sources";
+import * as WebGPU from "../../webgpu-utils/webgpu-utils";
+import { MeshRenderable } from "./mesh-renderable";
+
+type RenderData = {
+    readonly meshes: MeshRenderable[];
+    readonly modelMatrix: glMatrix.ReadonlyMat4;
+    readonly mvpMatrix: glMatrix.ReadonlyMat4;
+};
 
 class MeshRenderer {
     private readonly device: GPUDevice;
     private readonly renderPipeline: GPURenderPipeline;
     private readonly uniforms: WebGPU.Uniforms;
 
-    private readonly verticesCount: number;
-    private readonly buffer: WebGPU.Buffer;
     private readonly uniformsBindgroup: GPUBindGroup;
 
-    private readonly matrix: glMatrix.ReadonlyMat4;
-    private readonly mvpMatrix: glMatrix.mat4 = glMatrix.mat4.create();
-
-    public constructor(webgpuCanvas: WebGPU.Canvas, modelMatrix: glMatrix.ReadonlyMat4, mesh: Mesh) {
+    public constructor(webgpuCanvas: WebGPU.Canvas) {
         this.device = webgpuCanvas.device;
-        this.matrix = modelMatrix;
 
         this.uniforms = new WebGPU.Uniforms(this.device, [
             { name: "mvp", type: WebGPU.Types.mat4x4 },
@@ -72,35 +72,6 @@ class MeshRenderer {
             },
         });
 
-        this.verticesCount = 3 * mesh.triangles.length;
-        this.buffer = new WebGPU.Buffer(this.device, {
-            size: 4 * 2 * 3 * 3 * mesh.triangles.length,
-            usage: GPUBufferUsage.VERTEX,
-        });
-        const buffer = new Float32Array(this.buffer.getMappedRange());
-        let i = 0;
-        for (const triangle of mesh.triangles) {
-            buffer[i++] = triangle.p1[0];
-            buffer[i++] = triangle.p1[1];
-            buffer[i++] = triangle.p1[2];
-            buffer[i++] = triangle.normal[0];
-            buffer[i++] = triangle.normal[1];
-            buffer[i++] = triangle.normal[2];
-            buffer[i++] = triangle.p2[0];
-            buffer[i++] = triangle.p2[1];
-            buffer[i++] = triangle.p2[2];
-            buffer[i++] = triangle.normal[0];
-            buffer[i++] = triangle.normal[1];
-            buffer[i++] = triangle.normal[2];
-            buffer[i++] = triangle.p3[0];
-            buffer[i++] = triangle.p3[1];
-            buffer[i++] = triangle.p3[2];
-            buffer[i++] = triangle.normal[0];
-            buffer[i++] = triangle.normal[1];
-            buffer[i++] = triangle.normal[2];
-        }
-        this.buffer.unmap();
-
         this.uniformsBindgroup = this.device.createBindGroup({
             layout: this.renderPipeline.getBindGroupLayout(0),
             entries: [
@@ -112,17 +83,30 @@ class MeshRenderer {
         });
     }
 
-    public render(renderpassEncoder: GPURenderPassEncoder, viewData: ViewData): void {
-        glMatrix.mat4.multiply(this.mvpMatrix, viewData.vpMatrix, this.matrix);
+    public createMeshRenderable(mesh: Mesh): MeshRenderable {
+        return new MeshRenderable(this.device, mesh);
+    }
 
-        this.uniforms.setValueFromName("mvp", this.mvpMatrix);
-        this.uniforms.setValueFromName("modelMatrix", this.matrix);
+    public render(renderpassEncoder: GPURenderPassEncoder, renderData: RenderData): void {
+        if (renderData.meshes.length === 0) {
+            return;
+        }
+
+        this.uniforms.setValueFromName("mvp", renderData.mvpMatrix);
+        this.uniforms.setValueFromName("modelMatrix", renderData.modelMatrix);
         this.uniforms.uploadToGPU();
 
         renderpassEncoder.setPipeline(this.renderPipeline);
-        renderpassEncoder.setVertexBuffer(0, this.buffer.gpuBuffer);
-        renderpassEncoder.setBindGroup(0, this.uniformsBindgroup);
-        renderpassEncoder.draw(this.verticesCount);
+
+        for (const mesh of renderData.meshes) {
+            renderpassEncoder.setVertexBuffer(0, mesh.buffer.gpuBuffer);
+            renderpassEncoder.setBindGroup(0, this.uniformsBindgroup);
+            renderpassEncoder.draw(mesh.verticesCount);
+        }
+    }
+
+    public free(): void {
+        this.uniforms.free();
     }
 }
 

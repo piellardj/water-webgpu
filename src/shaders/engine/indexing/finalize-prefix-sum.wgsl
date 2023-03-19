@@ -6,7 +6,7 @@ struct DataItem {               //           align(4) size(8)
 @group(0) @binding(0) var<storage,read> prefixSumResultBuffer: array<DataItem>;
 @group(0) @binding(1) var<storage,read_write> cellsBuffer: array<Cell>;
 @group(0) @binding(2) var<storage,read_write> indirectDrawBuffer: IndirectDrawBuffer;
-@group(0) @binding(3) var<storage,read_write> drawableCellsIndicesBuffer: array<u32>;
+@group(0) @binding(3) var<storage,read_write> nonEmptyCellsIndicesBuffer: array<u32>;
 
 override cellsCount: u32;
 override workgroupSize: i32;
@@ -26,7 +26,7 @@ fn main(in: ComputeIn) {
 
         let doesCellContainParticles = min(1u, cellParticlesCount);
         if (doesCellContainParticles == 1u) {
-            drawableCellsIndicesBuffer[dataItem.offsetOfCell] = cellIndex;
+            nonEmptyCellsIndicesBuffer[dataItem.offsetOfCell] = cellIndex;
         }
 
         if (cellIndex == cellsCount - 1u) {

@@ -1,8 +1,13 @@
 import * as glMatrix from "gl-matrix";
-import { type CellsData } from "../engine/engine";
+import { GridData, NonEmptyCellsBuffers } from "../engine/engine";
 import * as ShaderSources from "../shader-sources";
 import * as WebGPU from "../webgpu-utils/webgpu-utils";
-import { type ViewData } from "./camera";
+
+type RenderData = {
+    readonly buffers: NonEmptyCellsBuffers;
+    readonly gridData: GridData;
+    readonly mvpMatrix: glMatrix.ReadonlyMat4;
+};
 
 class GridCellsRenderer {
     private readonly device: GPUDevice;
@@ -10,12 +15,8 @@ class GridCellsRenderer {
     private readonly uniforms: WebGPU.Uniforms;
     private readonly uniformsBindgroup: GPUBindGroup;
 
-    private readonly matrix: glMatrix.ReadonlyMat4;
-    private readonly mvpMatrix: glMatrix.mat4 = glMatrix.mat4.create();
-
-    public constructor(webgpuCanvas: WebGPU.Canvas, modelMatrix: glMatrix.ReadonlyMat4) {
+    public constructor(webgpuCanvas: WebGPU.Canvas) {
         this.device = webgpuCanvas.device;
-        this.matrix = modelMatrix;
 
         this.uniforms = new WebGPU.Uniforms(this.device, [
             { name: "mvp", type: WebGPU.Types.mat4x4 },
@@ -76,18 +77,16 @@ class GridCellsRenderer {
         });
     }
 
-    public render(renderpassEncoder: GPURenderPassEncoder, viewData: ViewData, data: CellsData): void {
-        glMatrix.mat4.multiply(this.mvpMatrix, viewData.vpMatrix, this.matrix);
-
-        this.uniforms.setValueFromName("mvp", this.mvpMatrix);
-        this.uniforms.setValueFromName("gridSize", data.gridSize);
-        this.uniforms.setValueFromName("cellSize", data.cellSize);
+    public render(renderpassEncoder: GPURenderPassEncoder, renderData: RenderData): void {
+        this.uniforms.setValueFromName("mvp", renderData.mvpMatrix);
+        this.uniforms.setValueFromName("gridSize", renderData.gridData.gridSize);
+        this.uniforms.setValueFromName("cellSize", renderData.gridData.cellSize);
         this.uniforms.uploadToGPU();
 
         renderpassEncoder.setPipeline(this.renderPipeline);
         renderpassEncoder.setBindGroup(0, this.uniformsBindgroup);
-        renderpassEncoder.setVertexBuffer(0, data.cellsIndicesBuffer);
-        renderpassEncoder.drawIndirect(data.cellsIndirectDrawBuffer, 0);
+        renderpassEncoder.setVertexBuffer(0, renderData.buffers.nonEmptyCellsIndicesBuffer);
+        renderpassEncoder.drawIndirect(renderData.buffers.cellsIndirectDrawBuffer, 0);
     }
 }
 

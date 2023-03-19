@@ -29,7 +29,6 @@ class Initialization {
             throw new Error();
         }
 
-
         this.workgroupsCount = Math.ceil(data.particlesBufferData.particlesCount / Initialization.WORKGROUP_SIZE);
 
         this.uniforms = new WebGPU.Uniforms(device, [

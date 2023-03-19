@@ -1,5 +1,3 @@
-
-import * as glMatrix from "gl-matrix";
 import * as ShaderSources from "../shader-sources";
 import * as WebGPU from "../webgpu-utils/webgpu-utils";
 import { type ViewData } from "./camera";
@@ -9,12 +7,7 @@ class AxesRenderer {
     private readonly renderPipeline: GPURenderPipeline;
     private readonly uniforms: WebGPU.Uniforms;
 
-    private readonly verticesCount: number = 6;
     private readonly uniformsBindgroup: GPUBindGroup;
-
-    private readonly matrix: glMatrix.mat4 = glMatrix.mat4.create();
-    private readonly mvpMatrix: glMatrix.mat4 = glMatrix.mat4.create();
-    public size: number = 1;
 
     public constructor(webgpuCanvas: WebGPU.Canvas) {
         this.device = webgpuCanvas.device;
@@ -62,15 +55,12 @@ class AxesRenderer {
     }
 
     public render(renderpassEncoder: GPURenderPassEncoder, viewData: ViewData): void {
-        glMatrix.mat4.fromScaling(this.matrix, [this.size, this.size, this.size]);
-        glMatrix.mat4.multiply(this.mvpMatrix, viewData.vpMatrix, this.matrix);
-
-        this.uniforms.setValueFromName("mvp", this.mvpMatrix);
+        this.uniforms.setValueFromName("mvp", viewData.vpMatrix);
         this.uniforms.uploadToGPU();
 
         renderpassEncoder.setPipeline(this.renderPipeline);
         renderpassEncoder.setBindGroup(0, this.uniformsBindgroup);
-        renderpassEncoder.draw(this.verticesCount);
+        renderpassEncoder.draw(6);
     }
 }
 
