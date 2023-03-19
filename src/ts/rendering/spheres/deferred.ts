@@ -27,6 +27,9 @@ class Deferred {
     private readonly positionsBuffer: GPUBuffer;
     private readonly spheresCount: number;
 
+    private readonly weightToOnlyShowWater: number;
+    private readonly weightToShowEverything: number;
+
     private readonly matrix: glMatrix.ReadonlyMat4;
     private readonly mvpMatrix: glMatrix.mat4 = glMatrix.mat4.create();
 
@@ -38,6 +41,9 @@ class Deferred {
         this.positionsBuffer = spheresData.buffer;
         this.spheresCount = spheresData.count;
 
+        this.weightToOnlyShowWater = spheresData.weightThresholdToOnlyShowWater;
+        this.weightToShowEverything = spheresData.weightThresholdToShowEverything;
+
         this.texture = new WebGPU.Texture(this.device, "rgba8unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING);
         this.depthTexture = new WebGPU.Texture(this.device, "depth16unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING);
 
@@ -46,6 +52,7 @@ class Deferred {
             { name: "cameraUp", type: WebGPU.Types.vec3F32 },
             { name: "sphereRadius", type: WebGPU.Types.f32 },
             { name: "cameraRight", type: WebGPU.Types.vec3F32 },
+            { name: "weightThreshold", type: WebGPU.Types.f32 }
         ]);
 
         const shaderModule = WebGPU.ShaderModule.create(this.device, {
@@ -148,6 +155,7 @@ class Deferred {
         this.uniforms.setValueFromName("cameraUp", viewData.cameraUp);
         this.uniforms.setValueFromName("cameraRight", viewData.cameraRight);
         this.uniforms.setValueFromName("sphereRadius", Parameters.spheresRadiusFactor * this.sphereRadius);
+        this.uniforms.setValueFromName("weightThreshold", Parameters.showObstacleSpheres ? this.weightToShowEverything : this.weightToOnlyShowWater);
         this.uniforms.uploadToGPU();
 
         for (const renderPass of this.renderPasses) {
@@ -205,6 +213,11 @@ class Deferred {
                                 shaderLocation: 0,
                                 offset: spheresData.positionAttribute.offset,
                                 format: spheresData.positionAttribute.format,
+                            },
+                            {
+                                shaderLocation: 1,
+                                offset: spheresData.weightAttribute.offset,
+                                format: spheresData.weightAttribute.format,
                             }
                         ],
                         arrayStride: spheresData.positionAttribute.arrayStride,

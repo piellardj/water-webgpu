@@ -2,6 +2,7 @@
 
 struct VertexIn {
     @location(0) center: vec3<f32>,
+    @location(1) weight: f32,
     @builtin(vertex_index) vertexIndex: u32,
 };
 
@@ -9,6 +10,7 @@ struct VertexOut {
     @builtin(position) position: vec4<f32>,
     @location(0) localPosition: vec2<f32>, // in {-1, +1}^2
     @location(1) middlePointDepth: f32,
+    @location(2) @interpolate(flat) isDisplayed: u32,
 };
 
 @vertex
@@ -29,10 +31,17 @@ fn main_vertex(in: VertexIn) -> VertexOut {
     let nearestPointWorldPosition: vec3<f32> = in.center + uniforms.sphereRadius * toCamera;
     let nearestPoint = uniforms.mvp * vec4<f32>(nearestPointWorldPosition, 1.0);
     output.middlePointDepth = nearestPoint.z / nearestPoint.w;
+
+    output.isDisplayed = select(0u, 1u, in.weight < uniforms.weightThreshold);
+
     return output;
 }
 
 fn computeLocalDepth(in: VertexOut) -> f32 {
+    if (in.isDisplayed == 0u) {
+        discard;
+    }
+
     let distanceFromCenterSquared: f32 = dot(in.localPosition, in.localPosition);
     if (distanceFromCenterSquared > 1.0) {
         discard;

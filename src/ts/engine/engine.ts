@@ -1,4 +1,5 @@
 import * as glMatrix from "gl-matrix";
+import { Parameters } from "../ui/parameters";
 import * as WebGPU from "../webgpu-utils/webgpu-utils";
 import { Indexing, type CellsDebugData } from "./indexing/indexing";
 import { FillableMesh } from "./initial-conditions/fillable-mesh";
@@ -14,6 +15,9 @@ type SpheresData = {
     readonly count: number;
     readonly buffer: GPUBuffer;
     readonly positionAttribute: WebGPU.Types.VertexAttribute;
+    readonly weightAttribute: WebGPU.Types.VertexAttribute;
+    readonly weightThresholdToOnlyShowWater: number;
+    readonly weightThresholdToShowEverything: number;
 };
 
 type CellsData = {
@@ -32,12 +36,13 @@ type ParticlesBufferData = {
 class Engine {
     private readonly device: GPUDevice;
 
-    public readonly mesh: Mesh;
+    public readonly particlesInitialMesh: Mesh;
+    public readonly obstaclesMesh: Mesh;
 
     private readonly particles: ParticlesBufferData;
-    private readonly spheresRadius: number = 0.02;
+    private readonly spheresRadius: number = 0.005;
 
-    private readonly cellSize: number = Math.max(0.02, 2.1 * this.spheresRadius);
+    private readonly cellSize: number = Math.max(0.01, 2 * this.spheresRadius);
     private readonly gridSize: glMatrix.ReadonlyVec3 = [Math.ceil(1 / this.cellSize), Math.ceil(1 / this.cellSize), Math.ceil(1 / this.cellSize)];
     private readonly drawableCellsIndicesBuffer: WebGPU.Buffer;
     private readonly cellsIndirectDrawBuffer: WebGPU.Buffer;
@@ -54,40 +59,34 @@ class Engine {
     public constructor(device: GPUDevice) {
         this.device = device;
 
-        this.mesh = Mesh.load(Models.Shapes);
+        // grid cells
+        {
+            this.drawableCellsIndicesBuffer = new WebGPU.Buffer(this.device, {
+                size: Uint32Array.BYTES_PER_ELEMENT * this.gridSize[0] * this.gridSize[1] * this.gridSize[2],
+                usage: GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE,
+            });
+            this.cellsIndirectDrawBuffer = new WebGPU.Buffer(this.device, {
+                size: WebGPU.Types.indirectDrawBufferType.size,
+                usage: GPUBufferUsage.INDIRECT | GPUBufferUsage.STORAGE,
+            });
+            WebGPU.Types.indirectDrawBufferType.setValue(this.cellsIndirectDrawBuffer.getMappedRange(), 0, {
+                vertexCount: 24,
+                instancesCount: 0, // will be dynamically computed on GPU
+                firstVertex: 0,    // will be dynamically computed on GPU
+                firstInstance: 0,  // will be dynamically computed on GPU
+            });
+            this.cellsIndirectDrawBuffer.unmap();
+        }
 
-        const fillableMesh = new FillableMesh(this.mesh.triangles);
-        const positions = InitialPositions.fillMesh(this.spheresRadius, fillableMesh);
-        // positions.push(...positions.map(v => {
-        //     return [v[0] + 0.1, v[1] + 0.1, v[2] + 0.1] as glMatrix.vec3;
-        // }));
-        // positions.push(...positions.map(v => {
-        //     return [v[0] + 0.07, v[1] + 0.07, v[2] + 0.07] as glMatrix.vec3;
-        // }));
-        // positions.push(...positions.map(v => {
-        //     return [v[0] + 0.04, v[1] + 0.04, v[2] + 0.04] as glMatrix.vec3;
-        // }));
-        // positions.push(...positions.map(v => {
-        //     return [v[0] + 0.06, v[1] + 0.06, v[2] + 0.06] as glMatrix.vec3;
-        // }));
+        this.particlesInitialMesh = Mesh.load(Models.Shapes);
+        const particlesFillableMesh = new FillableMesh(this.particlesInitialMesh.triangles);
+        const particlesPositions = InitialPositions.fillMesh(this.spheresRadius, particlesFillableMesh);
 
-        this.drawableCellsIndicesBuffer = new WebGPU.Buffer(this.device, {
-            size: Uint32Array.BYTES_PER_ELEMENT * this.gridSize[0] * this.gridSize[1] * this.gridSize[2],
-            usage: GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE,
-        });
-        this.cellsIndirectDrawBuffer = new WebGPU.Buffer(this.device, {
-            size: WebGPU.Types.indirectDrawBufferType.size,
-            usage: GPUBufferUsage.INDIRECT | GPUBufferUsage.STORAGE,
-        });
-        WebGPU.Types.indirectDrawBufferType.setValue(this.cellsIndirectDrawBuffer.getMappedRange(), 0, {
-            vertexCount: 24,
-            instancesCount: 0, // will be dynamically computed on GPU
-            firstVertex: 0,    // will be dynamically computed on GPU
-            firstInstance: 0,  // will be dynamically computed on GPU
-        });
-        this.cellsIndirectDrawBuffer.unmap();
+        this.obstaclesMesh = Mesh.load(Models.Lighthouse2);
+        const obstaclesFillableMesh = new FillableMesh(this.obstaclesMesh.triangles);
+        const obstaclesPositions = InitialPositions.fillMesh(this.spheresRadius, obstaclesFillableMesh);
 
-        const particlesCount = positions.length;
+        const particlesCount = particlesPositions.length + obstaclesPositions.length;
         const particlesStructType = new WebGPU.Types.StructType("Particle", [
             { name: "position", type: WebGPU.Types.vec3F32 },
             { name: "weight", type: WebGPU.Types.f32 },
@@ -107,7 +106,8 @@ class Engine {
         };
 
         this.initialization = new Initialization(this.device, {
-            initialPositions: positions,
+            particlesPositions,
+            obstaclesPositions,
             particlesBufferData: this.particles,
         });
 
@@ -125,10 +125,12 @@ class Engine {
             cellsBufferData: this.indexing.cellsBufferData,
             particlesBufferData: this.particles,
             particleRadius: this.spheresRadius,
+            weightThreshold: Initialization.PARTICLE_WEIGHT_THRESHOLD,
         });
         this.integration = new Integration(this.device, {
             particlesBufferData: this.particles,
             particleRadius: this.spheresRadius,
+            weightThreshold: Initialization.PARTICLE_WEIGHT_THRESHOLD,
         });
     }
 
@@ -167,6 +169,9 @@ class Engine {
             count: this.particles.particlesCount,
             buffer: this.particles.particlesBuffer.gpuBuffer,
             positionAttribute: this.particles.particlesStructType.asVertexAttribute("position"),
+            weightAttribute: this.particles.particlesStructType.asVertexAttribute("weight"),
+            weightThresholdToOnlyShowWater: Initialization.PARTICLE_WEIGHT_THRESHOLD,
+            weightThresholdToShowEverything: Initialization.PARTICLE_WEIGHT_OBSTACLE + 10,
         };
     }
 

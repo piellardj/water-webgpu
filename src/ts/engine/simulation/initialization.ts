@@ -4,12 +4,16 @@ import { ParticlesBufferData } from "../engine";
 import * as glMatrix from "gl-matrix";
 
 type Data = {
-    initialPositions: ReadonlyArray<glMatrix.ReadonlyVec3>;
+    particlesPositions: ReadonlyArray<glMatrix.ReadonlyVec3>;
+    obstaclesPositions: ReadonlyArray<glMatrix.ReadonlyVec3>;
     particlesBufferData: ParticlesBufferData;
 };
 
 class Initialization {
     private static readonly WORKGROUP_SIZE: number = 256;
+    public static readonly PARTICLE_WEIGHT_WATER: number = 1;
+    public static readonly PARTICLE_WEIGHT_THRESHOLD: number = 10;
+    public static readonly PARTICLE_WEIGHT_OBSTACLE: number = 100000;
 
     private readonly workgroupsCount: number;
 
@@ -21,9 +25,10 @@ class Initialization {
     private readonly bindgroup: GPUBindGroup;
 
     public constructor(device: GPUDevice, data: Data) {
-        if (data.particlesBufferData.particlesCount !== data.initialPositions.length) {
+        if (data.particlesBufferData.particlesCount !== (data.particlesPositions.length + data.obstaclesPositions.length)) {
             throw new Error();
         }
+
 
         this.workgroupsCount = Math.ceil(data.particlesBufferData.particlesCount / Initialization.WORKGROUP_SIZE);
 
@@ -34,22 +39,28 @@ class Initialization {
         this.uniforms.uploadToGPU();
 
         const initialParticleStructType = new WebGPU.Types.StructType("InitialParticle", [
-            {name: "position", type: WebGPU.Types.vec3F32},
-            {name: "weight", type: WebGPU.Types.f32},
+            { name: "position", type: WebGPU.Types.vec3F32 },
+            { name: "weight", type: WebGPU.Types.f32 },
         ]);
 
         this.positionsBuffer = new WebGPU.Buffer(device, {
-            size: initialParticleStructType.size * data.initialPositions.length,
+            size: initialParticleStructType.size * (data.particlesPositions.length + data.obstaclesPositions.length),
             usage: GPUBufferUsage.STORAGE,
         });
         const positionsData = this.positionsBuffer.getMappedRange();
-        data.initialPositions.forEach((position: glMatrix.ReadonlyVec3, index: number) => {
+        data.particlesPositions.forEach((position: glMatrix.ReadonlyVec3, index: number) => {
             const offset = index * initialParticleStructType.size;
-            const data = {
+            initialParticleStructType.setValue(positionsData, offset, {
                 position,
-                weight: 1, 
-            };
-            initialParticleStructType.setValue(positionsData, offset, data);
+                weight: Initialization.PARTICLE_WEIGHT_WATER,
+            });
+        });
+        data.obstaclesPositions.forEach((position: glMatrix.ReadonlyVec3, index: number) => {
+            const offset = (data.particlesPositions.length + index) * initialParticleStructType.size;
+            initialParticleStructType.setValue(positionsData, offset, {
+                position,
+                weight: Initialization.PARTICLE_WEIGHT_OBSTACLE,
+            });
         });
         this.positionsBuffer.unmap();
 

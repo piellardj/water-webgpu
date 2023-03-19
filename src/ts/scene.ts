@@ -20,7 +20,7 @@ class Scene {
     private readonly axesRenderer: AxesRenderer;
     private readonly cubeRenderer: CubeRenderer;
     private readonly spheresRenderer: SpheresRenderer;
-    private readonly meshRenderer: MeshRenderer;
+    private readonly obstacleMeshRenderer: MeshRenderer;
     private readonly gridCellsRenderer: GridCellsRenderer;
     private gridCellsPerPopulationRenderer: GridCellsByPopulationRenderer | null = null;
 
@@ -32,7 +32,7 @@ class Scene {
         this.axesRenderer = new AxesRenderer(webgpuCanvas);
         this.cubeRenderer = new CubeRenderer(webgpuCanvas, this.modelMatrix);
         this.spheresRenderer = new SpheresRenderer(webgpuCanvas, this.modelMatrix, this.engine.spheresData);
-        this.meshRenderer = new MeshRenderer(webgpuCanvas, this.modelMatrix, this.engine.mesh);
+        this.obstacleMeshRenderer = new MeshRenderer(webgpuCanvas, this.modelMatrix, this.engine.obstaclesMesh);
         this.gridCellsRenderer = new GridCellsRenderer(webgpuCanvas, this.modelMatrix);
 
         Indicators.setParticlesCount(this.engine.spheresData.count);
@@ -64,8 +64,8 @@ class Scene {
         if (Parameters.showDomain) {
             this.cubeRenderer.render(renderpassEncoder, viewData);
         }
-        if (Parameters.showMesh) {
-            this.meshRenderer.render(renderpassEncoder, viewData);
+        if (Parameters.showObstacleMesh) {
+            this.obstacleMeshRenderer.render(renderpassEncoder, viewData);
         }
         if (Parameters.showSpheres) {
             this.spheresRenderer.renderComposition(renderpassEncoder, viewData);

@@ -80,6 +80,22 @@ const data: IDemopageData = {
             ],
         },
         {
+            title: "Obstacles",
+            controls: [
+                {
+                    type: Demopage.supportedControls.Checkbox,
+                    title: "Show mesh",
+                    id: "obstacle-mesh-checkbox-id",
+                    checked: true,
+                },
+                {
+                    type: Demopage.supportedControls.Checkbox,
+                    title: "Show spheres",
+                    id: "obstacle-spheres-checkbox-id",
+                },
+            ],
+        },
+        {
             title: "Rendering",
             controls: [
                 {
@@ -104,12 +120,6 @@ const data: IDemopageData = {
                     type: Demopage.supportedControls.Checkbox,
                     title: "Domain",
                     id: "domain-checkbox-id",
-                    checked: true,
-                },
-                {
-                    type: Demopage.supportedControls.Checkbox,
-                    title: "Mesh",
-                    id: "mesh-checkbox-id",
                     checked: true,
                 },
                 {

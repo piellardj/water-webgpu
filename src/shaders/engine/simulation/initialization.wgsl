@@ -11,15 +11,16 @@ struct ComputeIn {
 @compute @workgroup_size(workgroupSize)
 fn main(in: ComputeIn) {
     let particleId = in.globalInvocationId.x;
-
-    if (particleId < uniforms.particlesCount) {
-        var initialParticle = initialParticlesBuffer[particleId];
-
-        var particle: Particle;
-        particle.position = initialParticle.position;
-        particle.weight = initialParticle.weight;
-        particle.velocity = vec3<f32>(0);
-        particle.acceleration = vec3<f32>(0);
-        particlesBuffer[particleId] = particle;
+    if (particleId >= uniforms.particlesCount) {
+        return;
     }
+
+    var initialParticle = initialParticlesBuffer[particleId];
+
+    var particle: Particle;
+    particle.position = initialParticle.position;
+    particle.weight = initialParticle.weight;
+    particle.velocity = vec3<f32>(0);
+    particle.acceleration = vec3<f32>(0);
+    particlesBuffer[particleId] = particle;
 }

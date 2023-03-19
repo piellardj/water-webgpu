@@ -7,11 +7,13 @@ const controlId = {
     RESET_BUTTON: "reset-button-id",
     GRAVITY_RANGE: "gravity-range-id",
 
+    OBSTACLE_MESH_CHECKBOX: "obstacle-mesh-checkbox-id",
+    OBSTACLE_SPHERES_CHECKBOX: "obstacle-spheres-checkbox-id",
+
     BACKGROUND_COLORPICKER: "background-color-id",
     INDICATORS_CHECKBOX: "indicators-checkbox-id",
     AXES_CHECKBOX: "axes-checkbox-id",
     DOMAIN_CHECKBOX: "domain-checkbox-id",
-    MESH_CHECKBOX: "mesh-checkbox-id",
     GRID_CELLS_SELECT: "grid-cells-select-id",
     PROJECTION_TABS: "projection-tabs-id",
 
@@ -96,8 +98,12 @@ abstract class Parameters {
         return Page.Checkbox.isChecked(controlId.DOMAIN_CHECKBOX);
     }
 
-    public static get showMesh(): boolean {
-        return Page.Checkbox.isChecked(controlId.MESH_CHECKBOX);
+    public static get showObstacleMesh(): boolean {
+        return Page.Checkbox.isChecked(controlId.OBSTACLE_MESH_CHECKBOX);
+    }
+
+    public static get showObstacleSpheres(): boolean {
+        return Page.Checkbox.isChecked(controlId.OBSTACLE_SPHERES_CHECKBOX);
     }
 
     public static get projection(): EProjection {

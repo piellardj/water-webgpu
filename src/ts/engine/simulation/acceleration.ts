@@ -11,6 +11,7 @@ type Data = {
     cellsBufferData: CellsBufferData;
     gridSize: glMatrix.ReadonlyVec3,
     cellSize: number,
+    weightThreshold: number,
 };
 
 class Acceleration {
@@ -34,14 +35,14 @@ class Acceleration {
             { name: "gravity", type: WebGPU.Types.vec3F32 },
             { name: "dt", type: WebGPU.Types.f32 },
             { name: "particlesCount", type: WebGPU.Types.u32 },
-            { name: "damping", type: WebGPU.Types.f32 },
+            { name: "weightThreshold", type: WebGPU.Types.f32 },
         ]);
         this.uniforms.setValueFromName("gridSize", data.gridSize);
         this.uniforms.setValueFromName("cellSize", data.cellSize);
         this.uniforms.setValueFromName("cellsStride", [1, data.gridSize[0], data.gridSize[0] * data.gridSize[1]]);
         this.uniforms.setValueFromName("particlesCount", data.particlesBufferData.particlesCount);
         this.uniforms.setValueFromName("particleRadius", data.particleRadius);
-        this.uniforms.setValueFromName("damping", 0.8);
+        this.uniforms.setValueFromName("weightThreshold", data.weightThreshold);
 
         this.pipeline = device.createComputePipeline({
             layout: "auto",
@@ -76,7 +77,10 @@ class Acceleration {
     }
 
     public compute(commandEncoder: GPUCommandEncoder, dt: number): void {
-        this.uniforms.setValueFromName("gravity", [0, 0, -Parameters.gravity]);
+        const now = 0.0003 * performance.now();
+        this.uniforms.setValueFromName("gravity", [0, Parameters.gravity * Math.cos(now), Parameters.gravity * Math.sin(now)]);
+
+        // this.uniforms.setValueFromName("gravity", [0, 0, -Parameters.gravity]);
         this.uniforms.setValueFromName("dt", dt);
         this.uniforms.uploadToGPU();
 
