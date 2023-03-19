@@ -46,6 +46,12 @@ class Scene {
     }
 
     public render(commandEncoder: GPUCommandEncoder, viewData: ViewData): void {
+        // const now = 0.0003 * performance.now();
+        // glMatrix.mat4.fromXRotation(this.modelMatrix, -Math.PI / 2 -now);
+        // glMatrix.mat4.translate(this.modelMatrix, this.modelMatrix, [-0.5, -0.5, -0.5]);
+        // this.uniforms.setValueFromName("gravity", [0, Parameters.gravity * Math.cos(now), Parameters.gravity * Math.sin(now)]);
+
+
         if (Parameters.showSpheres) {
             this.spheresRenderer.renderDeferred(commandEncoder, viewData);
         }

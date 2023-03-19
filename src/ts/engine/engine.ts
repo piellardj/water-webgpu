@@ -35,9 +35,9 @@ class Engine {
     public readonly mesh: Mesh;
 
     private readonly particles: ParticlesBufferData;
-    private readonly spheresRadius: number = 0.05;
+    private readonly spheresRadius: number = 0.02;
 
-    private readonly cellSize: number = 0.05;
+    private readonly cellSize: number = Math.max(0.02, 2.1 * this.spheresRadius);
     private readonly gridSize: glMatrix.ReadonlyVec3 = [Math.ceil(1 / this.cellSize), Math.ceil(1 / this.cellSize), Math.ceil(1 / this.cellSize)];
     private readonly drawableCellsIndicesBuffer: WebGPU.Buffer;
     private readonly cellsIndirectDrawBuffer: WebGPU.Buffer;
@@ -58,6 +58,18 @@ class Engine {
 
         const fillableMesh = new FillableMesh(this.mesh.triangles);
         const positions = InitialPositions.fillMesh(this.spheresRadius, fillableMesh);
+        positions.push(...positions.map(v => {
+            return [v[0] + 0.1, v[1] + 0.1, v[2] + 0.1] as glMatrix.vec3;
+        }));
+        positions.push(...positions.map(v => {
+            return [v[0] + 0.07, v[1] + 0.07, v[2] + 0.07] as glMatrix.vec3;
+        }));
+        positions.push(...positions.map(v => {
+            return [v[0] + 0.04, v[1] + 0.04, v[2] + 0.04] as glMatrix.vec3;
+        }));
+        positions.push(...positions.map(v => {
+            return [v[0] + 0.06, v[1] + 0.06, v[2] + 0.06] as glMatrix.vec3;
+        }));
 
         this.drawableCellsIndicesBuffer = new WebGPU.Buffer(this.device, {
             size: Uint32Array.BYTES_PER_ELEMENT * this.gridSize[0] * this.gridSize[1] * this.gridSize[2],
@@ -98,20 +110,24 @@ class Engine {
             particlesBufferData: this.particles,
         });
 
-        this.acceleration = new Acceleration(this.device, {
-            particlesBufferData: this.particles,
-        });
-        this.integration = new Integration(this.device, {
-            particlesBufferData: this.particles,
-            particleRadius: this.spheresRadius,
-        });
-
         this.indexing = new Indexing(this.device, {
             gridSize: this.gridSize,
             cellSize: this.cellSize,
             particlesBufferData: this.particles,
             cellsIndirectDrawBuffer: this.cellsIndirectDrawBuffer,
             drawableCellsIndicesBuffer: this.drawableCellsIndicesBuffer,
+        });
+
+        this.acceleration = new Acceleration(this.device, {
+            gridSize: this.gridSize,
+            cellSize: this.cellSize,
+            cellsBufferData: this.indexing.cellsBufferData,
+            particlesBufferData: this.particles,
+            particleRadius: this.spheresRadius,
+        });
+        this.integration = new Integration(this.device, {
+            particlesBufferData: this.particles,
+            particleRadius: this.spheresRadius,
         });
     }
 

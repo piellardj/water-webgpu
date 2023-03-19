@@ -49,6 +49,8 @@ class Indexing {
     private readonly finalizePrefixSum: FinalizePrefixSum;
     private readonly reorderParticles: ReorderParticles;
 
+    public readonly cellsBufferData: CellsBufferData;
+
     public constructor(device: GPUDevice, data: Data) {
         this.cellsCount = data.gridSize[0] * data.gridSize[1] * data.gridSize[2];
         this.gridSize = data.gridSize;
@@ -60,29 +62,29 @@ class Indexing {
         ]);
 
         this.cellsBuffer = new WebGPU.Buffer(device, {
-            size:  this.cellStructType.size * this.cellsCount,
+            size: this.cellStructType.size * this.cellsCount,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX,
         });
 
-        const cellsBufferData = {
+        this.cellsBufferData = {
             cellsBufferBindingResource: this.cellsBuffer.bindingResource,
-            cellStructType:  this.cellStructType,
+            cellStructType: this.cellStructType,
             cellsCount: this.cellsCount,
         };
 
         this.resetCells = new ResetCells(device, {
-            cellsBufferData,
+            cellsBufferData: this.cellsBufferData,
         });
 
         this.countParticlesPerCell = new CountParticlesPerCell(device, {
-            cellsBufferData,
+            cellsBufferData: this.cellsBufferData,
             gridSize: data.gridSize,
             cellSize: data.cellSize,
             particlesBufferData: data.particlesBufferData,
         });
 
         this.preparePrefixSum = new PreparePrefixSum(device, {
-            cellsBufferData,
+            cellsBufferData: this.cellsBufferData,
         });
 
         this.prefixSum = new PrefixSum(device, {
@@ -93,14 +95,14 @@ class Indexing {
 
         this.finalizePrefixSum = new FinalizePrefixSum(device, {
             dataItemsBuffer: this.preparePrefixSum.dataItemsBuffer,
-            cellsBufferData,
+            cellsBufferData: this.cellsBufferData,
             cellsIndirectDrawBuffer: data.cellsIndirectDrawBuffer,
             drawableCellsIndicesBuffer: data.drawableCellsIndicesBuffer,
         });
 
         this.reorderParticles = new ReorderParticles(device, {
             particlesBufferData: data.particlesBufferData,
-            cellsBufferData,
+            cellsBufferData: this.cellsBufferData,
             gridSize: data.gridSize,
             cellSize: data.cellSize,
         });
