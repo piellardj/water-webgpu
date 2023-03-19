@@ -114,6 +114,7 @@ class Scene {
                 instancesCount: this.engine.spheresBuffer.instancesCount,
                 sphereRadius: this.engine.spheresBuffer.sphereRadius,
                 maxDisplayedWeight: Engine.getMaxWeight(Parameters.obstacleDisplayAsSpheres),
+                willUseWaterDepth: [EDisplayMode.WATER_DEPTH, EDisplayMode.WATER].includes(Parameters.displayMode),
             });
         }
 
@@ -141,13 +142,13 @@ class Scene {
                 meshes: renderableMeshes,
                 mvpMatrix: this.mvpMatrix,
                 modelMatrix: this.modelMatrix,
-                displayNormals: Parameters.displayMode !== EDisplayMode.WATER,
+                displayNormals: ![EDisplayMode.WATER, EDisplayMode.BALLS].includes(Parameters.displayMode),
                 lightDirection,
             });
         }
 
         if (Parameters.particlesDisplay) {
-            this.spheresRenderer.renderComposition(renderpassEncoder, viewData);
+            this.spheresRenderer.renderComposition(renderpassEncoder, viewData, { lightDirection });
         }
 
         switch (Parameters.renderGridCells) {

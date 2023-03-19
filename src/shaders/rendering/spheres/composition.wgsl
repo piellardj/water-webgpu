@@ -7,6 +7,7 @@ const displayMode_normalWorld = 2u;
 const displayMode_waterDepth = 3u;
 const displayMode_water = 4u;
 const displayMode_depth = 5u;
+const displayMode_balls = 6u;
 
 @group(1) @binding(0) var<uniform> uniforms: Uniforms;
 
@@ -83,6 +84,16 @@ fn main_fragment(in: VertexOut) -> FragmentOut {
                 specular + mix(waterColor, uniforms.worldColor, fresnelFactor),
                 1.0
             );
+        }
+        case displayMode_balls {
+                const albedo = vec3<f32>(0.184, 0.45, 0.913);
+                let ambiant =  0.4;
+                let diffuse = 1.0 * (0.5 + 0.5 * dot(normalWorld, uniforms.lightDirection));
+
+                out.color = vec4<f32>(
+                    albedo * (ambiant + diffuse),
+                    1.0
+                );
         }
         default {
             out.color = vec4<f32>(0.0, 0.0, 1.0, 1.0);

@@ -3,8 +3,9 @@ import { Parameters } from "../../ui/parameters";
 import * as WebGPU from "../../webgpu-utils/webgpu-utils";
 import { type ViewData } from "../camera";
 import { Blur } from "./blur";
-import { Composition } from "./composition";
-import { Deferred, type RenderData } from "./deferred";
+import { Composition, type RenderData as CompositionRenderData } from "./composition";
+import { Deferred, type RenderData as DeferredRenderData } from "./deferred";
+
 
 class SpheresRenderer {
     private readonly deferredRenderer: Deferred;
@@ -17,7 +18,7 @@ class SpheresRenderer {
         this.compositionRenderer = new Composition(webgpuCanvas, this.deferredRenderer.texture);
     }
 
-    public renderDeferred(commandEncoder: GPUCommandEncoder, viewData: ViewData, data: RenderData): void {
+    public renderDeferred(commandEncoder: GPUCommandEncoder, viewData: ViewData, data: DeferredRenderData): void {
         this.deferredRenderer.render(commandEncoder, viewData, data);
 
         if (Parameters.blur) {
@@ -25,8 +26,8 @@ class SpheresRenderer {
         }
     }
 
-    public renderComposition(renderpassEncoder: GPURenderPassEncoder, viewData: ViewData): void {
-        this.compositionRenderer.render(renderpassEncoder, viewData);
+    public renderComposition(renderpassEncoder: GPURenderPassEncoder, viewData: ViewData, renderData: CompositionRenderData): void {
+        this.compositionRenderer.render(renderpassEncoder, viewData, renderData);
     }
 
     public setSize(width: number, height: number): boolean {

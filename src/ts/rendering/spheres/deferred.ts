@@ -19,12 +19,14 @@ type RenderData = {
     readonly instancesCount: number;
     readonly sphereRadius: number;
     readonly maxDisplayedWeight: number;
+    readonly willUseWaterDepth: boolean;
 };
 
 class Deferred {
     private readonly device: GPUDevice;
 
-    private readonly renderPasses: RenderPass[];
+    private readonly rgaRenderPass: RenderPass;
+    private readonly bRenderPass: RenderPass;
 
     private readonly uniforms: WebGPU.Uniforms;
 
@@ -50,8 +52,6 @@ class Deferred {
             code: ShaderSources.Rendering.Spheres.Spheres,
             structs: [this.uniforms],
         });
-
-        this.renderPasses = [];
 
         // RGA render pass
         {
@@ -88,13 +88,13 @@ class Deferred {
                 }]
             });
 
-            this.renderPasses.push({
+            this.rgaRenderPass = {
                 colorAttachment,
                 depthAttachment,
                 descriptor: renderPassDescriptor,
                 pipeline,
                 uniformsBindgroup,
-            });
+            };
         }
 
         // B render pass
@@ -130,12 +130,12 @@ class Deferred {
                 }]
             });
 
-            this.renderPasses.push({
+            this.bRenderPass = {
                 colorAttachment,
                 descriptor: renderPassDescriptor,
                 pipeline,
                 uniformsBindgroup,
-            });
+            };
         }
     }
 
@@ -148,7 +148,12 @@ class Deferred {
         this.uniforms.setValueFromName("weightThreshold", data.maxDisplayedWeight);
         this.uniforms.uploadToGPU();
 
-        for (const renderPass of this.renderPasses) {
+        const renderPasses = [this.rgaRenderPass];
+        if (data.willUseWaterDepth) {
+            renderPasses.push(this.bRenderPass);
+        }
+
+        for (const renderPass of renderPasses) {
             const renderpassEncoder = commandEncoder.beginRenderPass(renderPass.descriptor);
             renderpassEncoder.setViewport(0, 0, this.texture.getWidth(), this.texture.getHeight(), 0, 1);
             renderpassEncoder.setScissorRect(0, 0, this.texture.getWidth(), this.texture.getHeight());
@@ -163,15 +168,17 @@ class Deferred {
     public setSize(width: number, height: number): boolean {
         let somethingChanged = false;
 
+        const renderPasses = [this.rgaRenderPass, this.bRenderPass];
+
         if (this.texture.setSize(width, height)) {
-            for (const renderPass of this.renderPasses) {
+            for (const renderPass of renderPasses) {
                 renderPass.colorAttachment.view = this.texture.getView();
             }
             somethingChanged = true;
         }
 
         if (this.depthTexture.setSize(width, height)) {
-            for (const renderPass of this.renderPasses) {
+            for (const renderPass of renderPasses) {
                 if (renderPass.depthAttachment) {
                     renderPass.depthAttachment.view = this.depthTexture.getView();
                 }

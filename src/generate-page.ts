@@ -241,7 +241,7 @@ const data: IDemopageData = {
                             checked: true,
                         },
                         {
-                            value: "2",
+                            value: "6",
                             label: "Balls",
                         },
                     ]

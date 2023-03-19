@@ -1,7 +1,12 @@
+import * as glMatrix from "gl-matrix";
 import * as ShaderSources from "../../shader-sources";
 import { Parameters } from "../../ui/parameters";
 import * as WebGPU from "../../webgpu-utils/webgpu-utils";
 import { type ViewData } from "../camera";
+
+type RenderData = {
+    lightDirection: glMatrix.ReadonlyVec3;
+}
 
 class Composition {
     private readonly device: GPUDevice;
@@ -25,6 +30,7 @@ class Composition {
             { name: "specularity", type: WebGPU.Types.f32 },
             { name: "waterColor", type: WebGPU.Types.vec3F32 },
             { name: "waterOpacity", type: WebGPU.Types.f32 },
+            { name: "lightDirection", type: WebGPU.Types.vec3F32 },
         ]);
 
         const shaderModule = WebGPU.ShaderModule.create(this.device, {
@@ -74,7 +80,7 @@ class Composition {
         });
     }
 
-    public render(renderpassEncoder: GPURenderPassEncoder, viewData: ViewData): void {
+    public render(renderpassEncoder: GPURenderPassEncoder, viewData: ViewData, renderData: RenderData): void {
         this.uniforms.setValueFromName("cameraRight", viewData.cameraRight);
         this.uniforms.setValueFromName("displayMode", Parameters.displayMode);
         this.uniforms.setValueFromName("cameraUp", viewData.cameraUp);
@@ -83,6 +89,7 @@ class Composition {
         this.uniforms.setValueFromName("specularity", Parameters.waterSpecularity);
         this.uniforms.setValueFromName("waterColor", Parameters.renderWaterColor.slice(0, 3));
         this.uniforms.setValueFromName("waterOpacity", Parameters.renderWaterOpacity);
+        this.uniforms.setValueFromName("lightDirection", renderData.lightDirection);
         this.uniforms.uploadToGPU();
 
         renderpassEncoder.setPipeline(this.renderPipeline);
@@ -109,6 +116,9 @@ class Composition {
     }
 }
 
+export type {
+    RenderData,
+};
 export {
     Composition,
 };
