@@ -28,6 +28,21 @@ type ParticlesBufferData = {
 };
 
 class Engine {
+    private static readonly particleStructType = new WebGPU.Types.StructType("Particle", [
+        { name: "position", type: WebGPU.Types.vec3F32 },
+        { name: "weight", type: WebGPU.Types.f32 },
+        { name: "velocity", type: WebGPU.Types.vec3F32 },
+        { name: "acceleration", type: WebGPU.Types.vec3F32 },
+        { name: "indexInCell", type: WebGPU.Types.u32 },
+    ]);
+    public static readonly spheresBufferDescriptor: SpheresBufferDescriptor = {
+        positionAttribute: Engine.particleStructType.asVertexAttribute("position"),
+        weightAttribute: Engine.particleStructType.asVertexAttribute("weight"),
+        bufferArrayStride: Engine.particleStructType.size,
+    };
+
+    public static readonly cellBufferDescriptor: CellsBufferDescriptor = Indexing.cellsBufferDescriptor;
+
     private readonly device: GPUDevice;
 
     public readonly particlesInitialMesh: Mesh;
@@ -48,9 +63,6 @@ class Engine {
     private readonly indexing: Indexing;
     private needsIndexing: boolean = true;
 
-    public readonly spheresBufferDescriptor: SpheresBufferDescriptor;
-    public readonly spheresBuffer: SpheresBuffer;
-
     public constructor(device: GPUDevice) {
         this.device = device;
 
@@ -63,21 +75,14 @@ class Engine {
         const obstaclesPositions = InitialPositions.fillMesh(this.spheresRadius, obstaclesFillableMesh);
 
         const particlesCount = particlesPositions.length + obstaclesPositions.length;
-        const particlesStructType = new WebGPU.Types.StructType("Particle", [
-            { name: "position", type: WebGPU.Types.vec3F32 },
-            { name: "weight", type: WebGPU.Types.f32 },
-            { name: "velocity", type: WebGPU.Types.vec3F32 },
-            { name: "acceleration", type: WebGPU.Types.vec3F32 },
-            { name: "indexInCell", type: WebGPU.Types.u32 },
-        ]);
         const particlesBuffer = new WebGPU.Buffer(this.device, {
-            size: particlesStructType.size * particlesCount,
+            size: Engine.particleStructType.size * particlesCount,
             usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE,
         });
 
         this.particles = {
             particlesCount,
-            particlesStructType,
+            particlesStructType: Engine.particleStructType,
             particlesBuffer,
         };
 
@@ -106,17 +111,6 @@ class Engine {
             particleRadius: this.spheresRadius,
             weightThreshold: Engine.getMaxWeight(false),
         });
-
-        this.spheresBufferDescriptor = {
-            positionAttribute: this.particles.particlesStructType.asVertexAttribute("position"),
-            weightAttribute: this.particles.particlesStructType.asVertexAttribute("weight"),
-            bufferArrayStride: this.particles.particlesStructType.size,
-        };
-        this.spheresBuffer = {
-            gpuBuffer: this.particles.particlesBuffer.gpuBuffer,
-            instancesCount: this.particles.particlesCount,
-            sphereRadius: this.spheresRadius,
-        };
     }
 
     public compute(commandEncoder: GPUCommandEncoder, dt: number): void {
@@ -148,9 +142,6 @@ class Engine {
         return Initialization.PARTICLE_WEIGHT_THRESHOLD;
     }
 
-    public get cellBufferDescriptor(): CellsBufferDescriptor {
-        return this.indexing.cellsBufferDescriptor;
-    }
     public get cellsBufferData(): CellsBufferData {
         return this.indexing.cellsBufferData;
     }
@@ -159,6 +150,14 @@ class Engine {
     }
     public get gridData(): GridData {
         return this.indexing.gridData;
+    }
+
+    public get spheresBuffer(): SpheresBuffer {
+        return {
+            gpuBuffer: this.particles.particlesBuffer.gpuBuffer,
+            instancesCount: this.particles.particlesCount,
+            sphereRadius: this.spheresRadius,
+        };
     }
 
     private indexIfNeeded(commandEncoder: GPUCommandEncoder): void {

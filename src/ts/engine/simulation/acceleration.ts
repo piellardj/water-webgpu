@@ -14,18 +14,23 @@ type Data = {
     weightThreshold: number,
 };
 
+type ResetResult = {
+    workgroupsCount: number;
+    bindgroup: GPUBindGroup;
+};
+
 class Acceleration {
     private static readonly WORKGROUP_SIZE: number = 128;
 
-    private readonly workgroupsCount: number;
-
+    private readonly device: GPUDevice;
     private readonly uniforms: WebGPU.Uniforms;
-
     private readonly pipeline: GPUComputePipeline;
-    private readonly bindgroup: GPUBindGroup;
+
+    private workgroupsCount: number;
+    private bindgroup: GPUBindGroup;
 
     public constructor(device: GPUDevice, data: Data) {
-        this.workgroupsCount = Math.ceil(data.particlesBufferData.particlesCount / Acceleration.WORKGROUP_SIZE);
+        this.device = device;
 
         this.uniforms = new WebGPU.Uniforms(device, [
             { name: "gridSize", type: WebGPU.Types.vec3I32 },
@@ -37,12 +42,6 @@ class Acceleration {
             { name: "particlesCount", type: WebGPU.Types.u32 },
             { name: "weightThreshold", type: WebGPU.Types.f32 },
         ]);
-        this.uniforms.setValueFromName("gridSize", data.gridSize);
-        this.uniforms.setValueFromName("cellSize", data.cellSize);
-        this.uniforms.setValueFromName("cellsStride", [1, data.gridSize[0], data.gridSize[0] * data.gridSize[1]]);
-        this.uniforms.setValueFromName("particlesCount", data.particlesBufferData.particlesCount);
-        this.uniforms.setValueFromName("particleRadius", data.particleRadius);
-        this.uniforms.setValueFromName("weightThreshold", data.weightThreshold);
 
         this.pipeline = device.createComputePipeline({
             layout: "auto",
@@ -57,7 +56,44 @@ class Acceleration {
                 },
             },
         });
-        this.bindgroup = device.createBindGroup({
+
+        const resetResult = this.applyReset(data);
+        this.workgroupsCount = resetResult.workgroupsCount;
+        this.bindgroup = resetResult.bindgroup;
+    }
+
+    public compute(commandEncoder: GPUCommandEncoder, dt: number): void {
+        const now = 0.0003 * performance.now();
+        this.uniforms.setValueFromName("gravity", [0, Parameters.gravity * Math.cos(now), Parameters.gravity * Math.sin(now)]);
+
+        // this.uniforms.setValueFromName("gravity", [0, 0, -Parameters.gravity]);
+        this.uniforms.setValueFromName("dt", dt);
+        this.uniforms.uploadToGPU();
+
+        const computePass = commandEncoder.beginComputePass();
+        computePass.setPipeline(this.pipeline);
+        computePass.setBindGroup(0, this.bindgroup);
+        computePass.dispatchWorkgroups(this.workgroupsCount);
+        computePass.end();
+    }
+
+    public reset(data: Data): void {
+        const resetResult = this.applyReset(data);
+        this.workgroupsCount = resetResult.workgroupsCount;
+        this.bindgroup = resetResult.bindgroup;
+    }
+
+    private applyReset(data: Data): ResetResult {
+        this.uniforms.setValueFromName("gridSize", data.gridSize);
+        this.uniforms.setValueFromName("cellSize", data.cellSize);
+        this.uniforms.setValueFromName("cellsStride", [1, data.gridSize[0], data.gridSize[0] * data.gridSize[1]]);
+        this.uniforms.setValueFromName("particlesCount", data.particlesBufferData.particlesCount);
+        this.uniforms.setValueFromName("particleRadius", data.particleRadius);
+        this.uniforms.setValueFromName("weightThreshold", data.weightThreshold);
+
+        const workgroupsCount = Math.ceil(data.particlesBufferData.particlesCount / Acceleration.WORKGROUP_SIZE);
+
+        const bindgroup = this.device.createBindGroup({
             layout: this.pipeline.getBindGroupLayout(0),
             entries: [
                 {
@@ -74,21 +110,8 @@ class Acceleration {
                 },
             ]
         });
-    }
 
-    public compute(commandEncoder: GPUCommandEncoder, dt: number): void {
-        const now = 0.0003 * performance.now();
-        this.uniforms.setValueFromName("gravity", [0, Parameters.gravity * Math.cos(now), Parameters.gravity * Math.sin(now)]);
-
-        // this.uniforms.setValueFromName("gravity", [0, 0, -Parameters.gravity]);
-        this.uniforms.setValueFromName("dt", dt);
-        this.uniforms.uploadToGPU();
-
-        const computePass = commandEncoder.beginComputePass();
-        computePass.setPipeline(this.pipeline);
-        computePass.setBindGroup(0, this.bindgroup);
-        computePass.dispatchWorkgroups(this.workgroupsCount);
-        computePass.end();
+        return { workgroupsCount, bindgroup };
     }
 }
 

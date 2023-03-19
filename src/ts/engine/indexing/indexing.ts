@@ -38,9 +38,17 @@ type GridData = {
 }
 
 class Indexing {
+    private static readonly cellStructType = new WebGPU.Types.StructType("Cell", [
+        { name: "particlesCount", type: WebGPU.Types.u32 },
+        { name: "offset", type: WebGPU.Types.u32 },
+    ]);
+    public static readonly cellsBufferDescriptor: CellsBufferDescriptor = {
+        particlesCountAttribute: Indexing.cellStructType.asVertexAttribute("particlesCount"),
+        bufferArrayStride: Indexing.cellStructType.size,
+    };
+
     private readonly cellsCount: number;
 
-    private readonly cellStructType: WebGPU.Types.StructType;
     private readonly cellsBuffer: WebGPU.Buffer;
 
     private readonly nonEmptyCellsIndicesBuffer: WebGPU.Buffer;
@@ -53,7 +61,6 @@ class Indexing {
     private readonly finalizePrefixSum: FinalizePrefixSum;
     private readonly reorderParticles: ReorderParticles;
 
-    public readonly cellsBufferDescriptor: CellsBufferDescriptor;
     public readonly cellsBufferData: CellsBufferData;
 
     public readonly nonEmptyCellsBuffers: NonEmptyCellsBuffers;
@@ -62,13 +69,8 @@ class Indexing {
     public constructor(device: GPUDevice, data: Data) {
         this.cellsCount = data.gridSize[0] * data.gridSize[1] * data.gridSize[2];
 
-        this.cellStructType = new WebGPU.Types.StructType("Cell", [
-            { name: "particlesCount", type: WebGPU.Types.u32 },
-            { name: "offset", type: WebGPU.Types.u32 },
-        ]);
-
         this.cellsBuffer = new WebGPU.Buffer(device, {
-            size: this.cellStructType.size * this.cellsCount,
+            size: Indexing.cellStructType.size * this.cellsCount,
             usage: GPUBufferUsage.STORAGE | GPUBufferUsage.VERTEX,
         });
 
@@ -92,7 +94,7 @@ class Indexing {
         this.cellsBufferData = {
             gpuBuffer: this.cellsBuffer.gpuBuffer,
             cellsBufferBindingResource: this.cellsBuffer.bindingResource,
-            cellStructType: this.cellStructType,
+            cellStructType: Indexing.cellStructType,
             cellsCount: this.cellsCount,
         };
 
@@ -130,11 +132,6 @@ class Indexing {
             gridSize: data.gridSize,
             cellSize: data.cellSize,
         });
-
-        this.cellsBufferDescriptor = {
-            particlesCountAttribute: this.cellStructType.asVertexAttribute("particlesCount"),
-            bufferArrayStride: this.cellStructType.size,
-        };
 
         this.nonEmptyCellsBuffers = {
             nonEmptyCellsIndicesBuffer: this.nonEmptyCellsIndicesBuffer.gpuBuffer,

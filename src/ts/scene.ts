@@ -9,7 +9,7 @@ import { MeshRenderable } from "./rendering/mesh/mesh-renderable";
 import { MeshRenderer } from "./rendering/mesh/mesh-renderer";
 import { SpheresRenderer } from "./rendering/spheres/spheres-renderer";
 import * as Indicators from "./ui/indicators";
-import { EGridDisplayMode, EObstacleType, Parameters } from "./ui/parameters";
+import { EGridDisplayMode, Parameters } from "./ui/parameters";
 import * as WebGPU from "./webgpu-utils/webgpu-utils";
 
 class Scene {
@@ -37,10 +37,10 @@ class Scene {
 
         this.axesRenderer = new AxesRenderer(webgpuCanvas);
         this.cubeRenderer = new CubeRenderer(webgpuCanvas);
-        this.spheresRenderer = new SpheresRenderer(webgpuCanvas, this.engine.spheresBufferDescriptor);
+        this.spheresRenderer = new SpheresRenderer(webgpuCanvas, Engine.spheresBufferDescriptor);
         this.meshRenderer = new MeshRenderer(webgpuCanvas);
         this.gridCellsRenderer = new GridCellsRenderer(webgpuCanvas);
-        this.gridCellsPerPopulationRenderer = new GridCellsByPopulationRenderer(this.webgpuCanvas, this.engine.cellBufferDescriptor);
+        this.gridCellsPerPopulationRenderer = new GridCellsByPopulationRenderer(this.webgpuCanvas, Engine.cellBufferDescriptor);
 
         this.particlesMeshes.push(this.meshRenderer.createMeshRenderable(this.engine.particlesInitialMesh));
         this.obstacleMeshes.push(this.meshRenderer.createMeshRenderable(this.engine.obstaclesMesh));
