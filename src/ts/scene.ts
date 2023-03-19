@@ -11,7 +11,7 @@ import { MeshRenderable } from "./rendering/mesh/mesh-renderable";
 import { MeshRenderer } from "./rendering/mesh/mesh-renderer";
 import { SpheresRenderer } from "./rendering/spheres/spheres-renderer";
 import * as Indicators from "./ui/indicators";
-import { EAnimationType, EGridDisplayMode, EObstacleType, Parameters } from "./ui/parameters";
+import { EDomainAnimationType, EGridDisplayMode, EObstacleType, Parameters } from "./ui/parameters";
 import * as WebGPU from "./webgpu-utils/webgpu-utils";
 
 type Data = {
@@ -40,8 +40,8 @@ class Scene {
     private readonly particlesMeshes: MeshRenderable[] = [];
     private readonly obstacleMeshes: MeshRenderable[] = [];
 
-    private rotationPeriod: number = 0;
-    private contractionPeriod: number = 0;
+    private domainRotationPeriod: number = 0;
+    private domainContractionPeriod: number = 0;
 
     public constructor(webgpuCanvas: WebGPU.Canvas, data: Data) {
         this.webgpuCanvas = webgpuCanvas;
@@ -71,15 +71,15 @@ class Scene {
     }
 
     public update(commandEncoder: GPUCommandEncoder, dt: number): void {
-        const animation = Parameters.domainAnimation;
-        if (animation === EAnimationType.ROTATION) {
-            this.rotationPeriod += 0.2 * dt;
-            Parameters.domainRotation = this.rotationPeriod;
+        const domainAnimation = Parameters.domainAnimation;
+        if (domainAnimation === EDomainAnimationType.ROTATION) {
+            this.domainRotationPeriod += 0.2 * dt;
+            Parameters.domainRotation = this.domainRotationPeriod;
         } else {
-            this.rotationPeriod = Parameters.domainRotation;
-            if (animation === EAnimationType.CONTRACT) {
-                this.contractionPeriod += 0.4 * dt;
-                Parameters.domainContraction = 0.2 + 0.8 * (0.5 + 0.5 * Math.cos(this.contractionPeriod));
+            this.domainRotationPeriod = Parameters.domainRotation;
+            if (domainAnimation === EDomainAnimationType.CONTRACT) {
+                this.domainContractionPeriod += 0.4 * dt;
+                Parameters.domainContraction = 0.2 + 0.8 * (0.5 + 0.5 * Math.cos(this.domainContractionPeriod));
             }
         }
 
@@ -159,9 +159,9 @@ class Scene {
     }
 
     public reinitializeDomain(): void {
-        this.rotationPeriod = 0;
-        this.contractionPeriod = 0;
-        Parameters.domainRotation = this.rotationPeriod;
+        this.domainRotationPeriod = 0;
+        this.domainContractionPeriod = 0;
+        Parameters.domainRotation = this.domainRotationPeriod;
         Parameters.domainContraction = 1;
     }
 

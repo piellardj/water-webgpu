@@ -73,7 +73,7 @@ enum EObstacleType {
     CAPSULES = "capsules",
 }
 
-enum EAnimationType {
+enum EDomainAnimationType {
     NONE = "none",
     ROTATION = "rotate",
     CONTRACT = "contract",
@@ -130,12 +130,12 @@ abstract class Parameters {
         return Page.Range.getValue(controlId.GRAVITY_RANGE);
     }
 
-    public static get domainAnimation(): EAnimationType {
+    public static get domainAnimation(): EDomainAnimationType {
         const value = Page.Select.getValue(controlId.DOMAIN_ANIMATION_SELECT);
         if (!value) {
             throw new Error();
         }
-        return value as EAnimationType;
+        return value as EDomainAnimationType;
     }
 
     public static set domainRotation(value: number) {
@@ -235,7 +235,7 @@ abstract class Parameters {
 }
 
 export {
-    EAnimationType,
+    EDomainAnimationType,
     EGridDisplayMode,
     EObstacleType,
     EProjection,
