@@ -1,5 +1,6 @@
 import * as glMatrix from "gl-matrix";
 import * as ShaderSources from "../../shader-sources";
+import { Parameters } from "../../ui/parameters";
 import * as WebGPU from "../../webgpu-utils/webgpu-utils";
 import { ParticlesBufferData } from "../engine";
 import { CellsBufferData } from "../indexing/indexing";
@@ -27,6 +28,7 @@ class Acceleration {
 
     private workgroupsCount: number;
     private bindgroup: GPUBindGroup;
+    private particleRadius: number;
 
     public constructor(device: GPUDevice, data: Data) {
         this.device = device;
@@ -38,7 +40,9 @@ class Acceleration {
             { name: "particleRadius", type: WebGPU.Types.f32 },
             { name: "gravity", type: WebGPU.Types.vec3F32 },
             { name: "dt", type: WebGPU.Types.f32 },
+            { name: "upperBound", type: WebGPU.Types.vec3F32 },
             { name: "particlesCount", type: WebGPU.Types.u32 },
+            { name: "lowerBound", type: WebGPU.Types.vec3F32 },
             { name: "weightThreshold", type: WebGPU.Types.f32 },
         ]);
 
@@ -59,11 +63,14 @@ class Acceleration {
         const resetResult = this.applyReset(data);
         this.workgroupsCount = resetResult.workgroupsCount;
         this.bindgroup = resetResult.bindgroup;
+        this.particleRadius = data.particleRadius;
     }
 
     public compute(commandEncoder: GPUCommandEncoder, dt: number, gravity: glMatrix.ReadonlyVec3): void {
         this.uniforms.setValueFromName("gravity", gravity);
         this.uniforms.setValueFromName("dt", dt);
+        this.uniforms.setValueFromName("lowerBound", [this.particleRadius, this.particleRadius, this.particleRadius]);
+        this.uniforms.setValueFromName("upperBound", [1 - this.particleRadius, 1 - this.particleRadius, Parameters.contraction - this.particleRadius]);
         this.uniforms.uploadToGPU();
 
         const computePass = commandEncoder.beginComputePass();
@@ -77,6 +84,7 @@ class Acceleration {
         const resetResult = this.applyReset(data);
         this.workgroupsCount = resetResult.workgroupsCount;
         this.bindgroup = resetResult.bindgroup;
+        this.particleRadius = data.particleRadius;
     }
 
     private applyReset(data: Data): ResetResult {

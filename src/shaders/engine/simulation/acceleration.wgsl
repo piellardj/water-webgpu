@@ -64,14 +64,12 @@ fn main(in: ComputeIn) {
     particle.acceleration += uniforms.gravity;
 
     // upper bound
-    let upperBound = vec3<f32>(1.0 - uniforms.particleRadius);
-    let upperBoundPenetration = particle.position - upperBound;
+    let upperBoundPenetration = particle.position - uniforms.upperBound;
     let upperBoundCheck = step(vec3<f32>(0), upperBoundPenetration); // 1 if out of bounds, 0 if in bounds
     particle.acceleration -= upperBoundCheck * (2.0 * upperBoundPenetration) / uniforms.dt;
 
     // lower bound
-    let lowerBound = vec3<f32>(uniforms.particleRadius);
-    let lowerBoundPenetration = lowerBound - particle.position;
+    let lowerBoundPenetration = uniforms.lowerBound - particle.position;
     let lowerBoundCheck = step(vec3<f32>(0), lowerBoundPenetration); // 1 if out of bounds, 0 if in bounds
     particle.acceleration += lowerBoundCheck * (2.0 * lowerBoundPenetration) / uniforms.dt;
 

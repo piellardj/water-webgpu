@@ -9,6 +9,7 @@ const controlId = {
     GRAVITY_RANGE: "gravity-range-id",
     OBSTACLE_SELECT: "obstacles-select-id",
     ANIMATION_SELECT: "animation-select-id",
+    CONTRACTION_RANGE: "contraction-range-id",
 
     OBSTACLE_MESH_CHECKBOX: "obstacle-mesh-checkbox-id",
     OBSTACLE_SPHERES_CHECKBOX: "obstacle-spheres-checkbox-id",
@@ -134,6 +135,10 @@ abstract class Parameters {
             throw new Error();
         }
         return value as EAnimationType;
+    }
+
+    public static get contraction(): number {
+        return Page.Range.getValue(controlId.CONTRACTION_RANGE);
     }
 
     public static get backgroundColor(): ColorNormalized {

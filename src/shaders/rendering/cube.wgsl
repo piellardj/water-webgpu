@@ -26,7 +26,7 @@ fn main_vertex(in: VertexIn) -> VertexOut {
     );
 
     var out: VertexOut;
-    let position = corners[in.vertexIndex];
+    let position = corners[in.vertexIndex] * uniforms.proportions;
     out.position = uniforms.mvp * vec4<f32>(position, 1.0);
     return out;
 }

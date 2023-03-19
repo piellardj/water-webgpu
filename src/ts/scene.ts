@@ -100,6 +100,7 @@ class Scene {
         if (Parameters.showDomain) {
             this.cubeRenderer.render(renderpassEncoder, {
                 mvpMatrix: this.mvpMatrix,
+                proportions: [1, 1, Parameters.contraction],
             });
         }
 

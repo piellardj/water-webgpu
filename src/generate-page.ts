@@ -132,6 +132,15 @@ const data: IDemopageData = {
                         },
                     ],
                 },
+                {
+                    type: Demopage.supportedControls.Range,
+                    title: "Contraction",
+                    id: "contraction-range-id",
+                    min: 0.3,
+                    max: 1,
+                    value: 1,
+                    step: 0.01,
+                },
             ],
         },
         {

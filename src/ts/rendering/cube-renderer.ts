@@ -4,6 +4,7 @@ import * as WebGPU from "../webgpu-utils/webgpu-utils";
 
 type RenderData = {
     readonly mvpMatrix: glMatrix.ReadonlyMat4;
+    readonly proportions: glMatrix.ReadonlyVec3;
 };
 
 class CubeRenderer {
@@ -18,6 +19,7 @@ class CubeRenderer {
 
         this.uniforms = new WebGPU.Uniforms(this.device, [
             { name: "mvp", type: WebGPU.Types.mat4x4 },
+            { name: "proportions", type: WebGPU.Types.vec3F32 },
         ]);
 
         const shaderModule = WebGPU.ShaderModule.create(this.device, {
@@ -61,6 +63,7 @@ class CubeRenderer {
 
     public render(renderpassEncoder: GPURenderPassEncoder, renderData: RenderData): void {
         this.uniforms.setValueFromName("mvp", renderData.mvpMatrix);
+        this.uniforms.setValueFromName("proportions", renderData.proportions);
         this.uniforms.uploadToGPU();
 
         renderpassEncoder.setPipeline(this.renderPipeline);
