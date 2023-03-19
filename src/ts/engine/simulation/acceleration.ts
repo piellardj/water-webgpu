@@ -70,7 +70,7 @@ class Acceleration {
         this.uniforms.setValueFromName("gravity", gravity);
         this.uniforms.setValueFromName("dt", dt);
         this.uniforms.setValueFromName("lowerBound", [this.particleRadius, this.particleRadius, this.particleRadius]);
-        this.uniforms.setValueFromName("upperBound", [1 - this.particleRadius, 1 - this.particleRadius, Parameters.contraction - this.particleRadius]);
+        this.uniforms.setValueFromName("upperBound", [1 - this.particleRadius, 1 - this.particleRadius, Parameters.domainContraction - this.particleRadius]);
         this.uniforms.uploadToGPU();
 
         const computePass = commandEncoder.beginComputePass();

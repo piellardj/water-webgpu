@@ -8,8 +8,11 @@ const controlId = {
     SPHERE_RADIUS_TABS: "sphere-radius-tabs-id",
     GRAVITY_RANGE: "gravity-range-id",
     OBSTACLE_SELECT: "obstacles-select-id",
-    ANIMATION_SELECT: "animation-select-id",
-    CONTRACTION_RANGE: "contraction-range-id",
+
+    DOMAIN_DISPLAY_CHECKBOX: "domain-display-checkbox-id",
+    DOMAIN_ANIMATION_SELECT: "domain-animation-select-id",
+    DOMAIN_ROTATION_RANGE: "domain-rotation-range-id",
+    DOMAIN_CONTRACTION_RANGE: "domain-contraction-range-id",
 
     OBSTACLE_MESH_CHECKBOX: "obstacle-mesh-checkbox-id",
     OBSTACLE_SPHERES_CHECKBOX: "obstacle-spheres-checkbox-id",
@@ -17,7 +20,6 @@ const controlId = {
     BACKGROUND_COLORPICKER: "background-color-id",
     INDICATORS_CHECKBOX: "indicators-checkbox-id",
     AXES_CHECKBOX: "axes-checkbox-id",
-    DOMAIN_CHECKBOX: "domain-checkbox-id",
     GRID_CELLS_SELECT: "grid-cells-select-id",
     PROJECTION_TABS: "projection-tabs-id",
 
@@ -73,6 +75,7 @@ enum EObstacleType {
 enum EAnimationType {
     NONE = "none",
     ROTATION = "rotate",
+    CONTRACT = "contract",
 }
 
 Page.Button.addObserver(controlId.RESET_BUTTON, () => {
@@ -129,16 +132,31 @@ abstract class Parameters {
         return value as EObstacleType;
     }
 
-    public static get animation(): EAnimationType {
-        const value = Page.Select.getValue(controlId.ANIMATION_SELECT);
+    public static get domainDisplay(): boolean {
+        return Page.Checkbox.isChecked(controlId.DOMAIN_DISPLAY_CHECKBOX);
+    }
+
+    public static get domainAnimation(): EAnimationType {
+        const value = Page.Select.getValue(controlId.DOMAIN_ANIMATION_SELECT);
         if (!value) {
             throw new Error();
         }
         return value as EAnimationType;
     }
 
-    public static get contraction(): number {
-        return Page.Range.getValue(controlId.CONTRACTION_RANGE);
+    public static set domainRotation(value: number) {
+        const rotation = (180 * value / Math.PI) % 360;
+        Page.Range.setValue(controlId.DOMAIN_ROTATION_RANGE, rotation);
+    }
+    public static get domainRotation(): number {
+        return Math.PI * Page.Range.getValue(controlId.DOMAIN_ROTATION_RANGE) / 180;
+    }
+
+    public static set domainContraction(value: number) {
+        Page.Range.setValue(controlId.DOMAIN_CONTRACTION_RANGE, value);
+    }
+    public static get domainContraction(): number {
+        return Page.Range.getValue(controlId.DOMAIN_CONTRACTION_RANGE);
     }
 
     public static get backgroundColor(): ColorNormalized {
@@ -147,10 +165,6 @@ abstract class Parameters {
 
     public static get showAxes(): boolean {
         return Page.Checkbox.isChecked(controlId.AXES_CHECKBOX);
-    }
-
-    public static get showDomain(): boolean {
-        return Page.Checkbox.isChecked(controlId.DOMAIN_CHECKBOX);
     }
 
     public static get showObstacleMesh(): boolean {

@@ -40,7 +40,8 @@ class Scene {
     private readonly particlesMeshes: MeshRenderable[] = [];
     private readonly obstacleMeshes: MeshRenderable[] = [];
 
-    private rotationAngle: number = 0;
+    private rotationPeriod: number = 0;
+    private contractionPeriod: number = 0;
 
     public constructor(webgpuCanvas: WebGPU.Canvas, data: Data) {
         this.webgpuCanvas = webgpuCanvas;
@@ -70,15 +71,25 @@ class Scene {
     }
 
     public update(commandEncoder: GPUCommandEncoder, dt: number): void {
-        if (Parameters.animation === EAnimationType.ROTATION) {
-            this.rotationAngle += 0.2 * dt;
+        const animation = Parameters.domainAnimation;
+        if (animation === EAnimationType.ROTATION) {
+            this.rotationPeriod += 0.2 * dt;
+            Parameters.domainRotation = this.rotationPeriod;
+        } else {
+            this.rotationPeriod = Parameters.domainRotation;
+            if (animation === EAnimationType.CONTRACT) {
+                this.contractionPeriod += 0.4 * dt;
+                Parameters.domainContraction = 0.2 + 0.8 * (0.5 + 0.5 * Math.cos(this.contractionPeriod));
+            }
         }
-        const gravity: glMatrix.vec3 = [0, Parameters.gravity * Math.cos(this.rotationAngle), Parameters.gravity * Math.sin(this.rotationAngle)];
+
+        const rotation = Parameters.domainRotation;
+        const gravity: glMatrix.vec3 = [0, Parameters.gravity * Math.cos(rotation), Parameters.gravity * Math.sin(rotation)];
         this.engine.compute(commandEncoder, dt, gravity);
     }
 
     public render(commandEncoder: GPUCommandEncoder, viewData: ViewData): void {
-        glMatrix.mat4.fromXRotation(this.modelMatrix, -Math.PI / 2 - this.rotationAngle);
+        glMatrix.mat4.fromXRotation(this.modelMatrix, -Math.PI / 2 - Parameters.domainRotation);
         glMatrix.mat4.translate(this.modelMatrix, this.modelMatrix, [-0.5, -0.5, -0.5]);
         glMatrix.mat4.multiply(this.mvpMatrix, viewData.vpMatrix, this.modelMatrix);
 
@@ -97,10 +108,10 @@ class Scene {
         if (Parameters.showAxes) {
             this.axesRenderer.render(renderpassEncoder, viewData);
         }
-        if (Parameters.showDomain) {
+        if (Parameters.domainDisplay) {
             this.cubeRenderer.render(renderpassEncoder, {
                 mvpMatrix: this.mvpMatrix,
-                proportions: [1, 1, Parameters.contraction],
+                proportions: [1, 1, Parameters.domainContraction],
             });
         }
 
@@ -144,7 +155,10 @@ class Scene {
 
     public reinitialize(): void {
         this.engine.reinitialize();
-        this.rotationAngle = 0;
+        this.rotationPeriod = 0;
+        this.contractionPeriod = 0;
+        Parameters.domainRotation = this.rotationPeriod;
+        Parameters.domainContraction = this.contractionPeriod;
     }
 
     public setSpheresSize(size: number): void {

@@ -100,23 +100,6 @@ const data: IDemopageData = {
                 },
                 {
                     type: Demopage.supportedControls.Select,
-                    title: "Animation",
-                    id: "animation-select-id",
-                    placeholder: "<unknown>",
-                    options: [
-                        {
-                            value: "none",
-                            label: "None",
-                        },
-                        {
-                            value: "rotate",
-                            label: "Rotate",
-                            checked: true,
-                        },
-                    ],
-                },
-                {
-                    type: Demopage.supportedControls.Select,
                     title: "Obstacles",
                     id: "obstacles-select-id",
                     placeholder: "<unknown>",
@@ -132,14 +115,55 @@ const data: IDemopageData = {
                         },
                     ],
                 },
+            ],
+        },
+        {
+            title: "Domain",
+            controls: [
+                {
+                    type: Demopage.supportedControls.Checkbox,
+                    title: "Display",
+                    id: "domain-display-checkbox-id",
+                    checked: true,
+                },
+                {
+                    type: Demopage.supportedControls.Select,
+                    title: "Animation",
+                    id: "domain-animation-select-id",
+                    placeholder: "<unknown>",
+                    options: [
+                        {
+                            value: "none",
+                            label: "None",
+                        },
+                        {
+                            value: "rotate",
+                            label: "Rotate",
+                            checked: true,
+                        },
+                        {
+                            value: "contract",
+                            label: "Contract",
+                        },
+                    ],
+                },
+                {
+                    type: Demopage.supportedControls.Range,
+                    title: "Rotation",
+                    id: "domain-rotation-range-id",
+                    min: 0,
+                    max: 360,
+                    value: 0,
+                    step: 0.1,
+                },
                 {
                     type: Demopage.supportedControls.Range,
                     title: "Contraction",
-                    id: "contraction-range-id",
-                    min: 0.3,
+                    id: "domain-contraction-range-id",
+                    min: 0.2,
                     max: 1,
                     value: 1,
-                    step: 0.01,
+                    step: 0.001,
                 },
             ],
         },
@@ -178,12 +202,6 @@ const data: IDemopageData = {
                     type: Demopage.supportedControls.Checkbox,
                     title: "Axes",
                     id: "axes-checkbox-id",
-                    checked: true,
-                },
-                {
-                    type: Demopage.supportedControls.Checkbox,
-                    title: "Domain",
-                    id: "domain-checkbox-id",
                     checked: true,
                 },
                 {
