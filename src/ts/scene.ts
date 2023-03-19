@@ -105,7 +105,7 @@ class Scene {
         glMatrix.mat4.translate(this.modelMatrix, this.modelMatrix, [-0.5, -0.5, -0.5]);
         glMatrix.mat4.multiply(this.mvpMatrix, viewData.vpMatrix, this.modelMatrix);
 
-        const lightDirection: glMatrix.ReadonlyVec3 = [0, Math.SQRT1_2, Math.SQRT1_2];
+        const lightDirection: glMatrix.ReadonlyVec3 = [Math.SQRT1_2, 0, Math.SQRT1_2];
 
         if (Parameters.particlesDisplay) {
             this.spheresRenderer.renderDeferred(commandEncoder, viewData, {

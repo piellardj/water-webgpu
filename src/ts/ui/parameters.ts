@@ -291,6 +291,14 @@ Page.Select.addObserver(controlId.OBSTACLE_SELECT, () => {
 });
 updateObstacleAnimationVisibility();
 
+function updateWaterControlsVisibility(): void {
+    const isWaterMode = Parameters.displayMode === EDisplayMode.WATER;
+    Page.Controls.setVisibility(controlId.RENDER_WATER_COLOR_COLORPICKER, isWaterMode);
+    Page.Controls.setVisibility(controlId.RENDER_WATER_OPACITY_RANGE, isWaterMode);
+}
+Page.Tabs.addObserver(controlId.RENDER_MODE_TABS, updateWaterControlsVisibility);
+updateWaterControlsVisibility();
+
 Page.Sections.setVisibility("debug-section-id", Parameters.isInDebug);
 
 export {
