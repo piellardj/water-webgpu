@@ -4,10 +4,14 @@ import { CellsBufferData, CellsBufferDescriptor, GridData, Indexing, NonEmptyCel
 import { FillableMesh } from "./initial-conditions/fillable-mesh";
 import * as InitialPositions from "./initial-conditions/initial-positions";
 import { Mesh } from "./initial-conditions/models/mesh";
-import * as Models from "./initial-conditions/models/models";
 import { Acceleration } from "./simulation/acceleration";
 import { Initialization } from "./simulation/initialization";
 import { Integration } from "./simulation/integration";
+
+type Data = {
+    particlesContainerMesh: Mesh;
+    obstaclesMesh: Mesh;
+};
 
 type SpheresBufferDescriptor = {
     readonly positionAttribute: WebGPU.Types.VertexAttribute;
@@ -41,12 +45,7 @@ class Engine {
         bufferArrayStride: Engine.particleStructType.size,
     };
 
-    public static readonly cellBufferDescriptor: CellsBufferDescriptor = Indexing.cellsBufferDescriptor;
-
     private readonly device: GPUDevice;
-
-    public readonly particlesInitialMesh: Mesh;
-    public readonly obstaclesMesh: Mesh;
 
     private readonly particles: ParticlesBufferData;
     private readonly spheresRadius: number = 0.005;
@@ -63,15 +62,13 @@ class Engine {
     private readonly indexing: Indexing;
     private needsIndexing: boolean = true;
 
-    public constructor(device: GPUDevice) {
+    public constructor(device: GPUDevice, data: Data) {
         this.device = device;
 
-        this.particlesInitialMesh = Mesh.load(Models.Shapes);
-        const particlesFillableMesh = new FillableMesh(this.particlesInitialMesh.triangles);
+        const particlesFillableMesh = new FillableMesh(data.particlesContainerMesh.triangles);
         const particlesPositions = InitialPositions.fillMesh(this.spheresRadius, particlesFillableMesh);
 
-        this.obstaclesMesh = Mesh.load(Models.Lighthouse2);
-        const obstaclesFillableMesh = new FillableMesh(this.obstaclesMesh.triangles);
+        const obstaclesFillableMesh = new FillableMesh(data.obstaclesMesh.triangles);
         const obstaclesPositions = InitialPositions.fillMesh(this.spheresRadius, obstaclesFillableMesh);
 
         const particlesCount = particlesPositions.length + obstaclesPositions.length;
@@ -142,6 +139,9 @@ class Engine {
         return Initialization.PARTICLE_WEIGHT_THRESHOLD;
     }
 
+    public static get cellBufferDescriptor(): CellsBufferDescriptor {
+        return Indexing.cellsBufferDescriptor;
+    }
     public get cellsBufferData(): CellsBufferData {
         return this.indexing.cellsBufferData;
     }

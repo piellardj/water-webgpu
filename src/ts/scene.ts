@@ -1,5 +1,7 @@
 import * as glMatrix from "gl-matrix";
 import { Engine } from "./engine/engine";
+import { Mesh } from "./engine/initial-conditions/models/mesh";
+import * as Models from "./engine/initial-conditions/models/models";
 import { AxesRenderer } from "./rendering/axes-renderer";
 import { ViewData } from "./rendering/camera";
 import { CubeRenderer } from "./rendering/cube-renderer";
@@ -33,7 +35,10 @@ class Scene {
     public constructor(webgpuCanvas: WebGPU.Canvas) {
         this.webgpuCanvas = webgpuCanvas;
 
-        this.engine = new Engine(webgpuCanvas.device);
+        const particlesContainerMesh = Mesh.load(Models.Shapes);
+        const obstaclesMesh = Mesh.load(Models.Lighthouse2);
+
+        this.engine = new Engine(webgpuCanvas.device, { particlesContainerMesh, obstaclesMesh });
 
         this.axesRenderer = new AxesRenderer(webgpuCanvas);
         this.cubeRenderer = new CubeRenderer(webgpuCanvas);
@@ -42,8 +47,8 @@ class Scene {
         this.gridCellsRenderer = new GridCellsRenderer(webgpuCanvas);
         this.gridCellsPerPopulationRenderer = new GridCellsByPopulationRenderer(this.webgpuCanvas, Engine.cellBufferDescriptor);
 
-        this.particlesMeshes.push(this.meshRenderer.createMeshRenderable(this.engine.particlesInitialMesh));
-        this.obstacleMeshes.push(this.meshRenderer.createMeshRenderable(this.engine.obstaclesMesh));
+        this.particlesMeshes.push(this.meshRenderer.createMeshRenderable(particlesContainerMesh));
+        this.obstacleMeshes.push(this.meshRenderer.createMeshRenderable(obstaclesMesh));
 
         Indicators.setParticlesCount(this.engine.spheresBuffer.instancesCount);
         Indicators.setGridSize(this.engine.gridData.gridSize);
