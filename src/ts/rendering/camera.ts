@@ -154,7 +154,7 @@ class Camera {
     private recomputeProjectionMatrix(): void {
         const aspectRatio = Page.Canvas.getAspectRatio();
 
-        if (Parameters.projection === EProjection.PERSPECTIVE) {
+        if (Parameters.renderProjection === EProjection.PERSPECTIVE) {
             // const zFar = this.distance + 1.3;
             // const zNear = Math.max(0.6, zFar - 4);
             const zFar = interpolate(zFarData, this.distance);

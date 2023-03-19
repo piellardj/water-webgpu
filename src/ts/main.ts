@@ -5,36 +5,40 @@ import * as Indicators from "./ui/indicators";
 import { Parameters } from "./ui/parameters";
 import * as WebGPU from "./webgpu-utils/webgpu-utils";
 
-function main(device: GPUDevice, canvas: HTMLCanvasElement, _canvasContainer: HTMLElement): void {
+function main(device: GPUDevice, canvas: HTMLCanvasElement): void {
+    WebGPU.Uniforms.tryToOptimize = Parameters.isInDebug;
+
     const webgpuCanvas = new WebGPU.Canvas(canvas);
     const camera = new Camera();
     const scene = new Scene(webgpuCanvas, {
-        spheresRadius: Parameters.spheresRadius,
+        spheresRadius: Parameters.particlesRadius,
         obstacle: Parameters.obstacleType,
+        particlesQuantity: Parameters.particlesQuantity,
     });
 
     const framesCounter = new FrameCounter();
     framesCounter.onChange = Indicators.setAverageFps;
 
-    Parameters.onResetObservers.push(() => scene.reinitialize());
+    Parameters.onParticlesQuantityChange.push(() => scene.setParticlesQuantity(Parameters.particlesQuantity));
+    Parameters.onParticlesRadiusChange.push(() => scene.setParticlesRadius(Parameters.particlesRadius));
+    Parameters.onParticlesResetObservers.push(() => scene.reinitialize());
     Parameters.onDomainResetObservers.push(() => scene.reinitializeDomain());
-    Parameters.onSphereSizeChange.push(() => scene.setSpheresSize(Parameters.spheresRadius));
     Parameters.onObstacleChange.push(() => scene.setObstacle(Parameters.obstacleType));
 
     function mainLoop(): void {
         framesCounter.registerFrame();
 
-        webgpuCanvas.setClearColor(Parameters.backgroundColor);
+        webgpuCanvas.setClearColor(Parameters.renderBackgroundColor);
         webgpuCanvas.adjustSize();
         scene.setCanvasSize(webgpuCanvas.width, webgpuCanvas.height);
 
         const commandEncoder = device.createCommandEncoder();
 
-        if (Parameters.paused) {
+        if (Parameters.enginePaused) {
             scene.update(commandEncoder, 0);
         } else {
-            const timestep = Parameters.timestep;
-            for (let i = Parameters.stepsPerFrame; i > 0; i--) {
+            const timestep = Parameters.engineTimestep;
+            for (let i = Parameters.engineStepsPerFrame; i > 0; i--) {
                 scene.update(commandEncoder, timestep);
             }
         }
@@ -50,8 +54,7 @@ function main(device: GPUDevice, canvas: HTMLCanvasElement, _canvasContainer: HT
 
 async function initialize(): Promise<void> {
     const canvasElement = Page.Canvas.getCanvas();
-    const canvasContainer = Page.Canvas.getCanvasContainer();
-    if (!canvasElement || !canvasContainer) {
+    if (!canvasElement) {
         throw new Error("Could not find canvas on page.");
     }
 
@@ -59,7 +62,7 @@ async function initialize(): Promise<void> {
     if (!device) {
         throw new Error("No GPU device.");
     }
-    main(device, canvasElement, canvasContainer);
+    main(device, canvasElement);
 }
 
 initialize();

@@ -37,41 +37,12 @@ const data: IDemopageData = {
     },
     controlsSections: [
         {
-            title: "Engine",
+            title: "Particles",
             controls: [
                 {
-                    type: Demopage.supportedControls.Checkbox,
-                    title: "Pause",
-                    id: "pause-checkbox-id",
-                    checked: false
-                },
-                {
-                    type: Demopage.supportedControls.Range,
-                    title: "Timestep",
-                    id: "timestep-range-id",
-                    min: 0.0005,
-                    max: 0.01,
-                    value: 0.001,
-                    step: 0.0005,
-                },
-                {
-                    type: Demopage.supportedControls.Range,
-                    title: "Steps per frame",
-                    id: "iterations-per-frame-range-id",
-                    min: 1,
-                    max: 10,
-                    value: 5,
-                    step: 1
-                },
-                {
-                    type: Demopage.supportedControls.Button,
-                    label: "Reset",
-                    id: "reset-button-id",
-                },
-                {
                     type: Demopage.supportedControls.Tabs,
-                    title: "Sphere radius",
-                    id: "sphere-radius-tabs-id",
+                    title: "Radius",
+                    id: "particles-radius-tabs-id",
                     unique: true,
                     options: [
                         {
@@ -90,13 +61,53 @@ const data: IDemopageData = {
                     ]
                 },
                 {
+                    type: Demopage.supportedControls.Select,
+                    title: "Quantity",
+                    id: "particles-quantity-select-id",
+                    placeholder: "<unknown>",
+                    options: [
+                        {
+                            value: "x",
+                            label: "A few",
+                        },
+                        {
+                            value: "xx",
+                            label: "Fair amount",
+                            checked: true,
+                        },
+                        {
+                            value: "xxx",
+                            label: "Lots",
+                        },
+                        {
+                            value: "xxxx",
+                            label: "Huge amount",
+                        },
+                        {
+                            value: "xxxxx",
+                            label: "Are you sure ?",
+                        },
+                    ],
+                },
+                {
                     type: Demopage.supportedControls.Range,
                     title: "Gravity",
-                    id: "gravity-range-id",
+                    id: "particles-gravity-range-id",
                     min: -1,
                     max: 1,
                     value: 0.9,
                     step: 0.1,
+                },
+                {
+                    type: Demopage.supportedControls.Checkbox,
+                    title: "Display",
+                    id: "particles-display-checkbox-id",
+                    checked: true,
+                },
+                {
+                    type: Demopage.supportedControls.Button,
+                    label: "Reset",
+                    id: "particles-reset-button-id",
                 },
             ],
         },
@@ -215,25 +226,39 @@ const data: IDemopageData = {
                 {
                     type: Demopage.supportedControls.ColorPicker,
                     title: "Background",
-                    id: "background-color-id",
+                    id: "render-background-color-id",
                     defaultValueHex: "#CA8BBC",
+                },
+                {
+                    type: Demopage.supportedControls.ColorPicker,
+                    title: "Water color",
+                    id: "render-water-color-id",
+                    defaultValueHex: "#0076EC"
+                },
+                {
+                    type: Demopage.supportedControls.Range,
+                    title: "Water opacity",
+                    id: "render-water-opacity-range-id",
+                    min: 0,
+                    max: 3,
+                    value: 1,
+                    step: 0.1
                 },
                 {
                     type: Demopage.supportedControls.Checkbox,
                     title: "Indicators",
-                    id: "indicators-checkbox-id",
+                    id: "render-indicators-checkbox-id",
                     checked: true,
                 },
                 {
                     type: Demopage.supportedControls.Checkbox,
                     title: "Axes",
-                    id: "axes-checkbox-id",
-                    checked: true,
+                    id: "render-axes-checkbox-id",
                 },
                 {
                     type: Demopage.supportedControls.Select,
                     title: "Grid cells",
-                    id: "grid-cells-select-id",
+                    id: "render-grid-cells-select-id",
                     placeholder: "<unknown>",
                     options: [
                         {
@@ -254,7 +279,7 @@ const data: IDemopageData = {
                 {
                     type: Demopage.supportedControls.Tabs,
                     title: "Projection",
-                    id: "projection-tabs-id",
+                    id: "render-projection-tabs-id",
                     unique: true,
                     options: [
                         {
@@ -271,14 +296,38 @@ const data: IDemopageData = {
             ],
         },
         {
-            title: "Spheres",
+            title: "Engine",
             controls: [
                 {
                     type: Demopage.supportedControls.Checkbox,
-                    title: "Display",
-                    id: "spheres-checkbox-id",
-                    checked: true,
+                    title: "Pause",
+                    id: "engine-pause-checkbox-id",
+                    checked: false
                 },
+                {
+                    type: Demopage.supportedControls.Range,
+                    title: "Timestep",
+                    id: "engine-timestep-range-id",
+                    min: 0.0005,
+                    max: 0.01,
+                    value: 0.001,
+                    step: 0.0005,
+                },
+                {
+                    type: Demopage.supportedControls.Range,
+                    title: "Steps per frame",
+                    id: "engine-iterations-per-frame-range-id",
+                    min: 1,
+                    max: 10,
+                    value: 5,
+                    step: 1
+                },
+            ],
+        },
+        {
+            title: "Debug",
+            id: "debug-section-id",
+            controls: [
                 {
                     type: Demopage.supportedControls.Range,
                     title: "Radius",
@@ -325,21 +374,6 @@ const data: IDemopageData = {
                             label: "Depth",
                         },
                     ]
-                },
-                {
-                    type: Demopage.supportedControls.ColorPicker,
-                    title: "Water color",
-                    id: "water-color-id",
-                    defaultValueHex: "#0076EC"
-                },
-                {
-                    type: Demopage.supportedControls.Range,
-                    title: "Water opacity",
-                    id: "water-opacity-range-id",
-                    min: 0,
-                    max: 3,
-                    value: 1,
-                    step: 0.1
                 },
                 {
                     type: Demopage.supportedControls.Range,

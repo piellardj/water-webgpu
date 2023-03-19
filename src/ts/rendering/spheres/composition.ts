@@ -79,10 +79,10 @@ class Composition {
         this.uniforms.setValueFromName("displayMode", Parameters.displayMode);
         this.uniforms.setValueFromName("cameraUp", viewData.cameraUp);
         this.uniforms.setValueFromName("f0", Parameters.waterFresnel);
-        this.uniforms.setValueFromName("worldColor", Parameters.backgroundColor.slice(0, 3));
+        this.uniforms.setValueFromName("worldColor", Parameters.renderBackgroundColor.slice(0, 3));
         this.uniforms.setValueFromName("specularity", Parameters.waterSpecularity);
-        this.uniforms.setValueFromName("waterColor", Parameters.waterColor.slice(0, 3));
-        this.uniforms.setValueFromName("waterOpacity", Parameters.waterOpacity);
+        this.uniforms.setValueFromName("waterColor", Parameters.renderWaterColor.slice(0, 3));
+        this.uniforms.setValueFromName("waterOpacity", Parameters.renderWaterOpacity);
         this.uniforms.uploadToGPU();
 
         renderpassEncoder.setPipeline(this.renderPipeline);

@@ -5,6 +5,7 @@ import X from "../../../../models/particles-x.obj";
 import XX from "../../../../models/particles-xx.obj";
 import XXX from "../../../../models/particles-xxx.obj";
 import XXXX from "../../../../models/particles-xxxx.obj";
+import XXXXX from "../../../../models/particles-xxxxx.obj";
 
 import Capsules from "../../../../models/capsules.obj";
 import Funnel from "../../../../models/funnel.obj";
@@ -17,6 +18,7 @@ const particles = {
     XX,
     XXX,
     XXXX,
+    XXXXX,
 };
 
 const obstacles = {

@@ -11,11 +11,12 @@ import { MeshRenderable } from "./rendering/mesh/mesh-renderable";
 import { MeshRenderer } from "./rendering/mesh/mesh-renderer";
 import { SpheresRenderer } from "./rendering/spheres/spheres-renderer";
 import * as Indicators from "./ui/indicators";
-import { EDomainAnimationType, EGridDisplayMode, EObstacleAnimationType, EObstacleType, Parameters } from "./ui/parameters";
+import { EDomainAnimationType, EGridDisplayMode, EObstacleAnimationType, EObstacleType, EParticlesQuantity, Parameters } from "./ui/parameters";
 import * as WebGPU from "./webgpu-utils/webgpu-utils";
 
 type Data = {
     spheresRadius: number;
+    particlesQuantity: EParticlesQuantity;
     obstacle: EObstacleType;
 };
 
@@ -53,7 +54,7 @@ class Scene {
         this.gridCellsRenderer = new GridCellsRenderer(webgpuCanvas);
         this.gridCellsPerPopulationRenderer = new GridCellsByPopulationRenderer(this.webgpuCanvas, Engine.cellBufferDescriptor);
 
-        this.particlesContainerMesh = Mesh.load(Models.Particles.XXX);
+        this.particlesContainerMesh = Scene.loadParticlesMesh(data.particlesQuantity);
         this.particlesMeshes.push(this.meshRenderer.createMeshRenderable(this.particlesContainerMesh));
 
         this.obstaclesMesh = Scene.loadObstacleMesh(data.obstacle);
@@ -83,7 +84,7 @@ class Scene {
             }
         }
         const rotation = Parameters.domainRotation;
-        const gravity: glMatrix.vec3 = [0, Parameters.gravity * Math.cos(rotation), Parameters.gravity * Math.sin(rotation)];
+        const gravity: glMatrix.vec3 = [0, Parameters.particlesGravity * Math.cos(rotation), Parameters.particlesGravity * Math.sin(rotation)];
 
         if (Parameters.obstacleAnimation === EObstacleAnimationType.ROTATION) {
             const rotationMatrix = glMatrix.mat4.create();
@@ -104,7 +105,7 @@ class Scene {
         glMatrix.mat4.translate(this.modelMatrix, this.modelMatrix, [-0.5, -0.5, -0.5]);
         glMatrix.mat4.multiply(this.mvpMatrix, viewData.vpMatrix, this.modelMatrix);
 
-        if (Parameters.showSpheres) {
+        if (Parameters.particlesDisplay) {
             this.spheresRenderer.renderDeferred(commandEncoder, viewData, {
                 modelMatrix: this.modelMatrix,
                 gpuBuffer: this.engine.spheresBuffer.gpuBuffer,
@@ -116,7 +117,7 @@ class Scene {
 
         const renderpassEncoder = this.webgpuCanvas.beginRenderPass(commandEncoder);
 
-        if (Parameters.showAxes) {
+        if (Parameters.renderAxes) {
             this.axesRenderer.render(renderpassEncoder, viewData);
         }
         if (Parameters.domainDisplay) {
@@ -131,7 +132,7 @@ class Scene {
             if (Parameters.obstacleDisplayAsMesh) {
                 renderableMeshes.push(...this.obstacleMeshes);
             }
-            if (Parameters.showParticlesMesh) {
+            if (Parameters.particlesDisplayAsMesh) {
                 renderableMeshes.push(...this.particlesMeshes);
             }
             this.meshRenderer.render(renderpassEncoder, {
@@ -141,11 +142,11 @@ class Scene {
             });
         }
 
-        if (Parameters.showSpheres) {
+        if (Parameters.particlesDisplay) {
             this.spheresRenderer.renderComposition(renderpassEncoder, viewData);
         }
 
-        switch (Parameters.showGridCells) {
+        switch (Parameters.renderGridCells) {
             case EGridDisplayMode.FINAL:
                 this.gridCellsRenderer.render(renderpassEncoder, {
                     mvpMatrix: this.mvpMatrix,
@@ -179,11 +180,31 @@ class Scene {
         Parameters.domainContraction = 1;
     }
 
-    public setSpheresSize(size: number): void {
+    public setParticlesRadius(size: number): void {
         this.engine.reset({
             particlesContainerMesh: this.particlesContainerMesh,
             obstaclesMesh: this.obstaclesMesh,
             spheresRadius: size,
+        });
+        for (const mesh of this.obstacleMeshes) {
+            glMatrix.mat4.identity(mesh.modelMatrix);
+        }
+        Indicators.setParticlesCount(this.engine.spheresBuffer.instancesCount);
+        Indicators.setGridSize(this.engine.gridData.gridSize);
+    }
+
+    public setParticlesQuantity(quantity: EParticlesQuantity): void {
+        for (const renderableMesh of this.particlesMeshes) {
+            renderableMesh.free();
+        }
+        this.particlesMeshes.length = 0;
+
+        this.particlesContainerMesh = Scene.loadParticlesMesh(quantity);
+        this.particlesMeshes.push(this.meshRenderer.createMeshRenderable(this.particlesContainerMesh));
+        this.engine.reset({
+            particlesContainerMesh: this.particlesContainerMesh,
+            obstaclesMesh: this.obstaclesMesh,
+            spheresRadius: this.engine.spheresBuffer.sphereRadius,
         });
         for (const mesh of this.obstacleMeshes) {
             glMatrix.mat4.identity(mesh.modelMatrix);
@@ -217,6 +238,23 @@ class Scene {
 
     public setCanvasSize(width: number, height: number): boolean {
         return this.spheresRenderer.setSize(width, height);
+    }
+
+    private static loadParticlesMesh(quantity: EParticlesQuantity): Mesh {
+        switch (quantity) {
+            case EParticlesQuantity.X:
+                return Mesh.load(Models.Particles.X);
+            case EParticlesQuantity.XX:
+                return Mesh.load(Models.Particles.XX);
+            case EParticlesQuantity.XXX:
+                return Mesh.load(Models.Particles.XXX);
+            case EParticlesQuantity.XXXX:
+                return Mesh.load(Models.Particles.XXXX);
+                case EParticlesQuantity.XXXXX:
+                    return Mesh.load(Models.Particles.XXXXX);
+            default:
+                throw new Error();
+        }
     }
 
     private static loadObstacleMesh(obstacle: EObstacleType): Mesh | null {

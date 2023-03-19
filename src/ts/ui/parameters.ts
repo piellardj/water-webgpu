@@ -1,12 +1,11 @@
 /// <reference types="../page-interface-generated" />
 
 const controlId = {
-    PAUSE_CHECKBOX: "pause-checkbox-id",
-    TIMESTEP_RANGE: "timestep-range-id",
-    STEPS_PER_FRAME_RANGE: "iterations-per-frame-range-id",
-    RESET_BUTTON: "reset-button-id",
-    SPHERE_RADIUS_TABS: "sphere-radius-tabs-id",
-    GRAVITY_RANGE: "gravity-range-id",
+    PARTICLES_RADIUS_TABS: "particles-radius-tabs-id",
+    PARTICLES_QUANTITY_SELECT: "particles-quantity-select-id",
+    PARTICLES_GRAVITY_RANGE: "particles-gravity-range-id",
+    PARTICLES_DISPLAY_CHECKBOX: "particles-display-checkbox-id",
+    PARTICLES_RESET_BUTTON: "particles-reset-button-id",
 
     DOMAIN_ANIMATION_SELECT: "domain-animation-select-id",
     DOMAIN_ROTATION_RANGE: "domain-rotation-range-id",
@@ -19,27 +18,30 @@ const controlId = {
     OBSTACLE_MESH_CHECKBOX: "obstacle-mesh-checkbox-id",
     OBSTACLE_SPHERES_CHECKBOX: "obstacle-spheres-checkbox-id",
 
-    BACKGROUND_COLORPICKER: "background-color-id",
-    INDICATORS_CHECKBOX: "indicators-checkbox-id",
-    AXES_CHECKBOX: "axes-checkbox-id",
-    GRID_CELLS_SELECT: "grid-cells-select-id",
-    PROJECTION_TABS: "projection-tabs-id",
+    RENDER_BACKGROUND_COLORPICKER: "render-background-color-id",
+    RENDER_WATER_COLOR_COLORPICKER: "render-water-color-id",
+    RENDER_WATER_OPACITY_RANGE: "render-water-opacity-range-id",
+    RENDER_INDICATORS_CHECKBOX: "render-indicators-checkbox-id",
+    RENDER_AXES_CHECKBOX: "render-axes-checkbox-id",
+    RENDER_GRID_CELLS_SELECT: "render-grid-cells-select-id",
+    RENDER_PROJECTION_TABS: "render-projection-tabs-id",
 
-    SPHERES_CHECKBOX: "spheres-checkbox-id",
+    ENGINE_PAUSE_CHECKBOX: "engine-pause-checkbox-id",
+    ENGINE_TIMESTEP_RANGE: "engine-timestep-range-id",
+    ENGINE_STEPS_PER_FRAME_RANGE: "engine-iterations-per-frame-range-id",
+
     BLUR_CHECKBOX: "blur-checkbox-id",
     SPHERES_RADIUS_RANGE: "spheres-radius-checkbox-id",
     DISPLAY_MODE_SELECT: "display-mode-select-id",
-    WATER_COLOR_COLORPICKER: "water-color-id",
-    WATER_OPACITY_RANGE: "water-opacity-range-id",
     SPECULARITY_RANGE: "specularity-range-id",
     FRESNEL_RANGE: "fresnel-range-id",
 };
 
 function updateIndicatorsVisibility(): void {
-    const shouldBeVisible = Page.Checkbox.isChecked(controlId.INDICATORS_CHECKBOX);
+    const shouldBeVisible = Page.Checkbox.isChecked(controlId.RENDER_INDICATORS_CHECKBOX);
     Page.Canvas.setIndicatorsVisibility(shouldBeVisible);
 }
-Page.Checkbox.addObserver(controlId.INDICATORS_CHECKBOX, updateIndicatorsVisibility);
+Page.Checkbox.addObserver(controlId.RENDER_INDICATORS_CHECKBOX, updateIndicatorsVisibility);
 updateIndicatorsVisibility();
 
 type ColorNormalized = [number, number, number, number];
@@ -88,55 +90,56 @@ enum EObstacleAnimationType {
     ROTATION = "rotate",
 }
 
-Page.Button.addObserver(controlId.RESET_BUTTON, () => {
-    for (const observer of Parameters.onResetObservers) {
-        observer();
-    }
-});
-Page.Button.addObserver(controlId.DOMAIN_RESET_BUTTON, () => {
-    for (const observer of Parameters.onDomainResetObservers) {
-        observer();
-    }
-});
-Page.Tabs.addObserver(controlId.SPHERE_RADIUS_TABS, () => {
-    for (const observer of Parameters.onSphereSizeChange) {
-        observer();
-    }
-});
-Page.Select.addObserver(controlId.OBSTACLE_SELECT, () => {
-    for (const observer of Parameters.onObstacleChange) {
-        observer();
-    }
-});
+enum EParticlesQuantity {
+    X = "x",
+    XX = "xx",
+    XXX = "xxx",
+    XXXX = "xxxx",
+    XXXXX = "xxxxx",
+}
+
+const isInDebug = new URLSearchParams(window.location.search).get("debug") === "1";
+
+Page.Controls.setVisibility(controlId.PARTICLES_DISPLAY_CHECKBOX, isInDebug);
+
+Page.Controls.setVisibility(controlId.OBSTACLE_MESH_CHECKBOX, isInDebug);
+Page.Controls.setVisibility(controlId.OBSTACLE_SPHERES_CHECKBOX, isInDebug);
+
+Page.Controls.setVisibility(controlId.RENDER_AXES_CHECKBOX, isInDebug);
+Page.Controls.setVisibility(controlId.RENDER_GRID_CELLS_SELECT, isInDebug);
+Page.Controls.setVisibility(controlId.RENDER_PROJECTION_TABS, isInDebug);
 
 abstract class Parameters {
-    public static readonly onResetObservers: VoidFunction[] = [];
+    public static readonly isInDebug: boolean = isInDebug;
+
+    public static readonly onParticlesQuantityChange: VoidFunction[] = [];
+    public static readonly onParticlesResetObservers: VoidFunction[] = [];
     public static readonly onDomainResetObservers: VoidFunction[] = [];
-    public static readonly onSphereSizeChange: VoidFunction[] = [];
+    public static readonly onParticlesRadiusChange: VoidFunction[] = [];
     public static readonly onObstacleChange: VoidFunction[] = [];
 
-    public static get paused(): boolean {
-        return Page.Checkbox.isChecked(controlId.PAUSE_CHECKBOX);
-    }
-
-    public static get timestep(): number {
-        return Page.Range.getValue(controlId.TIMESTEP_RANGE);
-    }
-
-    public static get stepsPerFrame(): number {
-        return Page.Range.getValue(controlId.STEPS_PER_FRAME_RANGE);
-    }
-
-    public static get spheresRadius(): number {
-        const value = Page.Tabs.getValues(controlId.SPHERE_RADIUS_TABS)[0];
+    public static get particlesRadius(): number {
+        const value = Page.Tabs.getValues(controlId.PARTICLES_RADIUS_TABS)[0];
         if (!value) {
             throw new Error();
         }
         return +value;
     }
-
-    public static get gravity(): number {
-        return Page.Range.getValue(controlId.GRAVITY_RANGE);
+    public static get particlesQuantity(): EParticlesQuantity {
+        const value = Page.Select.getValue(controlId.PARTICLES_QUANTITY_SELECT);
+        if (!value) {
+            throw new Error();
+        }
+        return value as EParticlesQuantity;
+    }
+    public static get particlesGravity(): number {
+        return Page.Range.getValue(controlId.PARTICLES_GRAVITY_RANGE);
+    }
+    public static get particlesDisplay(): boolean {
+        return Page.Checkbox.isChecked(controlId.PARTICLES_DISPLAY_CHECKBOX);
+    }
+    public static get particlesDisplayAsMesh(): boolean {
+        return false;
     }
 
     public static get domainAnimation(): EDomainAnimationType {
@@ -146,7 +149,6 @@ abstract class Parameters {
         }
         return value as EDomainAnimationType;
     }
-
     public static set domainRotation(value: number) {
         const rotation = (180 * value / Math.PI) % 360;
         Page.Range.setValue(controlId.DOMAIN_ROTATION_RANGE, rotation);
@@ -154,14 +156,12 @@ abstract class Parameters {
     public static get domainRotation(): number {
         return Math.PI * Page.Range.getValue(controlId.DOMAIN_ROTATION_RANGE) / 180;
     }
-
     public static set domainContraction(value: number) {
         Page.Range.setValue(controlId.DOMAIN_CONTRACTION_RANGE, value);
     }
     public static get domainContraction(): number {
         return Page.Range.getValue(controlId.DOMAIN_CONTRACTION_RANGE);
     }
-
     public static get domainDisplay(): boolean {
         return Page.Checkbox.isChecked(controlId.DOMAIN_DISPLAY_CHECKBOX);
     }
@@ -187,34 +187,37 @@ abstract class Parameters {
         return Page.Checkbox.isChecked(controlId.OBSTACLE_SPHERES_CHECKBOX);
     }
 
-
-    public static get backgroundColor(): ColorNormalized {
-        return buildColor(controlId.BACKGROUND_COLORPICKER);
+    public static get renderBackgroundColor(): ColorNormalized {
+        return buildColor(controlId.RENDER_BACKGROUND_COLORPICKER);
     }
-
-    public static get showAxes(): boolean {
-        return Page.Checkbox.isChecked(controlId.AXES_CHECKBOX);
+    public static get renderWaterColor(): ColorNormalized {
+        return buildColor(controlId.RENDER_WATER_COLOR_COLORPICKER);
     }
-
-
-    public static get showParticlesMesh(): boolean {
-        return false;
+    public static get renderWaterOpacity(): number {
+        return Page.Range.getValue(controlId.RENDER_WATER_OPACITY_RANGE);
     }
-
-    public static get projection(): EProjection {
-        return Page.Tabs.getValues(controlId.PROJECTION_TABS)[0] as EProjection;
+    public static get renderAxes(): boolean {
+        return Page.Checkbox.isChecked(controlId.RENDER_AXES_CHECKBOX);
     }
-
-    public static get showSpheres(): boolean {
-        return Page.Checkbox.isChecked(controlId.SPHERES_CHECKBOX);
-    }
-
-    public static get showGridCells(): EGridDisplayMode {
-        const value = Page.Select.getValue(controlId.GRID_CELLS_SELECT);
+    public static get renderGridCells(): EGridDisplayMode {
+        const value = Page.Select.getValue(controlId.RENDER_GRID_CELLS_SELECT);
         if (!value) {
             throw new Error();
         }
         return +value as EGridDisplayMode;
+    }
+    public static get renderProjection(): EProjection {
+        return Page.Tabs.getValues(controlId.RENDER_PROJECTION_TABS)[0] as EProjection;
+    }
+
+    public static get enginePaused(): boolean {
+        return Page.Checkbox.isChecked(controlId.ENGINE_PAUSE_CHECKBOX);
+    }
+    public static get engineTimestep(): number {
+        return Page.Range.getValue(controlId.ENGINE_TIMESTEP_RANGE);
+    }
+    public static get engineStepsPerFrame(): number {
+        return Page.Range.getValue(controlId.ENGINE_STEPS_PER_FRAME_RANGE);
     }
 
     public static get blur(): boolean {
@@ -233,14 +236,6 @@ abstract class Parameters {
         return +value as EDisplayMode;
     }
 
-    public static get waterColor(): ColorNormalized {
-        return buildColor(controlId.WATER_COLOR_COLORPICKER);
-    }
-
-    public static get waterOpacity(): number {
-        return Page.Range.getValue(controlId.WATER_OPACITY_RANGE);
-    }
-
     public static get waterSpecularity(): number {
         return Page.Range.getValue(controlId.SPECULARITY_RANGE);
     }
@@ -250,10 +245,47 @@ abstract class Parameters {
     }
 }
 
+Page.Tabs.addObserver(controlId.PARTICLES_RADIUS_TABS, () => {
+    for (const observer of Parameters.onParticlesRadiusChange) {
+        observer();
+    }
+});
+Page.Select.addObserver(controlId.PARTICLES_QUANTITY_SELECT, () => {
+    updateObstacleAnimationVisibility();
+    for (const observer of Parameters.onParticlesQuantityChange) {
+        observer();
+    }
+});
+Page.Button.addObserver(controlId.PARTICLES_RESET_BUTTON, () => {
+    for (const observer of Parameters.onParticlesResetObservers) {
+        observer();
+    }
+});
+
+Page.Button.addObserver(controlId.DOMAIN_RESET_BUTTON, () => {
+    for (const observer of Parameters.onDomainResetObservers) {
+        observer();
+    }
+});
+
+function updateObstacleAnimationVisibility(): void {
+    Page.Controls.setVisibility(controlId.OBSTACLE_ANIMATION_SELECT, Parameters.obstacleType !== EObstacleType.NONE);
+}
+Page.Select.addObserver(controlId.OBSTACLE_SELECT, () => {
+    updateObstacleAnimationVisibility();
+    for (const observer of Parameters.onObstacleChange) {
+        observer();
+    }
+});
+updateObstacleAnimationVisibility();
+
+Page.Sections.setVisibility("debug-section-id", Parameters.isInDebug);
+
 export {
     EDomainAnimationType,
     EGridDisplayMode,
     EObstacleAnimationType,
+    EParticlesQuantity,
     EObstacleType,
     EProjection,
     Parameters,
