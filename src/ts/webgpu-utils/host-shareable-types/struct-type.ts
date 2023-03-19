@@ -177,6 +177,14 @@ class StructType implements Type {
 ${attributesString}
 };`;
     }
+
+    public isCompact(): boolean {
+        let attributesTotalSize = 0;
+        for (const attribute of this.attributes) {
+            attributesTotalSize += attribute.size;
+        }
+        return this.size === attributesTotalSize;
+    }
 }
 
 export type {

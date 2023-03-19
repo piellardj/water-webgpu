@@ -3,7 +3,7 @@ import { type AttributeDefinition, StructType } from "./host-shareable-types/str
 import { WebGPUBuffer } from "./webgpu-buffer";
 
 class UniformsBuffer {
-    public static tryToOptimize: boolean = false;
+    public static tryToOptimize: boolean = true;
 
     private readonly device: GPUDevice;
     private readonly structType: StructType;
@@ -15,7 +15,7 @@ class UniformsBuffer {
         this.device = device;
         this.structType = new StructType("Uniforms", attributesDefinitions);
 
-        if (UniformsBuffer.tryToOptimize) {
+        if (UniformsBuffer.tryToOptimize && !this.structType.isCompact()) {
             const bestPermutation = UniformsBuffer.compact(attributesDefinitions);
             const bestStructType = new StructType("Uniforms", bestPermutation);
             if (bestStructType.size < this.structType.size) {
