@@ -1,9 +1,12 @@
 import { Mesh } from "../../engine/initial-conditions/models/mesh";
 import * as WebGPU from "../../webgpu-utils/webgpu-utils";
+import * as glMatrix from "gl-matrix";
 
 class MeshRenderable {
     public readonly verticesCount: number;
     public readonly buffer: WebGPU.Buffer;
+
+    public readonly modelMatrix: glMatrix.mat4 = glMatrix.mat4.create();
 
     public constructor(device: GPUDevice, mesh: Mesh) {
         this.verticesCount = 3 * mesh.triangles.length;

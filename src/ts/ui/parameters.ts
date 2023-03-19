@@ -15,6 +15,7 @@ const controlId = {
     DOMAIN_RESET_BUTTON: "domain-reset-button-id",
 
     OBSTACLE_SELECT: "obstacles-select-id",
+    OBSTACLE_ANIMATION_SELECT: "obstacles-animation-select-id",
     OBSTACLE_MESH_CHECKBOX: "obstacle-mesh-checkbox-id",
     OBSTACLE_SPHERES_CHECKBOX: "obstacle-spheres-checkbox-id",
 
@@ -71,12 +72,20 @@ enum EGridDisplayMode {
 enum EObstacleType {
     NONE = "none",
     CAPSULES = "capsules",
+    HELIX = "helix",
+    PIERCED_FLOOR = "pierced-floor",
+    FUNNEL = "funnel",
 }
 
 enum EDomainAnimationType {
     NONE = "none",
     ROTATION = "rotate",
     CONTRACT = "contract",
+}
+
+enum EObstacleAnimationType {
+    NONE = "none",
+    ROTATION = "rotate",
 }
 
 Page.Button.addObserver(controlId.RESET_BUTTON, () => {
@@ -164,6 +173,13 @@ abstract class Parameters {
         }
         return value as EObstacleType;
     }
+    public static get obstacleAnimation(): EObstacleAnimationType {
+        const value = Page.Select.getValue(controlId.OBSTACLE_ANIMATION_SELECT);
+        if (!value) {
+            throw new Error();
+        }
+        return value as EObstacleAnimationType;
+    }
     public static get obstacleDisplayAsMesh(): boolean {
         return Page.Checkbox.isChecked(controlId.OBSTACLE_MESH_CHECKBOX);
     }
@@ -237,6 +253,7 @@ abstract class Parameters {
 export {
     EDomainAnimationType,
     EGridDisplayMode,
+    EObstacleAnimationType,
     EObstacleType,
     EProjection,
     Parameters,

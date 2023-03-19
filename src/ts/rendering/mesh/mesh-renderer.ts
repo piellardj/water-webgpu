@@ -92,13 +92,18 @@ class MeshRenderer {
             return;
         }
 
-        this.uniforms.setValueFromName("mvp", renderData.mvpMatrix);
-        this.uniforms.setValueFromName("modelMatrix", renderData.modelMatrix);
-        this.uniforms.uploadToGPU();
-
         renderpassEncoder.setPipeline(this.renderPipeline);
 
         for (const mesh of renderData.meshes) {
+            const mvpMatrix = glMatrix.mat4.create();
+            glMatrix.mat4.multiply(mvpMatrix, renderData.mvpMatrix, mesh.modelMatrix);
+            const modelMatrix = glMatrix.mat4.create();
+            glMatrix.mat4.multiply(modelMatrix, renderData.modelMatrix, mesh.modelMatrix);
+
+            this.uniforms.setValueFromName("mvp", mvpMatrix);
+            this.uniforms.setValueFromName("modelMatrix", modelMatrix);
+            this.uniforms.uploadToGPU();
+
             renderpassEncoder.setVertexBuffer(0, mesh.buffer.gpuBuffer);
             renderpassEncoder.setBindGroup(0, this.uniformsBindgroup);
             renderpassEncoder.draw(mesh.verticesCount);

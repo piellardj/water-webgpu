@@ -173,6 +173,27 @@ const data: IDemopageData = {
                             label: "Capsules",
                             checked: true,
                         },
+                        {
+                            value: "helix",
+                            label: "Helix",
+                        },
+                    ],
+                },
+                {
+                    type: Demopage.supportedControls.Select,
+                    title: "Animation",
+                    id: "obstacles-animation-select-id",
+                    placeholder: "<unknown>",
+                    options: [
+                        {
+                            value: "none",
+                            label: "None",
+                        },
+                        {
+                            value: "rotate",
+                            label: "Rotate",
+                            checked: true,
+                        },
                     ],
                 },
                 {

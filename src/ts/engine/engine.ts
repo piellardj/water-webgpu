@@ -7,6 +7,7 @@ import { Mesh } from "./initial-conditions/models/mesh";
 import { Acceleration } from "./simulation/acceleration";
 import { Initialization } from "./simulation/initialization";
 import { Integration } from "./simulation/integration";
+import { ParticlesRotation } from "./simulation/obstacles-rotation";
 
 type Data = {
     particlesContainerMesh: Mesh;
@@ -71,6 +72,7 @@ class Engine {
 
     private readonly acceleration: Acceleration;
     private readonly integration: Integration;
+    private readonly obstaclesRotation: ParticlesRotation;
 
     private readonly indexing: Indexing;
     private needsIndexing: boolean;
@@ -116,12 +118,16 @@ class Engine {
             particleRadius: this.spheresRadius,
             weightThreshold: Engine.getMaxWeight(false),
         });
+        this.obstaclesRotation = new ParticlesRotation(this.device, {
+            particlesBufferData,
+            weightThreshold: Initialization.PARTICLE_WEIGHT_THRESHOLD,
+        });
 
         this.needsInitialization = true;
         this.needsIndexing = true;
     }
 
-    public compute(commandEncoder: GPUCommandEncoder, dt: number, gravity: glMatrix.ReadonlyVec3): void {
+    public compute(commandEncoder: GPUCommandEncoder, dt: number, gravity: glMatrix.ReadonlyVec3, obstaclesRotationMatrix?: glMatrix.ReadonlyMat4): void {
         if (this.needsInitialization) {
             this.initialization.compute(commandEncoder);
             this.needsInitialization = false;
@@ -133,6 +139,11 @@ class Engine {
         if (dt > 0) {
             this.acceleration.compute(commandEncoder, dt, gravity);
             this.integration.compute(commandEncoder, dt);
+
+            if (obstaclesRotationMatrix) {
+                this.obstaclesRotation.compute(commandEncoder, obstaclesRotationMatrix);
+            }
+
             this.needsIndexing = true;
 
             this.indexIfNeeded(commandEncoder);
@@ -183,6 +194,10 @@ class Engine {
             particlesBufferData,
             particleRadius: this.spheresRadius,
             weightThreshold: Engine.getMaxWeight(false),
+        });
+        this.obstaclesRotation.reset({
+            particlesBufferData,
+            weightThreshold: Initialization.PARTICLE_WEIGHT_THRESHOLD,
         });
 
         this.needsInitialization = true;

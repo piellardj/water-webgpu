@@ -12,6 +12,7 @@ import ResetCells from "../shaders/engine/indexing/reset-cells.wgsl";
 import Acceleration from "../shaders/engine/simulation/acceleration.wgsl";
 import Initialization from "../shaders/engine/simulation/initialization.wgsl";
 import Integration from "../shaders/engine/simulation/integration.wgsl";
+import ObstaclesRotation from "../shaders/engine/simulation/obstacles-rotation.wgsl";
 
 import Axes from "../shaders/rendering/axes.wgsl";
 import Cube from "../shaders/rendering/cube.wgsl";
@@ -38,6 +39,7 @@ const engine = {
         Acceleration,
         Initialization,
         Integration,
+        ObstaclesRotation,
     },
 };
 

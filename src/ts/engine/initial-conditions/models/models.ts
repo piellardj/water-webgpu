@@ -1,18 +1,33 @@
 /// <reference types="./obj-type"/>
 
+import Column from "../../../../models/column.obj";
+import X from "../../../../models/particles-x.obj";
+import XX from "../../../../models/particles-xx.obj";
+import XXX from "../../../../models/particles-xxx.obj";
+import XXXX from "../../../../models/particles-xxxx.obj";
+
 import Capsules from "../../../../models/capsules.obj";
-import Cube from "../../../../models/cube.obj";
-import Lighthouse from "../../../../models/lighthouse.obj";
-import Lighthouse2 from "../../../../models/lighthouse2.obj";
-import Monkey from "../../../../models/monkey.obj";
-import Shapes from "../../../../models/shapes.obj";
+import Funnel from "../../../../models/funnel.obj";
+import Helix from "../../../../models/helix.obj";
+import PiercedFloor from "../../../../models/pierced-floor.obj";
+
+const particles = {
+    Column,
+    X,
+    XX,
+    XXX,
+    XXXX,
+};
+
+const obstacles = {
+    Capsules,
+    Funnel,
+    Helix,
+    PiercedFloor
+};
 
 export {
-    Capsules,
-    Cube,
-    Lighthouse,
-    Lighthouse2,
-    Monkey,
-    Shapes,
+    particles as Particles,
+    obstacles as Obstacles,
 };
 

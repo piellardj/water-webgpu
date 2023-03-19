@@ -11,7 +11,7 @@ import { MeshRenderable } from "./rendering/mesh/mesh-renderable";
 import { MeshRenderer } from "./rendering/mesh/mesh-renderer";
 import { SpheresRenderer } from "./rendering/spheres/spheres-renderer";
 import * as Indicators from "./ui/indicators";
-import { EDomainAnimationType, EGridDisplayMode, EObstacleType, Parameters } from "./ui/parameters";
+import { EDomainAnimationType, EGridDisplayMode, EObstacleAnimationType, EObstacleType, Parameters } from "./ui/parameters";
 import * as WebGPU from "./webgpu-utils/webgpu-utils";
 
 type Data = {
@@ -53,7 +53,7 @@ class Scene {
         this.gridCellsRenderer = new GridCellsRenderer(webgpuCanvas);
         this.gridCellsPerPopulationRenderer = new GridCellsByPopulationRenderer(this.webgpuCanvas, Engine.cellBufferDescriptor);
 
-        this.particlesContainerMesh = Mesh.load(Models.Shapes);
+        this.particlesContainerMesh = Mesh.load(Models.Particles.XXX);
         this.particlesMeshes.push(this.meshRenderer.createMeshRenderable(this.particlesContainerMesh));
 
         this.obstaclesMesh = Scene.loadObstacleMesh(data.obstacle);
@@ -82,9 +82,20 @@ class Scene {
                 Parameters.domainContraction = 0.2 + 0.8 * (0.5 + 0.5 * Math.cos(this.domainContractionPeriod));
             }
         }
-
         const rotation = Parameters.domainRotation;
         const gravity: glMatrix.vec3 = [0, Parameters.gravity * Math.cos(rotation), Parameters.gravity * Math.sin(rotation)];
+
+        if (Parameters.obstacleAnimation === EObstacleAnimationType.ROTATION) {
+            const rotationMatrix = glMatrix.mat4.create();
+            glMatrix.mat4.translate(rotationMatrix, rotationMatrix, [0.5, 0, 0.5]);
+            glMatrix.mat4.rotateY(rotationMatrix, rotationMatrix, 0.75 * dt);
+            glMatrix.mat4.translate(rotationMatrix, rotationMatrix, [-0.5, 0, -0.5]);
+
+            for (const mesh of this.obstacleMeshes) {
+                glMatrix.mat4.multiply(mesh.modelMatrix, mesh.modelMatrix, rotationMatrix);
+            }
+            this.engine.compute(commandEncoder, dt, gravity, rotationMatrix);
+        }
         this.engine.compute(commandEncoder, dt, gravity);
     }
 
@@ -155,6 +166,9 @@ class Scene {
 
     public reinitialize(): void {
         this.engine.reinitialize();
+        for (const mesh of this.obstacleMeshes) {
+            glMatrix.mat4.identity(mesh.modelMatrix);
+        }
         this.reinitializeDomain();
     }
 
@@ -171,6 +185,9 @@ class Scene {
             obstaclesMesh: this.obstaclesMesh,
             spheresRadius: size,
         });
+        for (const mesh of this.obstacleMeshes) {
+            glMatrix.mat4.identity(mesh.modelMatrix);
+        }
         Indicators.setParticlesCount(this.engine.spheresBuffer.instancesCount);
         Indicators.setGridSize(this.engine.gridData.gridSize);
     }
@@ -191,6 +208,9 @@ class Scene {
             obstaclesMesh: this.obstaclesMesh,
             spheresRadius: this.engine.spheresBuffer.sphereRadius,
         });
+        for (const mesh of this.obstacleMeshes) {
+            glMatrix.mat4.identity(mesh.modelMatrix);
+        }
         Indicators.setParticlesCount(this.engine.spheresBuffer.instancesCount);
         Indicators.setGridSize(this.engine.gridData.gridSize);
     }
@@ -204,7 +224,13 @@ class Scene {
             case EObstacleType.NONE:
                 return null;
             case EObstacleType.CAPSULES:
-                return Mesh.load(Models.Capsules);
+                return Mesh.load(Models.Obstacles.Capsules);
+            case EObstacleType.HELIX:
+                return Mesh.load(Models.Obstacles.Helix);
+            case EObstacleType.PIERCED_FLOOR:
+                return Mesh.load(Models.Obstacles.PiercedFloor);
+            case EObstacleType.FUNNEL:
+                return Mesh.load(Models.Obstacles.Funnel);
             default:
                 throw new Error();
         }
