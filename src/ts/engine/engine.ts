@@ -121,7 +121,7 @@ class Engine {
         this.needsIndexing = true;
     }
 
-    public compute(commandEncoder: GPUCommandEncoder, dt: number): void {
+    public compute(commandEncoder: GPUCommandEncoder, dt: number, gravity: glMatrix.ReadonlyVec3): void {
         if (this.needsInitialization) {
             this.initialization.compute(commandEncoder);
             this.needsInitialization = false;
@@ -131,7 +131,7 @@ class Engine {
         this.indexIfNeeded(commandEncoder);
 
         if (dt > 0) {
-            this.acceleration.compute(commandEncoder, dt);
+            this.acceleration.compute(commandEncoder, dt, gravity);
             this.integration.compute(commandEncoder, dt);
             this.needsIndexing = true;
 

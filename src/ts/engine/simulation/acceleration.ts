@@ -1,6 +1,5 @@
 import * as glMatrix from "gl-matrix";
 import * as ShaderSources from "../../shader-sources";
-import { Parameters } from "../../ui/parameters";
 import * as WebGPU from "../../webgpu-utils/webgpu-utils";
 import { ParticlesBufferData } from "../engine";
 import { CellsBufferData } from "../indexing/indexing";
@@ -62,11 +61,8 @@ class Acceleration {
         this.bindgroup = resetResult.bindgroup;
     }
 
-    public compute(commandEncoder: GPUCommandEncoder, dt: number): void {
-        const now = 0.0003 * performance.now();
-        this.uniforms.setValueFromName("gravity", [0, Parameters.gravity * Math.cos(now), Parameters.gravity * Math.sin(now)]);
-
-        // this.uniforms.setValueFromName("gravity", [0, 0, -Parameters.gravity]);
+    public compute(commandEncoder: GPUCommandEncoder, dt: number, gravity: glMatrix.ReadonlyVec3): void {
+        this.uniforms.setValueFromName("gravity", gravity);
         this.uniforms.setValueFromName("dt", dt);
         this.uniforms.uploadToGPU();
 

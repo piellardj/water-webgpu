@@ -100,6 +100,23 @@ const data: IDemopageData = {
                 },
                 {
                     type: Demopage.supportedControls.Select,
+                    title: "Animation",
+                    id: "animation-select-id",
+                    placeholder: "<unknown>",
+                    options: [
+                        {
+                            value: "none",
+                            label: "None",
+                        },
+                        {
+                            value: "rotate",
+                            label: "Rotate",
+                            checked: true,
+                        },
+                    ],
+                },
+                {
+                    type: Demopage.supportedControls.Select,
                     title: "Obstacles",
                     id: "obstacles-select-id",
                     placeholder: "<unknown>",

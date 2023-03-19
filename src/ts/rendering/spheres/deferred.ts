@@ -14,7 +14,7 @@ type RenderPass = {
 }
 
 type RenderData = {
-    readonly mvpMatrix: glMatrix.ReadonlyMat4;
+    readonly modelMatrix: glMatrix.ReadonlyMat4;
     readonly gpuBuffer: GPUBuffer;
     readonly instancesCount: number;
     readonly sphereRadius: number;
@@ -38,7 +38,8 @@ class Deferred {
         this.depthTexture = new WebGPU.Texture(this.device, "depth16unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING);
 
         this.uniforms = new WebGPU.Uniforms(this.device, [
-            { name: "mvp", type: WebGPU.Types.mat4x4 },
+            { name: "vpMatrix", type: WebGPU.Types.mat4x4 },
+            { name: "mMatrix", type: WebGPU.Types.mat4x4 },
             { name: "cameraUp", type: WebGPU.Types.vec3F32 },
             { name: "sphereRadius", type: WebGPU.Types.f32 },
             { name: "cameraRight", type: WebGPU.Types.vec3F32 },
@@ -139,7 +140,8 @@ class Deferred {
     }
 
     public render(commandEncoder: GPUCommandEncoder, viewData: ViewData, data: RenderData): void {
-        this.uniforms.setValueFromName("mvp", data.mvpMatrix);
+        this.uniforms.setValueFromName("vpMatrix", viewData.vpMatrix);
+        this.uniforms.setValueFromName("mMatrix", data.modelMatrix);
         this.uniforms.setValueFromName("cameraUp", viewData.cameraUp);
         this.uniforms.setValueFromName("cameraRight", viewData.cameraRight);
         this.uniforms.setValueFromName("sphereRadius", Parameters.spheresRadiusFactor * data.sphereRadius);

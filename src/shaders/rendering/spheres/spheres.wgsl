@@ -23,13 +23,16 @@ fn main_vertex(in: VertexIn) -> VertexOut {
     let corner = quadVertices[in.vertexIndex];
 
     var output: VertexOut;
-    let worldPosition: vec3<f32> = in.center + uniforms.sphereRadius * (corner.x * uniforms.cameraRight + corner.y * uniforms.cameraUp);
-    output.position = uniforms.mvp * vec4<f32>(worldPosition, 1.0);
+    let centerWorld4 = uniforms.mMatrix * vec4<f32>(in.center, 1.0);
+    let centerWorld = centerWorld4.xyz / centerWorld4.w;
+
+    let worldPosition: vec3<f32> = centerWorld + uniforms.sphereRadius * (corner.x * uniforms.cameraRight + corner.y * uniforms.cameraUp);
+    output.position = uniforms.vpMatrix * vec4<f32>(worldPosition, 1.0);
     output.localPosition = corner;
 
     let toCamera: vec3<f32> = cross(uniforms.cameraRight, uniforms.cameraUp);
-    let nearestPointWorldPosition: vec3<f32> = in.center + uniforms.sphereRadius * toCamera;
-    let nearestPoint = uniforms.mvp * vec4<f32>(nearestPointWorldPosition, 1.0);
+    let nearestPointWorldPosition: vec3<f32> = centerWorld + uniforms.sphereRadius * toCamera;
+    let nearestPoint = uniforms.vpMatrix * vec4<f32>(nearestPointWorldPosition, 1.0);
     output.middlePointDepth = nearestPoint.z / nearestPoint.w;
 
     output.isDisplayed = select(0u, 1u, in.weight < uniforms.weightThreshold);

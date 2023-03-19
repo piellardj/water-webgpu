@@ -8,6 +8,7 @@ const controlId = {
     SPHERE_RADIUS_TABS: "sphere-radius-tabs-id",
     GRAVITY_RANGE: "gravity-range-id",
     OBSTACLE_SELECT: "obstacles-select-id",
+    ANIMATION_SELECT: "animation-select-id",
 
     OBSTACLE_MESH_CHECKBOX: "obstacle-mesh-checkbox-id",
     OBSTACLE_SPHERES_CHECKBOX: "obstacle-spheres-checkbox-id",
@@ -68,6 +69,11 @@ enum EObstacleType {
     CAPSULES = "capsules",
 }
 
+enum EAnimationType {
+    NONE = "none",
+    ROTATION = "rotate",
+}
+
 Page.Button.addObserver(controlId.RESET_BUTTON, () => {
     for (const observer of Parameters.onResetObservers) {
         observer();
@@ -120,6 +126,14 @@ abstract class Parameters {
             throw new Error();
         }
         return value as EObstacleType;
+    }
+
+    public static get animation(): EAnimationType {
+        const value = Page.Select.getValue(controlId.ANIMATION_SELECT);
+        if (!value) {
+            throw new Error();
+        }
+        return value as EAnimationType;
     }
 
     public static get backgroundColor(): ColorNormalized {
@@ -195,6 +209,7 @@ abstract class Parameters {
 }
 
 export {
+    EAnimationType,
     EGridDisplayMode,
     EObstacleType,
     EProjection,

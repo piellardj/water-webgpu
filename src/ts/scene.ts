@@ -11,7 +11,7 @@ import { MeshRenderable } from "./rendering/mesh/mesh-renderable";
 import { MeshRenderer } from "./rendering/mesh/mesh-renderer";
 import { SpheresRenderer } from "./rendering/spheres/spheres-renderer";
 import * as Indicators from "./ui/indicators";
-import { EGridDisplayMode, EObstacleType, Parameters } from "./ui/parameters";
+import { EAnimationType, EGridDisplayMode, EObstacleType, Parameters } from "./ui/parameters";
 import * as WebGPU from "./webgpu-utils/webgpu-utils";
 
 type Data = {
@@ -39,6 +39,8 @@ class Scene {
     private readonly meshRenderer: MeshRenderer;
     private readonly particlesMeshes: MeshRenderable[] = [];
     private readonly obstacleMeshes: MeshRenderable[] = [];
+
+    private rotationAngle: number = 0;
 
     public constructor(webgpuCanvas: WebGPU.Canvas, data: Data) {
         this.webgpuCanvas = webgpuCanvas;
@@ -68,21 +70,21 @@ class Scene {
     }
 
     public update(commandEncoder: GPUCommandEncoder, dt: number): void {
-        this.engine.compute(commandEncoder, dt);
+        if (Parameters.animation === EAnimationType.ROTATION) {
+            this.rotationAngle += 0.2 * dt;
+        }
+        const gravity: glMatrix.vec3 = [0, Parameters.gravity * Math.cos(this.rotationAngle), Parameters.gravity * Math.sin(this.rotationAngle)];
+        this.engine.compute(commandEncoder, dt, gravity);
     }
 
     public render(commandEncoder: GPUCommandEncoder, viewData: ViewData): void {
-        glMatrix.mat4.fromTranslation(this.modelMatrix, [-0.5, -0.5, -0.5]);
-        // const now = 0.0003 * performance.now();
-        // glMatrix.mat4.fromXRotation(this.modelMatrix, -Math.PI / 2 -now);
-        // glMatrix.mat4.translate(this.modelMatrix, this.modelMatrix, [-0.5, -0.5, -0.5]);
-        // this.uniforms.setValueFromName("gravity", [0, Parameters.gravity * Math.cos(now), Parameters.gravity * Math.sin(now)]);
-
+        glMatrix.mat4.fromXRotation(this.modelMatrix, -Math.PI / 2 - this.rotationAngle);
+        glMatrix.mat4.translate(this.modelMatrix, this.modelMatrix, [-0.5, -0.5, -0.5]);
         glMatrix.mat4.multiply(this.mvpMatrix, viewData.vpMatrix, this.modelMatrix);
 
         if (Parameters.showSpheres) {
             this.spheresRenderer.renderDeferred(commandEncoder, viewData, {
-                mvpMatrix: this.mvpMatrix,
+                modelMatrix: this.modelMatrix,
                 gpuBuffer: this.engine.spheresBuffer.gpuBuffer,
                 instancesCount: this.engine.spheresBuffer.instancesCount,
                 sphereRadius: this.engine.spheresBuffer.sphereRadius,
@@ -141,6 +143,7 @@ class Scene {
 
     public reinitialize(): void {
         this.engine.reinitialize();
+        this.rotationAngle = 0;
     }
 
     public setSpheresSize(size: number): void {
