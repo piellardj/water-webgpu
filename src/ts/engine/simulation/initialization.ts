@@ -70,10 +70,10 @@ class Initialization {
     }
 
     public reset(data: Data): void {
-        const resetResult = this.applyReset(data);
-
-        this.workgroupsCount = resetResult.workgroupsCount;
         this.positionsBuffer.free();
+
+        const resetResult = this.applyReset(data);
+        this.workgroupsCount = resetResult.workgroupsCount;
         this.positionsBuffer = resetResult.positionsBuffer;
         this.bindgroup = resetResult.bindgroup;
     }

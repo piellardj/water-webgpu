@@ -70,10 +70,11 @@ class ReorderParticles {
     }
 
     public reset(data: Data): void {
+        this.tempParticlesBuffer.free();
+
         const resetResult = this.applyReset(data);
         this.workgroupsCount = resetResult.workgroupsCount;
         this.sourceParticlesBuffer = data.particlesBufferData.particlesBuffer;
-        this.tempParticlesBuffer.free();
         this.tempParticlesBuffer = resetResult.tempParticlesBuffer;
         this.bindgroup = resetResult.bindgroup;
     }

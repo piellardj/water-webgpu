@@ -138,12 +138,12 @@ class Indexing {
     }
 
     public reset(data: Data): void {
-        const resetResult = this.applyReset(data);
-
-        this.cellsCount = resetResult.cellsCount;
         this.cellsBuffer.free();
-        this.cellsBuffer = resetResult.cellsBuffer;
         this.nonEmptyCellsIndicesBuffer.free();
+
+        const resetResult = this.applyReset(data);
+        this.cellsCount = resetResult.cellsCount;
+        this.cellsBuffer = resetResult.cellsBuffer;
         this.nonEmptyCellsIndicesBuffer = resetResult.nonEmptyCellsIndicesBuffer;
         this.gridData = resetResult.gridData;
 

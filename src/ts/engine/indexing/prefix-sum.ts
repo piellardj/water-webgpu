@@ -117,13 +117,7 @@ class PrefixSum {
     }
 
     public reset(data: Data): void {
-        const resetResult = this.applyReset(data);
-        this.dispatchSize = resetResult.dispatchSize;
         this.localTotalsBuffer.free();
-        this.localTotalsBuffer = resetResult.localTotalsBuffer;
-
-        this.reduceBindgroup = resetResult.reduceBindgroup;
-        this.downPassBindgroup = resetResult.downPassBindgroup;
 
         let child = this.childPrefixSum;
         while (child) {
@@ -131,6 +125,14 @@ class PrefixSum {
             child.uniforms.free();
             child = child.childPrefixSum;
         }
+
+        const resetResult = this.applyReset(data);
+        this.dispatchSize = resetResult.dispatchSize;
+        this.localTotalsBuffer = resetResult.localTotalsBuffer;
+
+        this.reduceBindgroup = resetResult.reduceBindgroup;
+        this.downPassBindgroup = resetResult.downPassBindgroup;
+
         this.childPrefixSum = resetResult.childPrefixSum;
     }
 

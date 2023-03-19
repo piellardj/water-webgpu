@@ -59,9 +59,10 @@ class PreparePrefixSum {
     }
 
     public reset(data: Data): void {
+        this.dataItemsBuffer.free();
+
         const resetResult = this.applyReset(data);
         this.workgroupsCount = resetResult.workgroupsCount;
-        this.dataItemsBuffer.free();
         this.dataItemsBuffer = resetResult.dataItemsBuffer;
         this.bindgroup = resetResult.bindgroup;
     }
