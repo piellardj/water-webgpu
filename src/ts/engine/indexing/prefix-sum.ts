@@ -127,6 +127,7 @@ class PrefixSum {
 
         let child = this.childPrefixSum;
         while (child) {
+            child.localTotalsBuffer.free();
             child.uniforms.free();
             child = child.childPrefixSum;
         }
