@@ -93,6 +93,7 @@ enum EObstacleAnimationType {
 }
 
 enum EParticlesQuantity {
+    S = "s",
     X = "x",
     XX = "xx",
     XXX = "xxx",

@@ -1,6 +1,7 @@
 /// <reference types="./obj-type"/>
 
 import Column from "../../../../models/column.obj";
+import S from "../../../../models/particles-s.obj";
 import X from "../../../../models/particles-x.obj";
 import XX from "../../../../models/particles-xx.obj";
 import XXX from "../../../../models/particles-xxx.obj";
@@ -14,6 +15,7 @@ import PiercedFloor from "../../../../models/pierced-floor.obj";
 
 const particles = {
     Column,
+    S,
     X,
     XX,
     XXX,

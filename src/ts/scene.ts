@@ -247,6 +247,8 @@ class Scene {
 
     private static loadParticlesMesh(quantity: EParticlesQuantity): Mesh {
         switch (quantity) {
+            case EParticlesQuantity.S:
+                return Mesh.load(Models.Particles.S);
             case EParticlesQuantity.X:
                 return Mesh.load(Models.Particles.X);
             case EParticlesQuantity.XX:

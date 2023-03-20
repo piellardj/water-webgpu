@@ -67,17 +67,21 @@ const data: IDemopageData = {
                     placeholder: "<unknown>",
                     options: [
                         {
+                            value: "s",
+                            label: "Small amount",
+                        },
+                        {
                             value: "x",
-                            label: "A few",
+                            label: "Fair amount",
                         },
                         {
                             value: "xx",
-                            label: "Fair amount",
+                            label: "Medium amount",
                             checked: true,
                         },
                         {
                             value: "xxx",
-                            label: "Lots",
+                            label: "Big amount",
                         },
                         {
                             value: "xxxx",
@@ -85,7 +89,7 @@ const data: IDemopageData = {
                         },
                         {
                             value: "xxxxx",
-                            label: "Are you sure ?",
+                            label: "Giant amount",
                         },
                     ],
                 },
