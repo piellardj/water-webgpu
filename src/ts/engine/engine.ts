@@ -18,6 +18,7 @@ type Data = {
 type SpheresBufferDescriptor = {
     readonly positionAttribute: WebGPU.Types.VertexAttribute;
     readonly weightAttribute: WebGPU.Types.VertexAttribute;
+    readonly foamAttribute: WebGPU.Types.VertexAttribute;
     readonly bufferArrayStride: number;
 };
 
@@ -49,12 +50,14 @@ class Engine {
         { name: "position", type: WebGPU.Types.vec3F32 },
         { name: "weight", type: WebGPU.Types.f32 },
         { name: "velocity", type: WebGPU.Types.vec3F32 },
+        { name: "foam", type: WebGPU.Types.f32 },
         { name: "acceleration", type: WebGPU.Types.vec3F32 },
         { name: "indexInCell", type: WebGPU.Types.u32 },
     ]);
     public static readonly spheresBufferDescriptor: SpheresBufferDescriptor = {
         positionAttribute: Engine.particleStructType.asVertexAttribute("position"),
         weightAttribute: Engine.particleStructType.asVertexAttribute("weight"),
+        foamAttribute: Engine.particleStructType.asVertexAttribute("foam"),
         bufferArrayStride: Engine.particleStructType.size,
     };
 

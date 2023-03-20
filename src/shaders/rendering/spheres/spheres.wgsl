@@ -3,6 +3,7 @@
 struct VertexIn {
     @location(0) center: vec3<f32>,
     @location(1) weight: f32,
+    @location(2) foam: f32,
     @builtin(vertex_index) vertexIndex: u32,
 };
 
@@ -11,6 +12,7 @@ struct VertexOut {
     @location(0) localPosition: vec2<f32>, // in {-1, +1}^2
     @location(1) middlePointDepth: f32,
     @location(2) @interpolate(flat) isDisplayed: u32,
+    @location(3) @interpolate(flat) foam: f32,
 };
 
 @vertex
@@ -36,6 +38,7 @@ fn main_vertex(in: VertexIn) -> VertexOut {
     output.middlePointDepth = nearestPoint.z / nearestPoint.w;
 
     output.isDisplayed = select(0u, 1u, in.weight < uniforms.weightThreshold);
+    output.foam = in.foam;
 
     return output;
 }
@@ -60,6 +63,7 @@ fn computeDepth(in: VertexOut, localDepth: f32) -> f32 {
 struct FragmentRGAOut {
     @builtin(frag_depth) depth: f32,
     @location(0) color: vec4<f32>,
+    @location(1) foam: vec4<f32>,
 };
 
 @fragment
@@ -70,6 +74,7 @@ fn main_fragment_rga(in: VertexOut) -> FragmentRGAOut {
     var output: FragmentRGAOut;
     output.depth = depth;
     output.color = vec4<f32>(0.5 + 0.5 * in.localPosition, 0, depth);
+    output.foam = vec4<f32>(in.foam);
     return output;
 }
 

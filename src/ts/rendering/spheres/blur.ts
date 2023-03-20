@@ -1,6 +1,11 @@
 import * as ShaderSources from "../../shader-sources";
 import * as WebGPU from "../../webgpu-utils/webgpu-utils";
 
+type Data = {
+    readonly deferredTexture: WebGPU.Texture
+    readonly foamTexture: WebGPU.Texture
+};
+
 class Blur {
     private static readonly WORKGROUP_SIZE = 256;
     private static readonly BLUR_RADIUS = 6;
@@ -8,16 +13,18 @@ class Blur {
 
     private readonly device: GPUDevice;
     private readonly temporaryTexture: WebGPU.Texture;
+    private readonly temporaryFoamTexture: WebGPU.Texture;
     private readonly pipeline: GPUComputePipeline;
     private readonly uniformsHorizontal: WebGPU.Uniforms;
     private readonly uniformsVertical: WebGPU.Uniforms;
     private bindgroupHorizontal: GPUBindGroup | null = null;
     private bindgroupVertical: GPUBindGroup | null = null;
 
-    public constructor(device: GPUDevice, deferredTexture: WebGPU.Texture) {
+    public constructor(device: GPUDevice, data: Data) {
         this.device = device;
 
         this.temporaryTexture = new WebGPU.Texture(device, "rgba8unorm", GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING);
+        this.temporaryFoamTexture = new WebGPU.Texture(device, "rgba8unorm", GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING);
 
         const uniformBufferAttributes = [
             { name: "direction", type: WebGPU.Types.vec2I32 },
@@ -44,7 +51,7 @@ class Blur {
             }
         });
 
-        this.setDeferredTexture(deferredTexture);
+        this.setDeferredTextures(data);
     }
 
     public compute(commandEncoder: GPUCommandEncoder): void {
@@ -52,8 +59,8 @@ class Blur {
             throw new Error();
         }
 
-        const height = this.temporaryTexture.getHeight();
         const width = this.temporaryTexture.getWidth();
+        const height = this.temporaryTexture.getHeight();
 
         const computePass = commandEncoder.beginComputePass();
         computePass.setPipeline(this.pipeline);
@@ -71,18 +78,33 @@ class Blur {
         computePass.end();
     }
 
-    public setDeferredTexture(deferredTexture: WebGPU.Texture): void {
-        if (!deferredTexture.hasUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING)) {
+    public setDeferredTextures(data: Data): void {
+        if (!data.deferredTexture.hasUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING)) {
             throw new Error("Texture has wrong usage.");
         }
-        if (deferredTexture.format !== "rgba8unorm" || this.temporaryTexture.format !== "rgba8unorm") {
+        if (!data.foamTexture.hasUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING)) {
+            throw new Error("Texture has wrong usage.");
+        }
+        if (data.deferredTexture.format !== "rgba8unorm" || this.temporaryTexture.format !== "rgba8unorm") {
+            throw new Error("Texture has wrong format.");
+        }
+        if (data.foamTexture.format !== "rgba8unorm" || this.temporaryFoamTexture.format !== "rgba8unorm") {
             throw new Error("Texture has wrong format.");
         }
 
-        this.temporaryTexture.setSize(deferredTexture.getWidth(), deferredTexture.getHeight());
+        if (data.foamTexture.getWidth() !== data.deferredTexture.getWidth() || data.foamTexture.getHeight() !== data.deferredTexture.getHeight()) {
+            throw new Error();
+        }
 
-        const deferredTextureView = deferredTexture.getView();
+        const width = data.deferredTexture.getWidth();
+        const height = data.deferredTexture.getHeight();
+        this.temporaryTexture.setSize(width, height);
+        this.temporaryFoamTexture.setSize(width, height);
+
+        const deferredTextureView = data.deferredTexture.getView();
+        const deferredFoamTextureView = data.foamTexture.getView();
         const temporaryTextureView = this.temporaryTexture.getView();
+        const temporaryFoamTextureView = this.temporaryFoamTexture.getView();
         const layout = this.pipeline.getBindGroupLayout(0);
         this.bindgroupHorizontal = this.device.createBindGroup({
             layout,
@@ -92,9 +114,15 @@ class Blur {
                     resource: deferredTextureView,
                 }, {
                     binding: 1,
-                    resource: temporaryTextureView,
+                    resource: deferredFoamTextureView,
                 }, {
                     binding: 2,
+                    resource: temporaryTextureView,
+                }, {
+                    binding: 3,
+                    resource: temporaryFoamTextureView,
+                }, {
+                    binding: 4,
                     resource: this.uniformsHorizontal.bindingResource,
                 }
             ]
@@ -107,9 +135,15 @@ class Blur {
                     resource: temporaryTextureView,
                 }, {
                     binding: 1,
-                    resource: deferredTextureView,
+                    resource: temporaryFoamTextureView,
                 }, {
                     binding: 2,
+                    resource: deferredTextureView,
+                }, {
+                    binding: 3,
+                    resource: deferredFoamTextureView,
+                }, {
+                    binding: 4,
                     resource: this.uniformsVertical.bindingResource,
                 }
             ]

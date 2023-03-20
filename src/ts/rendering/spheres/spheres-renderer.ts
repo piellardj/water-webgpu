@@ -13,8 +13,13 @@ class SpheresRenderer {
 
     public constructor(webgpuCanvas: WebGPU.Canvas, data: DeferredData) {
         this.deferredRenderer = new Deferred(webgpuCanvas, data);
-        this.blur = new Blur(webgpuCanvas.device, this.deferredRenderer.texture);
-        this.compositionRenderer = new Composition(webgpuCanvas, this.deferredRenderer.texture);
+
+        const texturesData = {
+            deferredTexture: this.deferredRenderer.texture,
+            foamTexture: this.deferredRenderer.foamTexture,
+        };
+        this.blur = new Blur(webgpuCanvas.device, texturesData);
+        this.compositionRenderer = new Composition(webgpuCanvas, texturesData);
     }
 
     public renderDeferred(commandEncoder: GPUCommandEncoder, viewData: ViewData, data: DeferredRenderData): void {
@@ -31,8 +36,13 @@ class SpheresRenderer {
 
     public setSize(width: number, height: number): boolean {
         if (this.deferredRenderer.setSize(width, height)) {
-            this.blur.setDeferredTexture(this.deferredRenderer.texture);
-            this.compositionRenderer.setDeferredTexture(this.deferredRenderer.texture);
+            const texturesData = {
+                deferredTexture: this.deferredRenderer.texture,
+                foamTexture: this.deferredRenderer.foamTexture,
+            };
+
+            this.blur.setDeferredTextures(texturesData);
+            this.compositionRenderer.setDeferredTexture(texturesData);
             return true;
         }
         return false;

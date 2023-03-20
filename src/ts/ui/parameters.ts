@@ -22,6 +22,7 @@ const controlId = {
     RENDER_MODE_TABS: "render-mode-tabs-id",
     RENDER_WATER_COLOR_COLORPICKER: "render-water-color-id",
     RENDER_WATER_OPACITY_RANGE: "render-water-opacity-range-id",
+    RENDER_FOAM_CHECKBOX: "render-foam-checkbox-id",
     RENDER_INDICATORS_CHECKBOX: "render-indicators-checkbox-id",
     RENDER_AXES_CHECKBOX: "render-axes-checkbox-id",
     RENDER_GRID_CELLS_SELECT: "render-grid-cells-select-id",
@@ -198,6 +199,9 @@ abstract class Parameters {
     }
     public static get renderWaterOpacity(): number {
         return Page.Range.getValue(controlId.RENDER_WATER_OPACITY_RANGE);
+    }
+    public static get renderFoam(): boolean {
+        return Page.Checkbox.isChecked(controlId.RENDER_FOAM_CHECKBOX);
     }
     public static get renderAxes(): boolean {
         return Page.Checkbox.isChecked(controlId.RENDER_AXES_CHECKBOX);

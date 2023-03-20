@@ -1,6 +1,8 @@
 @group(0) @binding(0) var inputTexture: texture_2d<f32>;
-@group(0) @binding(1) var outputTexture: texture_storage_2d<rgba8unorm, write>;
-@group(0) @binding(2) var<uniform> uniforms: Uniforms;
+@group(0) @binding(1) var inputFoamTexture: texture_2d<f32>;
+@group(0) @binding(2) var outputTexture: texture_storage_2d<rgba8unorm, write>;
+@group(0) @binding(3) var outputFoamTexture: texture_storage_2d<rgba8unorm, write>;
+@group(0) @binding(4) var<uniform> uniforms: Uniforms;
 
 struct ComputeIn {
     @builtin(workgroup_id) workgroupId: vec3<u32>,
@@ -20,13 +22,31 @@ const blurFactors = array<f32,blurRadius + 1>(
     0.047024831283291185,
 );
 
+alias FragmentDataType = vec4<f32>;
+
 struct Fragment {
-    data: vec3<f32>,
+    data: FragmentDataType,
     depth: f32,
 };
+
 var<workgroup> workgroupCache : array<Fragment, workgroupSize>;
 
-fn addContribution(currentFragmentDepth: f32, neighbourIndexInCache: i32, factor: f32, cumulatedData: ptr<function,vec3<f32>>, samplesCount: ptr<function,f32>) {
+fn loadFragment(texelId: vec2<i32>) -> Fragment {
+    var currentFragment: Fragment;
+    let rawTexel = textureLoad(inputTexture, texelId, 0);
+    let foam = textureLoad(inputFoamTexture, texelId, 0).r;
+    currentFragment.data = vec4<f32>(rawTexel.rgb, foam);
+    currentFragment.depth = rawTexel.a;
+    return currentFragment;
+}
+fn storeFragment(texelId: vec2<i32>, cumulatedData: FragmentDataType, depth: f32) {
+    let outputColor = vec4<f32>(cumulatedData.rgb, depth);
+    let outputFoamColor = vec4<f32>(cumulatedData.a);
+    textureStore(outputTexture, texelId, outputColor);
+    textureStore(outputFoamTexture, texelId, outputFoamColor);
+}
+
+fn addContribution(currentFragmentDepth: f32, neighbourIndexInCache: i32, factor: f32, cumulatedData: ptr<function,FragmentDataType>, samplesCount: ptr<function,f32>) {
     if (neighbourIndexInCache >= 0 && neighbourIndexInCache < workgroupSize) {
         let neighbourFragment = workgroupCache[neighbourIndexInCache];
 
@@ -46,10 +66,7 @@ fn main(in: ComputeIn) {
     let indexInCache = i32(in.localInvocationId.x);
 
     // first, load workgroup cache
-    let rawTexel = textureLoad(inputTexture, texelId, 0);
-    var currentFragment: Fragment;
-    currentFragment.data = rawTexel.rgb;
-    currentFragment.depth = rawTexel.a;
+    let currentFragment = loadFragment(texelId);
     workgroupCache[indexInCache] = currentFragment;
     workgroupBarrier();
 
@@ -59,7 +76,7 @@ fn main(in: ComputeIn) {
         let nearImageBorder = (globalInvocationId.x <= blurRadius) || (globalInvocationId.x >= textureSize1D - 1 - blurRadius);
         let insideWorkgroup = (indexInCache >= blurRadius) && (indexInCache <= workgroupSize - 1 - blurRadius);
         if (nearImageBorder || insideWorkgroup) {
-            var cumulatedData = vec3<f32>(0.0);
+            var cumulatedData = FragmentDataType(0);
             var samplesCount = 0.0;
 
             addContribution(currentFragment.depth, indexInCache, blurFactors[0], &cumulatedData, &samplesCount);
@@ -71,8 +88,7 @@ fn main(in: ComputeIn) {
             }
 
             cumulatedData = cumulatedData / samplesCount;
-            let outputColor = vec4<f32>(cumulatedData, currentFragment.depth);
-            textureStore(outputTexture, texelId, outputColor);
+            storeFragment(texelId, cumulatedData, currentFragment.depth);
         }
 
     }

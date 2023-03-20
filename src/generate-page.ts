@@ -267,6 +267,12 @@ const data: IDemopageData = {
                 },
                 {
                     type: Demopage.supportedControls.Checkbox,
+                    title: "Foam",
+                    id: "render-foam-checkbox-id",
+                    checked: true,
+                },
+                {
+                    type: Demopage.supportedControls.Checkbox,
                     title: "Indicators",
                     id: "render-indicators-checkbox-id",
                     checked: true,

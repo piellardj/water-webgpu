@@ -21,6 +21,7 @@ fn main(in: ComputeIn) {
     particle.position = initialParticle.position;
     particle.weight = initialParticle.weight;
     particle.velocity = vec3<f32>(0);
+    particle.foam = 0.0;
     particle.acceleration = vec3<f32>(0);
     particlesBuffer[particleId] = particle;
 }

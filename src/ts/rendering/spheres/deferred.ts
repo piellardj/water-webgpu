@@ -12,6 +12,7 @@ type Data = {
 
 type RenderPass = {
     readonly colorAttachment: GPURenderPassColorAttachment;
+    readonly foamAttachment?: GPURenderPassColorAttachment;
     readonly depthAttachment: GPURenderPassDepthStencilAttachment;
     readonly descriptor: GPURenderPassDescriptor;
     readonly pipeline: GPURenderPipeline;
@@ -27,6 +28,14 @@ type RenderData = {
     readonly willUseWaterDepth: boolean;
 };
 
+type DeferredDescriptorData = {
+    fragmentMain: string;
+    bufferDescriptor: SpheresBufferDescriptor;
+    writeMask: GPUColorWriteFlags;
+    blend?: GPUBlendState;
+    foamTexture?: WebGPU.Texture;
+};
+
 class Deferred {
     private readonly device: GPUDevice;
 
@@ -36,12 +45,14 @@ class Deferred {
     private readonly uniforms: WebGPU.Uniforms;
 
     public readonly texture: WebGPU.Texture;
+    public readonly foamTexture: WebGPU.Texture;
     private readonly depthTexture: WebGPU.Texture;
 
     public constructor(webgpuCanvas: WebGPU.Canvas, data: Data) {
         this.device = webgpuCanvas.device;
 
         this.texture = new WebGPU.Texture(this.device, "rgba8unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING);
+        this.foamTexture = new WebGPU.Texture(this.device, "rgba8unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING);
         this.depthTexture = new WebGPU.Texture(this.device, "depth16unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING);
 
         this.uniforms = new WebGPU.Uniforms(this.device, [
@@ -66,6 +77,12 @@ class Deferred {
                 loadOp: "clear",
                 storeOp: "store",
             };
+            const foamAttachment: GPURenderPassColorAttachment = {
+                view: this.foamTexture.getView(),
+                clearValue: [0, 0, 0, 0],
+                loadOp: "clear",
+                storeOp: "store",
+            };
             const depthAttachment: GPURenderPassDepthStencilAttachment = {
                 view: this.depthTexture.getView(),
                 depthClearValue: 1,
@@ -74,11 +91,15 @@ class Deferred {
                 stencilReadOnly: true,
             };
             const renderPassDescriptor: GPURenderPassDescriptor = {
-                colorAttachments: [colorAttachment],
+                colorAttachments: [colorAttachment, foamAttachment],
                 depthStencilAttachment: depthAttachment,
             };
-            const writeMask = GPUColorWrite.RED | GPUColorWrite.GREEN | GPUColorWrite.ALPHA;
-            const pipelineDescriptor = this.createDeferredDescriptor(shaderModule, "main_fragment_rga", data.spheresBufferDescriptor, writeMask);
+            const pipelineDescriptor = this.createDeferredDescriptor(shaderModule, {
+                fragmentMain: "main_fragment_rga",
+                bufferDescriptor: data.spheresBufferDescriptor,
+                writeMask: GPUColorWrite.RED | GPUColorWrite.GREEN | GPUColorWrite.ALPHA,
+                foamTexture: this.foamTexture,
+            });
             pipelineDescriptor.depthStencil = {
                 depthWriteEnabled: true,
                 depthCompare: "less",
@@ -95,6 +116,7 @@ class Deferred {
 
             this.rgaRenderPass = {
                 colorAttachment,
+                foamAttachment,
                 depthAttachment,
                 descriptor: renderPassDescriptor,
                 pipeline,
@@ -118,7 +140,6 @@ class Deferred {
                 colorAttachments: [colorAttachment],
                 depthStencilAttachment: depthAttachment,
             };
-            const writeMask = GPUColorWrite.BLUE;
             const additiveBlend: GPUBlendState = {
                 color: {
                     srcFactor: "one",
@@ -131,7 +152,12 @@ class Deferred {
                     operation: "add",
                 }
             };
-            const pipelineDescriptor = this.createDeferredDescriptor(shaderModule, "main_fragment_b", data.spheresBufferDescriptor, writeMask, additiveBlend);
+            const pipelineDescriptor = this.createDeferredDescriptor(shaderModule, {
+                fragmentMain: "main_fragment_b",
+                bufferDescriptor: data.spheresBufferDescriptor,
+                writeMask: GPUColorWrite.BLUE,
+                blend: additiveBlend,
+            });
             pipelineDescriptor.depthStencil = {
                 depthWriteEnabled: false,
                 depthCompare: "less",
@@ -195,6 +221,14 @@ class Deferred {
             }
             somethingChanged = true;
         }
+        if (this.foamTexture.setSize(width, height)) {
+            for (const renderPass of renderPasses) {
+                if (renderPass.foamAttachment) {
+                    renderPass.foamAttachment.view = this.foamTexture.getView();
+                }
+            }
+            somethingChanged = true;
+        }
 
         if (this.depthTexture.setSize(width, height)) {
             this.rgaRenderPass.depthAttachment.view = this.depthTexture.getView();
@@ -208,13 +242,20 @@ class Deferred {
         this.bRenderPass.depthAttachment.view = sceneDepthTextureView;
     }
 
-    private createDeferredDescriptor(shaderModule: GPUShaderModule, fragmentMain: string, bufferDescriptor: SpheresBufferDescriptor, writeMask: GPUColorWriteFlags, blend?: GPUBlendState): GPURenderPipelineDescriptor {
+    private createDeferredDescriptor(shaderModule: GPUShaderModule, data: DeferredDescriptorData): GPURenderPipelineDescriptor {
+        const targets: GPUColorTargetState[] = [];
+
         const colorTarget: GPUColorTargetState = {
             format: this.texture.format,
-            writeMask,
+            writeMask: data.writeMask,
         };
-        if (blend) {
-            colorTarget.blend = blend;
+        if (data.blend) {
+            colorTarget.blend = data.blend;
+        }
+        targets.push(colorTarget);
+
+        if (data.foamTexture) {
+            targets.push({ format: data.foamTexture.format });
         }
 
         return {
@@ -227,24 +268,29 @@ class Deferred {
                         attributes: [
                             {
                                 shaderLocation: 0,
-                                offset: bufferDescriptor.positionAttribute.offset,
-                                format: bufferDescriptor.positionAttribute.format,
+                                offset: data.bufferDescriptor.positionAttribute.offset,
+                                format: data.bufferDescriptor.positionAttribute.format,
                             },
                             {
                                 shaderLocation: 1,
-                                offset: bufferDescriptor.weightAttribute.offset,
-                                format: bufferDescriptor.weightAttribute.format,
-                            }
+                                offset: data.bufferDescriptor.weightAttribute.offset,
+                                format: data.bufferDescriptor.weightAttribute.format,
+                            },
+                            {
+                                shaderLocation: 2,
+                                offset: data.bufferDescriptor.foamAttribute.offset,
+                                format: data.bufferDescriptor.foamAttribute.format,
+                            },
                         ],
-                        arrayStride: bufferDescriptor.bufferArrayStride,
+                        arrayStride: data.bufferDescriptor.bufferArrayStride,
                         stepMode: "instance",
                     }
                 ]
             },
             fragment: {
                 module: shaderModule,
-                entryPoint: fragmentMain,
-                targets: [colorTarget],
+                entryPoint: data.fragmentMain,
+                targets,
             },
             primitive: {
                 cullMode: "none",

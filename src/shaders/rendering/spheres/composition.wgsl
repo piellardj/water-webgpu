@@ -1,5 +1,6 @@
 @group(0) @binding(0) var uSampler: sampler;
 @group(0) @binding(1) var uTexture: texture_2d<f32>;
+@group(0) @binding(2) var uFoamTexture: texture_2d<f32>;
 
 const displayMode_positionLocal = 0u;
 const displayMode_normalScreenspace = 1u;
@@ -50,6 +51,13 @@ fn main_fragment(in: VertexOut) -> FragmentOut {
         discard;
     }
 
+    let foam = select(
+        0.0,
+        0.9 * smoothstep(0.15, 0.2, textureSample(uFoamTexture, uSampler, in.uv).r),
+        uniforms.enableFoam == 1u
+    );
+    const foamColor = vec3<f32>(1.0, 1.2, 1.4);
+
     let positionLocal = 2.0 * sample.rg - 1.0;
     let waterDepth = sample.b;
 
@@ -78,7 +86,8 @@ fn main_fragment(in: VertexOut) -> FragmentOut {
             let reflectedRayWorlspace = reflect(-toCamera, normalWorld);
             let specular = uniforms.specularity * smoothstep(0.95, 0.98, reflectedRayWorlspace.z);
 
-            let waterColor: vec3<f32> = pow(uniforms.waterColor, vec3<f32>(1.0 + 8.0 * waterDepth * uniforms.waterOpacity));
+            let pureWaterColor: vec3<f32> = pow(uniforms.waterColor, vec3<f32>(1.0 + 8.0 * waterDepth * uniforms.waterOpacity));
+            let waterColor = mix(pureWaterColor, foamColor, foam);
             let fresnelFactor = uniforms.f0 * 2.0 * pow(1.0 - normalScreenspace.z, 2.0); // not at all the real forumla
             out.color = vec4<f32>(
                 specular + mix(waterColor, uniforms.worldColor, fresnelFactor),
@@ -86,9 +95,9 @@ fn main_fragment(in: VertexOut) -> FragmentOut {
             );
         }
         case displayMode_balls {
-                const albedo = vec3<f32>(0.184, 0.45, 0.913);
+                let albedo = 1.3 * mix(vec3<f32>(0.184, 0.45, 0.913), foamColor, foam);
                 let ambiant =  0.4;
-                let diffuse = 1.0 * (0.5 + 0.5 * dot(normalWorld, uniforms.lightDirection));
+                let diffuse = 0.6 * (0.5 + 0.5 * dot(normalWorld, uniforms.lightDirection));
 
                 out.color = vec4<f32>(
                     albedo * (ambiant + diffuse),
