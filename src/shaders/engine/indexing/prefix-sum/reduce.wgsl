@@ -1,5 +1,5 @@
-@group(0) @binding(0) var<storage,read_write> inputBuffer: array<Type>;
-@group(0) @binding(1) var<storage,read_write> outputBuffer: array<Type>; // each cell stores the total for the corresponding workgroup
+@group(0) @binding(0) var<storage,read_write> data: array<Type>;
+@group(0) @binding(1) var<storage,read_write> workgroupsTotals: array<Type>; // each cell stores the total for the corresponding workgroup
 @group(0) @binding(2) var<uniform> uniforms: Uniforms;
 
 override workgroupSize: u32; // = 128u;
@@ -22,7 +22,7 @@ fn main(in: ComputeIn) {
 
     // load workgroup cache
     if (globalIndex < uniforms.itemsCount) {
-        workgroupCache[localIndex] = inputBuffer[globalIndex];
+        workgroupCache[localIndex] = data[globalIndex];
     } else {
         workgroupCache[localIndex] = Type(0);
     }
@@ -37,7 +37,7 @@ fn main(in: ComputeIn) {
     }
 
     if (localIndex == workgroupSize - 1u) {
-        outputBuffer[workgroupIndex] = workgroupCache[localIndex];
+        workgroupsTotals[workgroupIndex] = workgroupCache[localIndex];
         workgroupCache[localIndex] = Type(0u); // exclusive prefix sum
     }
 
@@ -56,6 +56,6 @@ fn main(in: ComputeIn) {
 
     // store result
     if (globalIndex < uniforms.itemsCount) {
-        inputBuffer[globalIndex] = workgroupCache[localIndex];
+        data[globalIndex] = workgroupCache[localIndex];
     }
 }
