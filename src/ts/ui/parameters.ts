@@ -235,7 +235,7 @@ abstract class Parameters {
     }
 
     public static get displayMode(): EDisplayMode {
-        let value: string | null;
+        let value: string | null | undefined;
         if (Parameters.isInDebug) {
             value = Page.Select.getValue(controlId.DEBUG_DISPLAY_MODE_SELECT);
         } else {
