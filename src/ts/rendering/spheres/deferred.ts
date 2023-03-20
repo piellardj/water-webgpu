@@ -5,9 +5,14 @@ import { Parameters } from "../../ui/parameters";
 import * as WebGPU from "../../webgpu-utils/webgpu-utils";
 import { type ViewData } from "../camera";
 
+type Data = {
+    readonly spheresBufferDescriptor: SpheresBufferDescriptor;
+    readonly sceneDepthTextureView: GPUTextureView;
+};
+
 type RenderPass = {
     readonly colorAttachment: GPURenderPassColorAttachment;
-    readonly depthAttachment?: GPURenderPassDepthStencilAttachment;
+    readonly depthAttachment: GPURenderPassDepthStencilAttachment;
     readonly descriptor: GPURenderPassDescriptor;
     readonly pipeline: GPURenderPipeline;
     readonly uniformsBindgroup: GPUBindGroup;
@@ -33,7 +38,7 @@ class Deferred {
     public readonly texture: WebGPU.Texture;
     private readonly depthTexture: WebGPU.Texture;
 
-    public constructor(webgpuCanvas: WebGPU.Canvas, bufferDescriptor: SpheresBufferDescriptor) {
+    public constructor(webgpuCanvas: WebGPU.Canvas, data: Data) {
         this.device = webgpuCanvas.device;
 
         this.texture = new WebGPU.Texture(this.device, "rgba8unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING);
@@ -73,7 +78,7 @@ class Deferred {
                 depthStencilAttachment: depthAttachment,
             };
             const writeMask = GPUColorWrite.RED | GPUColorWrite.GREEN | GPUColorWrite.ALPHA;
-            const pipelineDescriptor = this.createDeferredDescriptor(shaderModule, "main_fragment_rga", bufferDescriptor, writeMask);
+            const pipelineDescriptor = this.createDeferredDescriptor(shaderModule, "main_fragment_rga", data.spheresBufferDescriptor, writeMask);
             pipelineDescriptor.depthStencil = {
                 depthWriteEnabled: true,
                 depthCompare: "less",
@@ -104,8 +109,14 @@ class Deferred {
                 loadOp: "load",
                 storeOp: "store",
             };
+            const depthAttachment: GPURenderPassDepthStencilAttachment = {
+                view: data.sceneDepthTextureView,
+                depthReadOnly: true,
+                stencilReadOnly: true,
+            };
             const renderPassDescriptor: GPURenderPassDescriptor = {
                 colorAttachments: [colorAttachment],
+                depthStencilAttachment: depthAttachment,
             };
             const writeMask = GPUColorWrite.BLUE;
             const additiveBlend: GPUBlendState = {
@@ -120,7 +131,12 @@ class Deferred {
                     operation: "add",
                 }
             };
-            const pipelineDescriptor = this.createDeferredDescriptor(shaderModule, "main_fragment_b", bufferDescriptor, writeMask, additiveBlend);
+            const pipelineDescriptor = this.createDeferredDescriptor(shaderModule, "main_fragment_b", data.spheresBufferDescriptor, writeMask, additiveBlend);
+            pipelineDescriptor.depthStencil = {
+                depthWriteEnabled: false,
+                depthCompare: "less",
+                format: webgpuCanvas.depthTextureFormat,
+            };
             const pipeline = this.device.createRenderPipeline(pipelineDescriptor);
             const uniformsBindgroup = this.device.createBindGroup({
                 layout: pipeline.getBindGroupLayout(0),
@@ -132,6 +148,7 @@ class Deferred {
 
             this.bRenderPass = {
                 colorAttachment,
+                depthAttachment,
                 descriptor: renderPassDescriptor,
                 pipeline,
                 uniformsBindgroup,
@@ -153,10 +170,12 @@ class Deferred {
             renderPasses.push(this.bRenderPass);
         }
 
+        const width = this.texture.getWidth();
+        const height = this.texture.getHeight();
         for (const renderPass of renderPasses) {
             const renderpassEncoder = commandEncoder.beginRenderPass(renderPass.descriptor);
-            renderpassEncoder.setViewport(0, 0, this.texture.getWidth(), this.texture.getHeight(), 0, 1);
-            renderpassEncoder.setScissorRect(0, 0, this.texture.getWidth(), this.texture.getHeight());
+            renderpassEncoder.setViewport(0, 0, width, height, 0, 1);
+            renderpassEncoder.setScissorRect(0, 0, width, height);
             renderpassEncoder.setPipeline(renderPass.pipeline);
             renderpassEncoder.setVertexBuffer(0, data.gpuBuffer);
             renderpassEncoder.setBindGroup(0, renderPass.uniformsBindgroup);
@@ -178,15 +197,15 @@ class Deferred {
         }
 
         if (this.depthTexture.setSize(width, height)) {
-            for (const renderPass of renderPasses) {
-                if (renderPass.depthAttachment) {
-                    renderPass.depthAttachment.view = this.depthTexture.getView();
-                }
-            }
+            this.rgaRenderPass.depthAttachment.view = this.depthTexture.getView();
             somethingChanged = true;
         }
 
         return somethingChanged;
+    }
+
+    public setSceneDepthTextureView(sceneDepthTextureView: GPUTextureView): void {
+        this.bRenderPass.depthAttachment.view = sceneDepthTextureView;
     }
 
     private createDeferredDescriptor(shaderModule: GPUShaderModule, fragmentMain: string, bufferDescriptor: SpheresBufferDescriptor, writeMask: GPUColorWriteFlags, blend?: GPUBlendState): GPURenderPipelineDescriptor {
@@ -236,6 +255,7 @@ class Deferred {
 }
 
 export type {
+    Data,
     RenderData,
 };
 export {

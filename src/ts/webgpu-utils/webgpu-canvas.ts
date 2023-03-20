@@ -1,6 +1,11 @@
 import { Texture } from "./texture/texture";
 import * as WebGPU from "./webgpu-device";
 
+type RenderPassOptions = {
+    clearDepth?: boolean;
+    clearColor?: boolean;
+};
+
 class WebGPUCanvas {
     private readonly devicePixelRatio: number;
     private readonly context: GPUCanvasContext;
@@ -10,6 +15,7 @@ class WebGPUCanvas {
     public readonly clearColor: GPUColorDict;
 
     private readonly depthTexture: Texture;
+    public depthTextureView: GPUTextureView;
 
     public constructor(private readonly canvas: HTMLCanvasElement) {
         this.devicePixelRatio = window.devicePixelRatio;
@@ -36,6 +42,7 @@ class WebGPUCanvas {
         };
         this.context.configure(this.canvasConfiguration);
         this.depthTexture = new Texture(device, "depth16unorm", GPUTextureUsage.RENDER_ATTACHMENT);
+        this.depthTextureView = this.depthTexture.getView();
 
         this.textureFormat = this.canvasConfiguration.format;
         this.clearColor = { r: 0, g: 0, b: 0, a: 1 };
@@ -78,30 +85,32 @@ class WebGPUCanvas {
             this.canvas.width = actualWidth;
             this.canvas.height = actualHeight;
 
-            this.depthTexture.setSize(this.canvas.width, this.canvas.height);
+            if (this.depthTexture.setSize(this.canvas.width, this.canvas.height)) {
+                this.depthTextureView = this.depthTexture.getView();
+            }
         }
     }
 
-    public beginRenderPass(commandEncoder: GPUCommandEncoder): GPURenderPassEncoder {
-        const renderPassDescriptor = this.getRenderPassDescriptor();
+    public beginRenderPass(commandEncoder: GPUCommandEncoder, options?: RenderPassOptions): GPURenderPassEncoder {
+        const renderPassDescriptor = this.getRenderPassDescriptor(options);
         const renderPassEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
         renderPassEncoder.setViewport(0, 0, this.width, this.height, 0, 1);
         renderPassEncoder.setScissorRect(0, 0, this.width, this.height);
         return renderPassEncoder;
     }
 
-    private getRenderPassDescriptor(): GPURenderPassDescriptor {
+    private getRenderPassDescriptor(options?: RenderPassOptions): GPURenderPassDescriptor {
         return {
             colorAttachments: [{
                 view: this.context.getCurrentTexture().createView(),
                 clearValue: this.clearColor,
-                loadOp: "clear",
+                loadOp: (options?.clearColor === false) ? "load" : "clear",
                 storeOp: "store",
             }],
             depthStencilAttachment: {
                 view: this.depthTexture.getView(),
                 depthClearValue: 1,
-                depthLoadOp: "clear",
+                depthLoadOp: (options?.clearDepth === false) ? "load": "clear",
                 depthStoreOp: "store",
                 stencilReadOnly: true,
             },

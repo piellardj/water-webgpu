@@ -49,7 +49,10 @@ class Scene {
 
         this.axesRenderer = new AxesRenderer(webgpuCanvas);
         this.cubeRenderer = new CubeRenderer(webgpuCanvas);
-        this.spheresRenderer = new SpheresRenderer(webgpuCanvas, Engine.spheresBufferDescriptor);
+        this.spheresRenderer = new SpheresRenderer(webgpuCanvas, {
+            spheresBufferDescriptor: Engine.spheresBufferDescriptor,
+            sceneDepthTextureView: webgpuCanvas.depthTextureView,
+        });
         this.meshRenderer = new MeshRenderer(webgpuCanvas);
         this.gridCellsRenderer = new GridCellsRenderer(webgpuCanvas);
         this.gridCellsPerPopulationRenderer = new GridCellsByPopulationRenderer(this.webgpuCanvas, Engine.cellBufferDescriptor);
@@ -107,30 +110,8 @@ class Scene {
 
         const lightDirection: glMatrix.ReadonlyVec3 = [Math.SQRT1_2, 0, Math.SQRT1_2];
 
-        if (Parameters.particlesDisplay) {
-            this.spheresRenderer.renderDeferred(commandEncoder, viewData, {
-                modelMatrix: this.modelMatrix,
-                gpuBuffer: this.engine.spheresBuffer.gpuBuffer,
-                instancesCount: this.engine.spheresBuffer.instancesCount,
-                sphereRadius: this.engine.spheresBuffer.sphereRadius,
-                maxDisplayedWeight: Engine.getMaxWeight(Parameters.obstacleDisplayAsSpheres),
-                willUseWaterDepth: [EDisplayMode.WATER_DEPTH, EDisplayMode.WATER].includes(Parameters.displayMode),
-            });
-        }
-
-        const renderpassEncoder = this.webgpuCanvas.beginRenderPass(commandEncoder);
-
-        if (Parameters.renderAxes) {
-            this.axesRenderer.render(renderpassEncoder, viewData);
-        }
-        if (Parameters.domainDisplay) {
-            this.cubeRenderer.render(renderpassEncoder, {
-                mvpMatrix: this.mvpMatrix,
-                proportions: [1, 1, Parameters.domainContraction],
-            });
-        }
-
         {
+            const renderpassEncoder = this.webgpuCanvas.beginRenderPass(commandEncoder);
             const renderableMeshes: MeshRenderable[] = [];
             if (Parameters.obstacleDisplayAsMesh) {
                 renderableMeshes.push(...this.obstacleMeshes);
@@ -144,6 +125,31 @@ class Scene {
                 modelMatrix: this.modelMatrix,
                 displayNormals: ![EDisplayMode.WATER, EDisplayMode.BALLS].includes(Parameters.displayMode),
                 lightDirection,
+            });
+            renderpassEncoder.end();
+        }
+
+        if (Parameters.particlesDisplay) {
+            this.spheresRenderer.setSceneDepthTextureView(this.webgpuCanvas.depthTextureView);
+            this.spheresRenderer.renderDeferred(commandEncoder, viewData, {
+                modelMatrix: this.modelMatrix,
+                gpuBuffer: this.engine.spheresBuffer.gpuBuffer,
+                instancesCount: this.engine.spheresBuffer.instancesCount,
+                sphereRadius: this.engine.spheresBuffer.sphereRadius,
+                maxDisplayedWeight: Engine.getMaxWeight(Parameters.obstacleDisplayAsSpheres),
+                willUseWaterDepth: [EDisplayMode.WATER_DEPTH, EDisplayMode.WATER].includes(Parameters.displayMode),
+            });
+        }
+
+        const renderpassEncoder = this.webgpuCanvas.beginRenderPass(commandEncoder, { clearColor: false, clearDepth: false });
+
+        if (Parameters.renderAxes) {
+            this.axesRenderer.render(renderpassEncoder, viewData);
+        }
+        if (Parameters.domainDisplay) {
+            this.cubeRenderer.render(renderpassEncoder, {
+                mvpMatrix: this.mvpMatrix,
+                proportions: [1, 1, Parameters.domainContraction],
             });
         }
 
