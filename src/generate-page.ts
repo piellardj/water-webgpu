@@ -390,6 +390,10 @@ const data: IDemopageData = {
                             value: "5",
                             label: "Depth",
                         },
+                        {
+                            value: "6",
+                            label: "Balls",
+                        },
                     ]
                 },
                 {
