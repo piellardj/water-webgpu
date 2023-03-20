@@ -33,19 +33,22 @@ function fillMesh(spheresRadius: number, mesh: FillableMesh): glMatrix.vec3[] {
             const startX = shiftToStart(xShiftFromZ + xShiftFromY, strideX);
 
             const segments = mesh.getSegments(ERayDirection.X, [y, z]);
-            addRow(strideX, startX, y, z, positions, segments);
+            addRow(spheresRadius, strideX, startX, y, z, positions, segments);
         }
     }
 
     return positions;
 }
 
-function addRow(strideX: number, startX: number, y: number, z: number, positions: glMatrix.vec3[], segments: ReadonlyArray<Segment>): void {
+function addRow(spheresRadius: number, strideX: number, startX: number, y: number, z: number, positions: glMatrix.vec3[], segments: ReadonlyArray<Segment>): void {
     for (let x = startX; x <= 1; x += strideX) {
-        for (const segment of segments) {
-            if (segment.from <= x && x <= segment.to) {
-                positions.push([x, y, z]);
-                break;
+        const isInDomain = (x >= spheresRadius) && (y >= spheresRadius) && (z >= spheresRadius) && (1 - x >= spheresRadius) && (1 - y >= spheresRadius) && (1 - z >= spheresRadius);
+        if (isInDomain) {
+            for (const segment of segments) {
+                if (segment.from <= x && x <= segment.to) {
+                    positions.push([x, y, z]);
+                    break;
+                }
             }
         }
     }
