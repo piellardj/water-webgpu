@@ -22,9 +22,9 @@ fn main(in: ComputeIn) {
     let dtAcceleration: vec3<f32> = uniforms.dt * particle.acceleration;
     particle.foam += 10.0 * uniforms.dt * length(particle.velocity);
     particle.velocity = particle.velocity + dtAcceleration;
-    particle.velocity *= 0.999;
+    particle.velocity *= uniforms.velocityDamping;
     particle.position = particle.position + uniforms.dt * particle.velocity;
-    particle.foam = min(1.0, particle.foam * 0.997);
+    particle.foam = min(1.0, particle.foam * uniforms.foamDamping);
 
     particlesBuffer[particleId] = particle;
 }

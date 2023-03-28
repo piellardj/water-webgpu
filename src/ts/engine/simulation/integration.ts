@@ -31,6 +31,8 @@ class Integration {
             { name: "particlesCount", type: WebGPU.Types.u32 },
             { name: "particleRadius", type: WebGPU.Types.f32 },
             { name: "weightThreshold", type: WebGPU.Types.f32 },
+            { name: "velocityDamping", type: WebGPU.Types.f32 },
+            { name: "foamDamping", type: WebGPU.Types.f32 },
         ]);
 
         this.pipeline = device.createComputePipeline({
@@ -54,6 +56,8 @@ class Integration {
 
     public compute(commandEncoder: GPUCommandEncoder, dt: number): void {
         this.uniforms.setValueFromName("dt", dt);
+        this.uniforms.setValueFromName("velocityDamping", Math.pow(0.999, dt / 0.0005));
+        this.uniforms.setValueFromName("foamDamping", Math.pow(0.997, dt / 0.0005));
         this.uniforms.uploadToGPU();
 
         const computePass = commandEncoder.beginComputePass();
