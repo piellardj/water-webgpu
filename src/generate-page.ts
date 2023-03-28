@@ -269,7 +269,7 @@ const data: IDemopageData = {
                     type: Demopage.supportedControls.Checkbox,
                     title: "Foam",
                     id: "render-foam-checkbox-id",
-                    checked: true,
+                    checked: false,
                 },
                 {
                     type: Demopage.supportedControls.Checkbox,

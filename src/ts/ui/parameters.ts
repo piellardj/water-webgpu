@@ -109,6 +109,7 @@ Page.Controls.setVisibility(controlId.PARTICLES_DISPLAY_CHECKBOX, isInDebug);
 Page.Controls.setVisibility(controlId.OBSTACLE_MESH_CHECKBOX, isInDebug);
 Page.Controls.setVisibility(controlId.OBSTACLE_SPHERES_CHECKBOX, isInDebug);
 
+Page.Controls.setVisibility(controlId.RENDER_FOAM_CHECKBOX, isInDebug);
 Page.Controls.setVisibility(controlId.RENDER_AXES_CHECKBOX, isInDebug);
 Page.Controls.setVisibility(controlId.RENDER_GRID_CELLS_SELECT, isInDebug);
 Page.Controls.setVisibility(controlId.RENDER_PROJECTION_TABS, isInDebug);
