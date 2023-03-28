@@ -335,10 +335,10 @@ const data: IDemopageData = {
                     type: Demopage.supportedControls.Range,
                     title: "Timestep",
                     id: "engine-timestep-range-id",
-                    min: 0.0005,
-                    max: 0.01,
+                    min: 0.0004,
+                    max: 0.002,
                     value: 0.001,
-                    step: 0.0005,
+                    step: 0.0002,
                 },
                 {
                     type: Demopage.supportedControls.Range,
