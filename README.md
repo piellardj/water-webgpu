@@ -37,7 +37,7 @@ In my explanation, I will consider a 2D domain to make diagrams readable; howeve
 Let take the example of a scene where there are spheres of radius `r`. I divide the domain into a regular grid, where the cell size at least `2r`. This way if a sphere is in a certain cell, then the only other spheres potentially colliding are the ones in the same cell, or in the 9 adjacent cells.
 
 In this example there are 7 spheres (in blue), and the domain is divided into 16 cells (in black). Each cell is given a unique scalar identifier.
-<div style="text-align:center>
+<div style="text-align:center">
     <img alt="Spatial indexing: step 1" width="512px" src="src/readme/indexing-01.png"/>
 </div>
 
