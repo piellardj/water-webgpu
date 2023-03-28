@@ -25,8 +25,8 @@ In my explanation, I will consider a 2D domain to make diagrams readable; howeve
 Let take the example of a scene where there are spheres of radius `r`. I divide the domain into a regular grid, where the cell size at least `2r`. This way if a sphere is in a certain cell, then the only other spheres potentially colliding are the ones in the same cell, or in the 9 adjacent cells.
 
 In this example there are 7 spheres (in blue), and the domain is divided into 16 cells (in black). Each cell is given a unique scalar identifier.
-<div style="text-align:center">
-    <img alt="Spatial indexing: step 1" src="src/readme/indexing-01.png"/>
+<div style="text-align:center>
+    <img alt="Spatial indexing: step 1" width="512px" src="src/readme/indexing-01.png"/>
 </div>
 
 Then I count the number of spheres in each cell (`pCount` in these diagrams), and I assign a local id to each sphere (in blue).
@@ -51,6 +51,10 @@ Once this indexing is done:
 In this example, let's say I want to compute the collisions for particle 1.
 - I start by computing the cell id (cell #2)
 - I then lookup particles in adjacent cells (#1, #2, #3, #5, #6, #7): in cells #1,#3,#5,#6 `pCount=0` so no particles, in cell #2 particles `0` to `0+3` (0, 1, 2), in cell #7 particles `5` to `5+1` (5).
+
+Here is what indexing looks like (only the cells with `pCount>0` are displayed):
+
+https://user-images.githubusercontent.com/22922087/228377674-6cc242ab-d291-4367-823d-86c9c04d8297.mp4
 
 #### Performance
 Unfortunately, at the time of writing I did not find an easy way of precisely monitoring performance. I don't know, of physics or spatial indexing, which takes the most computing time. The only metric I have is the iterations per second. Here is the evolution of the iterations per second relatively to the particles count.
