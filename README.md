@@ -57,7 +57,15 @@ Here is what indexing looks like (only the cells with `pCount>0` are displayed):
 https://user-images.githubusercontent.com/22922087/228377674-6cc242ab-d291-4367-823d-86c9c04d8297.mp4
 
 #### Performance
-Unfortunately, at the time of writing I did not find an easy way of precisely monitoring performance. I don't know, of physics or spatial indexing, which takes the most computing time. The only metric I have is the iterations per second. Here is the evolution of the iterations per second relatively to the particles count.
+Unfortunately, at the time of writing I did not find an easy way of precisely monitoring performance. I don't know, of physics or spatial indexing, which takes the most computing time. The only metric I have is the iterations per second (one iteration being spatial indexing + physics computing).
+
+Here is the evolution of the iterations per second relatively to the particles count. Measures were done on my desktop computer with an nVidia 1660 Ti, with particles of radius 0.005, and a grid size of 98x98x98 (9411952 cells of 0.0102 each).
+<div style="text-align:center">
+    <img alt="Iterations-per-second by particles count." src="src/readme/performance.png"/>
+    <p>
+        <i>Iterations-per-second by particles count.</i>
+    </p>
+</div>
 
 ### Rendering
 The project supports two render modes:
