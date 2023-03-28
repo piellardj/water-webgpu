@@ -8,6 +8,18 @@
 The simulation runs fully on the GPU: the CPU is only used to compute the initial positions.
 
 #### Base principle
+The physics are not the focus of this project, so they are pretty basic.
+
+All particles in the scene share the same size. They evolve inside a delimited spatial domain (a unit cube). Particles collide with each other, so that there is no interpenetration. Particles are subject to gravity. I use Euler integration for each step.
+
+In the scene there can be obstacles. They are modelised as special particles that do not move, so in case of collision between a mobile particle and an obtacle's particle, it is the mobile particle that absorbs the energy and bounces back. For the rendering, the obstacles are rendered as meshes, but this is only for display.
+
+<div style="text-align:center">
+    <img alt="Obstacle modelized as particles." src="src/readme/obstacle.png"/>
+    <p>
+        <i>Obstacle modelized as particles.</i>
+    </p>
+</div>
 
 #### Spatial indexing
 A naive implementation of these equations would be, for each sphere to check every other sphere for collision. However:
