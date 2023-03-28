@@ -6,13 +6,12 @@ TODO
 
 ## Implementation
 ### Rendering
-The project supports two modes of render:
+The project supports two render modes:
 - balls, which is the cheapest one
 - water, which is the most expensive one
 
 These modes are purely cosmetic and don't affect the simulation in any way. In both modes I use deferred rendering.
-
-Below, example of both rendering modes for a same scene, comprising a central obstacle partially submerged.
+Below, examples of both rendering modes for a same scene, comprising a central obstacle partially submerged.
 <div style="text-align:center">
     <img alt="'Balls' rendering mode" src="src/readme/balls_shaded.png"/>
     <p>
@@ -91,3 +90,12 @@ In the last step, all this information is combined, and with a bit of fresnel an
 I am especially happy with the water depth information, which greatly improves the rendering since it allows to see obstacles through the water. This effect is visible in the video below:
 
 https://user-images.githubusercontent.com/22922087/228359283-33cc019e-f49b-4865-9906-eb5b36fb7920.mp4
+
+### Improvements
+There are many ways this project could be improved.
+On the engine side:
+- I could use an Smoothed particle hydrodynamics (SPH) algorithm for more realistic physics;
+- I could use a better integration scheme than Euler, even Verlet would be an improvement.
+
+On the rendering side:
+- another way to render water from spheres would be to recontruct the water surface, for instance with marching cubes. This is a great subject in itself and implementing it on GPU would be interesting.
