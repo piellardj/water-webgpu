@@ -12,12 +12,12 @@ The physics are not the focus of this project, so they are pretty basic.
 
 All particles in the scene share the same size. They evolve inside a delimited spatial domain (a unit cube). Particles collide with each other, so that there is no interpenetration. Particles are subject to gravity. I use Euler integration for each step.
 
-In the scene there can be obstacles. They are modelised as special particles that do not move, so in case of collision between a mobile particle and an obtacle's particle, it is the mobile particle that absorbs the energy and bounces back. For the rendering, the obstacles are rendered as meshes, but this is only for display.
+In the scene there can be obstacles. They are modeled as special particles that do not move, so in case of collision between a mobile particle and an obstacle's particle, it is the mobile particle that absorbs the energy and bounces back. For the rendering, the obstacles are rendered as meshes, but this is only for display.
 
 <div style="text-align:center">
-    <img alt="Obstacle modelized as particles." src="src/readme/obstacle.png"/>
+    <img alt="Obstacle modeled as particles." src="src/readme/obstacle.png"/>
     <p>
-        <i>Obstacle modelized as particles.</i>
+        <i>Obstacle modeled as particles.</i>
     </p>
 </div>
 
@@ -91,15 +91,15 @@ The project supports two render modes:
 These modes are purely cosmetic and don't affect the simulation in any way. In both modes I use deferred rendering.
 Below, examples of both rendering modes for a same scene, comprising a central obstacle partially submerged.
 <div style="text-align:center">
-    <img alt="'Balls' rendering mode" src="src/readme/balls_shaded.png"/>
+    <img alt="'Balls' rendering mode." src="src/readme/balls_shaded.png"/>
     <p>
-        <i>"Balls" rendering mode</i>
+        <i>"Balls" rendering mode.</i>
     </p>
 </div>
 <div style="text-align:center">
-    <img alt="'Water' rendering mode" src="src/readme/water_shaded.png"/>
+    <img alt="'Water' rendering mode." src="src/readme/water_shaded.png"/>
     <p>
-        <i>"Water" rendering mode</i>
+        <i>"Water" rendering mode.</i>
     </p>
 </div>
 
@@ -150,7 +150,7 @@ In a second step, I apply a blur to try to merge the spheres together.
     </p>
 </div>
 
-This blur is applied in a compute shader. It is computed in two steps as a separable gaussian blur: first vertical, then horizontal. For better performance, I first load the region into workgroup cache, then work on that cache.  It takes depth into account, in order to keep edges sharp: if there is a discontinuity in depth, then no blur is applied. Otherwise, a sphere in the foreground would be merged with the water in the background, which makes no sense visually.
+This blur is applied in a compute shader. It is computed in two steps as a separable Gaussian blur: first vertical, then horizontal. For better performance, I first load the region into workgroup cache, then work on that cache.  It takes depth into account, in order to keep edges sharp: if there is a discontinuity in depth, then no blur is applied. Otherwise, a sphere in the foreground would be merged with the water in the background, which makes no sense visually.
 <div style="text-align:center">
     <img alt="Where there is a depth discontinuity, no blur is applied." src="src/readme/blur_depth-aware.png"/>
     <p>
@@ -158,7 +158,7 @@ This blur is applied in a compute shader. It is computed in two steps as a separ
     </p>
 </div>
 
-In the last step, all this information is combined, and with a bit of fresnel and specularity here is the result:
+In the last step, all this information is combined, and with a bit of Fresnel and specularity here is the result:
 <div style="text-align:center">
     <img alt="Here is what the shaded water looks like." src="src/readme/water.png"/>
     <p>
@@ -170,7 +170,7 @@ I am especially happy with the water depth information, which greatly improves t
 
 https://user-images.githubusercontent.com/22922087/228359283-33cc019e-f49b-4865-9906-eb5b36fb7920.mp4
 
-## WebGPU specificities
+## Implementation details
 I used this project to further learn about WebGPU (which at the time of writing, is still in draft so things could change in the future). Below are specific implementation details I think are notable.
 
 ### Water depth: additive blending and write masks
@@ -203,7 +203,7 @@ This is necessary because the RGA channels of the deferred texture store the sce
 ### Blur: compute shaders, workgroup address space and workgroupBarrier
 In the "Water" render mode, I have to blur the deferred texture. In WebGL1, I would have used a fragment shader to do this. In WebGPU, there is support for compute shader, which offers more control, flexibility and performance !
 
-The blur is computed as a separable gaussian blur: first a horizontal blur is applied, then a vertical one. The principle of a blur is to sample the neighbouring fragments and sum them, with normalized weights. A direct way of doing this would be, for each texel, to fetch the neighbouring texels directly from the texture. However this proves to be suboptimal because then each texel would be fetched many times, and a fetch is expensive. A more performant way of doing this is to minimize texel fetches by using a cache in the workgroup address space. This is made possible with the use of the [`workgroupBarrier()`](https://www.w3.org/TR/WGSL/#workgroupBarrier-builtin) instruction.
+The blur is computed as a separable Gaussian blur: first a horizontal blur is applied, then a vertical one. The principle of a blur is to sample the neighbouring fragments and sum them, with normalized weights. A direct way of doing this would be, for each texel, to fetch the neighbouring texels directly from the texture. However this proves to be sub-optimal because then each texel would be fetched many times, and a fetch is expensive. A more performant way of doing this is to minimize texel fetches by using a cache in the workgroup address space. This is made possible with the use of the [`workgroupBarrier()`](https://www.w3.org/TR/WGSL/#workgroupBarrier-builtin) instruction.
 
 You can find such an example in the [webgpu-samples](https://github.com/webgpu/webgpu-samples/blob/main/src/sample/imageBlur/blur.wgsl).
 
@@ -353,6 +353,7 @@ There are many ways this project could be improved.
 On the engine side:
 - I could use an Smoothed particle hydrodynamics (SPH) algorithm for more realistic physics;
 - I could use a better integration scheme than Euler, even Verlet would be an improvement.
+- currently, all obstacles are modeled by spheres. This works well but has a major disadvantage: it makes all obstacles bumpy. For instance, balls don't roll well on mild slopes. This leaves a lot of room for improvement.
 
 On the rendering side:
 - another way to render water from spheres would be to recontruct the water surface, for instance with marching cubes. This is a great subject in itself and implementing it on GPU would be interesting.
