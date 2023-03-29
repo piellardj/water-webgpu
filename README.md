@@ -24,7 +24,7 @@ In the scene there can be obstacles. They are modelised as special particles tha
 #### Spatial indexing
 A naive implementation of these equations would be, for each sphere to check every other sphere for collision. However:
 - this is obviously not scalable;
-- this is wasting a lot of resources, because if two spheres are two far from one another, there is no need to compute their interaction.
+- this is wasting a lot of resources, because if two spheres are too far from one another, there is no need to compute their interaction.
 
 The solution to both these issues is to use spatial indexing, so that:
 - each particle only checks the particles near it and skips the ones far away;
@@ -169,8 +169,101 @@ https://user-images.githubusercontent.com/22922087/228359283-33cc019e-f49b-4865-
 ## WebGPU specificities
 I used this project to further learn about WebGPU (which at the time of writing, is still in draft so things could change in the future). Below are specific implementation details I think are notable.
 
-TODO
+### Water depth: additive blending and write masks
+I was a bit worried about the computation of the water depth. However it turned out to be easy because WebGPU supports:
+- additive blending
+```typescript
+const additiveBlend: GPUBlendState = {
+    color: {
+        srcFactor: "one",
+        dstFactor: "one",
+        operation: "add",
+    },
+    alpha: {
+        srcFactor: "one",
+        dstFactor: "one",
+        operation: "add",
+    }
+};
+```
+- and write mask
+```typescript
+const colorTarget: GPUColorTargetState = {
+    format: "rgba8unorm",
+    writeMask: GPUColorWrite.BLUE, // or GPUColorWrite.RED | GPUColorWrite.GREEN | GPUColorWrite.ALPHA
+};
+```
 
+This is necessary because the RGA channels of the deferred texture store the scene rendered classically (with depth write) whereas the B channel stores the scene in additive mode without depth write: as a result I cannot compute all four channels at the same time, I have to perform 2 renders into the same texture. I first render the RGA channels with a RGA writeMask and `depthWriteEnabled=true`, and then I do a second render for the B channel, with a B writeMask and `depthWriteEnabled=false`.
+
+### Blur: compute shaders, workgroup address space and workgroupBarrier
+In the "Water" render mode, I have to blur the deferred texture. In WebGL1, I would have used a fragment shader to do this. In WebGPU, there is support for compute shader, which offers more control, flexibility and performance !
+
+The blur is computed as a separable gaussian blur: first a horizontal blur is applied, then a vertical one. The principle of a blur is to sample the neighbouring fragments and sum them, with normalized weights. A direct way of doing this would be, for each texel, to fetch the neighbouring texels directly from the texture. However this proves to be suboptimal because then each texel would be fetched many times, and a fetch is expensive. A more performant way of doing this is to minimize texel fetches by using a cache in the workgroup address space. This is made possible with the use of the [`workgroupBarrier()`](https://www.w3.org/TR/WGSL/#workgroupBarrier-builtin) instruction.
+
+You can find such an example in the [webgpu-samples](https://github.com/webgpu/webgpu-samples/blob/main/src/sample/imageBlur/blur.wgsl).
+
+Below is a simplified example. In real life there is some more code to handle out-of-bounds reads.
+```glsl
+@group(0) @binding(0) var inputTexture: texture_2d<f32>; // input texture
+@group(0) @binding(1) var outputTexture: texture_storage_2d<rgba8unorm, write>; // output texture
+
+struct ComputeIn {
+    @builtin(workgroup_id) workgroupId: vec3<u32>,
+    @builtin(local_invocation_id) localInvocationId: vec3<u32>,
+    @builtin(global_invocation_id) globalInvocationId: vec3<u32>,
+};
+
+const direction = vec2<i32>(1,0); // horizontal blur
+const workgroupSize = 128;
+const blurRadius = 6;
+
+var<workgroup> workgroupCache : array<vec4<f32>, workgroupSize>; // cache stored in the workgroup address space
+
+@compute @workgroup_size(workgroupSize)
+fn main(in: ComputeIn) {
+    let textureSize = vec2<i32>(textureDimensions(inputTexture));
+    let globalInvocationId = vec2<i32>(in.globalInvocationId.xy) - vec2<i32>(2 * blurRadius * i32(in.workgroupId.x), 0);
+
+    let texelId = globalInvocationId.x * direction + globalInvocationId.y * (vec2<i32>(1) - direction);
+    let indexInCache = i32(in.localInvocationId.x);
+
+    // first, load workgroup cache, one single texel fetch per invocation
+    let currentFragment = textureLoad(inputTexture, texelId, 0); // texel fetch (might be out of texture range)
+    workgroupCache[indexInCache] = currentFragment; // write in workgroup cache
+
+    // wait for every invocation of in the workgroup
+    workgroupBarrier();
+    // at this point the workgroupCache stores a copy of a portion of the texture
+
+    // then compute blur by loading values from workgroupCache
+    if (texelId.x < textureSize.x && texelId.y < textureSize.y) {
+        var blurred = vec4<f32>(0);
+
+        // loop on items from indexInCache-blurRadius to indexInCache+blurRadius
+        for (let i = indexInCache-blurRadius; i <= indexInCache+blurRadius; i++) {
+            blurred += workgroupCache[i];
+        }
+        blurred /= 2.0 * f32(blurRadius) + 1.0;
+
+        // then store the result in the output texture
+        textureStore(outputTexture, texelId, blurred);
+    }
+}
+```
+
+### Uniforms buffer packing
+In GLSL when creating a structure, each attribute has requirements in terms of bytes alignment (and stride in case of arrays). Correctly packing a structure to minimize space requires a bit of care. Everything is explained in the [Alignment and Size](https://www.w3.org/TR/WGSL/#alignment-and-size) section of the spec.
+
+Here is an example of a structure that could be packed better:
+```glsl
+struct Particle {            //            align(16) size(48)
+    position: vec3<f32>,     // offset(0)  align(16) size(12)
+    velocity: vec3<f32>,     // offset(16) align(16) size(12)
+    acceleration: vec3<f32>, // offset(32) align(16) size(12)
+    weight: f32,             // offset(12) align(4)  size(4)
+};
+```
 ## Improvements
 There are many ways this project could be improved.
 On the engine side:
