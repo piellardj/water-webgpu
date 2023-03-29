@@ -17,7 +17,10 @@ function main(device: GPUDevice, canvas: HTMLCanvasElement): void {
     });
 
     const framesCounter = new FrameCounter();
-    framesCounter.onChange = Indicators.setAverageFps;
+    framesCounter.onChange = (fps: number) => {
+        Indicators.setAverageFps(fps);
+        Indicators.setAverageIps(fps * Parameters.engineStepsPerFrame);
+    };
 
     Parameters.onParticlesQuantityChange.push(() => scene.setParticlesQuantity(Parameters.particlesQuantity));
     Parameters.onParticlesRadiusChange.push(() => scene.setParticlesRadius(Parameters.particlesRadius));

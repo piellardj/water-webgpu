@@ -6,6 +6,10 @@ function setAverageFps(value: number): void {
     Page.Canvas.setIndicatorText("average-fps", `${value.toFixed()} fps`);
 }
 
+function setAverageIps(value: number): void {
+    Page.Canvas.setIndicatorText("average-its", `${value.toFixed()}`);
+}
+
 function setParticlesCount(value: number): void {
     Page.Canvas.setIndicatorText("particles-count", `${value.toLocaleString()}`);
 }
@@ -16,6 +20,7 @@ function setGridSize(value: glMatrix.ReadonlyVec3): void {
 
 export {
     setAverageFps,
+    setAverageIps,
     setGridSize,
     setParticlesCount,
 };

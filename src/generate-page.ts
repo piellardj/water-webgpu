@@ -22,6 +22,10 @@ const data: IDemopageData = {
             label: "Average FPS"
         },
         {
+            id: "average-its",
+            label: "Average iterations per second"
+        },
+        {
             id: "particles-count",
             label: "Particles count"
         },
