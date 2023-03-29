@@ -1,6 +1,20 @@
 /// <reference types="../page-interface-generated" />
 
 const controlId = {
+    ENGINE_PAUSE_CHECKBOX: "engine-pause-checkbox-id",
+    ENGINE_TIMESTEP_RANGE: "engine-timestep-range-id",
+    ENGINE_STEPS_PER_FRAME_RANGE: "engine-iterations-per-frame-range-id",
+
+    RENDER_BACKGROUND_COLORPICKER: "render-background-color-id",
+    RENDER_MODE_TABS: "render-mode-tabs-id",
+    RENDER_WATER_COLOR_COLORPICKER: "render-water-color-id",
+    RENDER_WATER_OPACITY_RANGE: "render-water-opacity-range-id",
+    RENDER_FOAM_CHECKBOX: "render-foam-checkbox-id",
+    RENDER_INDICATORS_CHECKBOX: "render-indicators-checkbox-id",
+    RENDER_AXES_CHECKBOX: "render-axes-checkbox-id",
+    RENDER_GRID_CELLS_SELECT: "render-grid-cells-select-id",
+    RENDER_PROJECTION_TABS: "render-projection-tabs-id",
+
     PARTICLES_RADIUS_TABS: "particles-radius-tabs-id",
     PARTICLES_QUANTITY_SELECT: "particles-quantity-select-id",
     PARTICLES_GRAVITY_RANGE: "particles-gravity-range-id",
@@ -17,20 +31,6 @@ const controlId = {
     OBSTACLE_ANIMATION_SELECT: "obstacles-animation-select-id",
     OBSTACLE_MESH_CHECKBOX: "obstacle-mesh-checkbox-id",
     OBSTACLE_SPHERES_CHECKBOX: "obstacle-spheres-checkbox-id",
-
-    RENDER_BACKGROUND_COLORPICKER: "render-background-color-id",
-    RENDER_MODE_TABS: "render-mode-tabs-id",
-    RENDER_WATER_COLOR_COLORPICKER: "render-water-color-id",
-    RENDER_WATER_OPACITY_RANGE: "render-water-opacity-range-id",
-    RENDER_FOAM_CHECKBOX: "render-foam-checkbox-id",
-    RENDER_INDICATORS_CHECKBOX: "render-indicators-checkbox-id",
-    RENDER_AXES_CHECKBOX: "render-axes-checkbox-id",
-    RENDER_GRID_CELLS_SELECT: "render-grid-cells-select-id",
-    RENDER_PROJECTION_TABS: "render-projection-tabs-id",
-
-    ENGINE_PAUSE_CHECKBOX: "engine-pause-checkbox-id",
-    ENGINE_TIMESTEP_RANGE: "engine-timestep-range-id",
-    ENGINE_STEPS_PER_FRAME_RANGE: "engine-iterations-per-frame-range-id",
 
     DEBUG_BLUR_CHECKBOX: "debug-blur-checkbox-id",
     DEBUG_SPHERES_RADIUS_RANGE: "debug-spheres-radius-range-id",
@@ -124,6 +124,42 @@ abstract class Parameters {
     public static readonly onParticlesRadiusChange: VoidFunction[] = [];
     public static readonly onObstacleChange: VoidFunction[] = [];
 
+    public static get enginePaused(): boolean {
+        return Page.Checkbox.isChecked(controlId.ENGINE_PAUSE_CHECKBOX);
+    }
+    public static get engineTimestep(): number {
+        return Page.Range.getValue(controlId.ENGINE_TIMESTEP_RANGE);
+    }
+    public static get engineStepsPerFrame(): number {
+        return Page.Range.getValue(controlId.ENGINE_STEPS_PER_FRAME_RANGE);
+    }
+
+    public static get renderBackgroundColor(): ColorNormalized {
+        return buildColor(controlId.RENDER_BACKGROUND_COLORPICKER);
+    }
+    public static get renderWaterColor(): ColorNormalized {
+        return buildColor(controlId.RENDER_WATER_COLOR_COLORPICKER);
+    }
+    public static get renderWaterOpacity(): number {
+        return Page.Range.getValue(controlId.RENDER_WATER_OPACITY_RANGE);
+    }
+    public static get renderFoam(): boolean {
+        return Page.Checkbox.isChecked(controlId.RENDER_FOAM_CHECKBOX);
+    }
+    public static get renderAxes(): boolean {
+        return Page.Checkbox.isChecked(controlId.RENDER_AXES_CHECKBOX);
+    }
+    public static get renderGridCells(): EGridDisplayMode {
+        const value = Page.Select.getValue(controlId.RENDER_GRID_CELLS_SELECT);
+        if (!value) {
+            throw new Error();
+        }
+        return +value as EGridDisplayMode;
+    }
+    public static get renderProjection(): EProjection {
+        return Page.Tabs.getValues(controlId.RENDER_PROJECTION_TABS)[0] as EProjection;
+    }
+
     public static get particlesRadius(): number {
         const value = Page.Tabs.getValues(controlId.PARTICLES_RADIUS_TABS)[0];
         if (!value) {
@@ -191,42 +227,6 @@ abstract class Parameters {
     }
     public static get obstacleDisplayAsSpheres(): boolean {
         return Page.Checkbox.isChecked(controlId.OBSTACLE_SPHERES_CHECKBOX);
-    }
-
-    public static get renderBackgroundColor(): ColorNormalized {
-        return buildColor(controlId.RENDER_BACKGROUND_COLORPICKER);
-    }
-    public static get renderWaterColor(): ColorNormalized {
-        return buildColor(controlId.RENDER_WATER_COLOR_COLORPICKER);
-    }
-    public static get renderWaterOpacity(): number {
-        return Page.Range.getValue(controlId.RENDER_WATER_OPACITY_RANGE);
-    }
-    public static get renderFoam(): boolean {
-        return Page.Checkbox.isChecked(controlId.RENDER_FOAM_CHECKBOX);
-    }
-    public static get renderAxes(): boolean {
-        return Page.Checkbox.isChecked(controlId.RENDER_AXES_CHECKBOX);
-    }
-    public static get renderGridCells(): EGridDisplayMode {
-        const value = Page.Select.getValue(controlId.RENDER_GRID_CELLS_SELECT);
-        if (!value) {
-            throw new Error();
-        }
-        return +value as EGridDisplayMode;
-    }
-    public static get renderProjection(): EProjection {
-        return Page.Tabs.getValues(controlId.RENDER_PROJECTION_TABS)[0] as EProjection;
-    }
-
-    public static get enginePaused(): boolean {
-        return Page.Checkbox.isChecked(controlId.ENGINE_PAUSE_CHECKBOX);
-    }
-    public static get engineTimestep(): number {
-        return Page.Range.getValue(controlId.ENGINE_TIMESTEP_RANGE);
-    }
-    public static get engineStepsPerFrame(): number {
-        return Page.Range.getValue(controlId.ENGINE_STEPS_PER_FRAME_RANGE);
     }
 
     public static get blur(): boolean {

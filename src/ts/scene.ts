@@ -92,7 +92,7 @@ class Scene {
         if (Parameters.obstacleAnimation === EObstacleAnimationType.ROTATION) {
             const rotationMatrix = glMatrix.mat4.create();
             glMatrix.mat4.translate(rotationMatrix, rotationMatrix, [0.5, 0, 0.5]);
-            glMatrix.mat4.rotateY(rotationMatrix, rotationMatrix, 0.75 * dt);
+            glMatrix.mat4.rotateY(rotationMatrix, rotationMatrix, 0.9 * dt);
             glMatrix.mat4.translate(rotationMatrix, rotationMatrix, [-0.5, 0, -0.5]);
 
             for (const mesh of this.obstacleMeshes) {

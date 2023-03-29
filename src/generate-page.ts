@@ -41,6 +41,133 @@ const data: IDemopageData = {
     },
     controlsSections: [
         {
+            title: "Engine",
+            controls: [
+                {
+                    type: Demopage.supportedControls.Checkbox,
+                    title: "Pause",
+                    id: "engine-pause-checkbox-id",
+                    checked: false
+                },
+                {
+                    type: Demopage.supportedControls.Range,
+                    title: "Timestep",
+                    id: "engine-timestep-range-id",
+                    min: 0.0001,
+                    max: 0.001,
+                    value: 0.0004,
+                    step: 0.0001,
+                },
+                {
+                    type: Demopage.supportedControls.Range,
+                    title: "Steps per frame",
+                    id: "engine-iterations-per-frame-range-id",
+                    min: 1,
+                    max: 20,
+                    value: 5,
+                    step: 1
+                },
+            ],
+        },
+        {
+            title: "Rendering",
+            controls: [
+                {
+                    type: Demopage.supportedControls.ColorPicker,
+                    title: "Background",
+                    id: "render-background-color-id",
+                    defaultValueHex: "#CA8BBC",
+                },
+                {
+                    type: Demopage.supportedControls.Tabs,
+                    title: "Mode",
+                    id: "render-mode-tabs-id",
+                    unique: true,
+                    options: [
+                        {
+                            value: "4",
+                            label: "Water",
+                        },
+                        {
+                            value: "6",
+                            label: "Balls",
+                            checked: true,
+                        },
+                    ]
+                },
+                {
+                    type: Demopage.supportedControls.ColorPicker,
+                    title: "Water color",
+                    id: "render-water-color-id",
+                    defaultValueHex: "#0076EC"
+                },
+                {
+                    type: Demopage.supportedControls.Range,
+                    title: "Water opacity",
+                    id: "render-water-opacity-range-id",
+                    min: 0,
+                    max: 3,
+                    value: 1,
+                    step: 0.1
+                },
+                {
+                    type: Demopage.supportedControls.Checkbox,
+                    title: "Foam",
+                    id: "render-foam-checkbox-id",
+                    checked: false,
+                },
+                {
+                    type: Demopage.supportedControls.Checkbox,
+                    title: "Indicators",
+                    id: "render-indicators-checkbox-id",
+                    checked: true,
+                },
+                {
+                    type: Demopage.supportedControls.Checkbox,
+                    title: "Axes",
+                    id: "render-axes-checkbox-id",
+                },
+                {
+                    type: Demopage.supportedControls.Select,
+                    title: "Grid cells",
+                    id: "render-grid-cells-select-id",
+                    placeholder: "<unknown>",
+                    options: [
+                        {
+                            value: "0",
+                            label: "Hidden",
+                            checked: true,
+                        },
+                        {
+                            value: "1",
+                            label: "Color by population",
+                        },
+                        {
+                            value: "2",
+                            label: "Final",
+                        },
+                    ],
+                },
+                {
+                    type: Demopage.supportedControls.Tabs,
+                    title: "Projection",
+                    id: "render-projection-tabs-id",
+                    unique: true,
+                    options: [
+                        {
+                            label: "Orthographic",
+                            value: "ortho",
+                        },
+                        {
+                            label: "Perspective",
+                            value: "perspective",
+                            checked: true,
+                        },
+                    ]
+                },
+            ],
+        },
+        {
             title: "Particles",
             controls: [
                 {
@@ -131,11 +258,11 @@ const data: IDemopageData = {
                         {
                             value: "none",
                             label: "None",
+                            checked: true,
                         },
                         {
                             value: "rotate",
                             label: "Rotate",
-                            checked: true,
                         },
                         {
                             value: "contract",
@@ -190,11 +317,11 @@ const data: IDemopageData = {
                         {
                             value: "capsules",
                             label: "Capsules",
-                            checked: true,
                         },
                         {
                             value: "helix",
                             label: "Helix",
+                            checked: true,
                         },
                         {
                             value: "cup",
@@ -229,133 +356,6 @@ const data: IDemopageData = {
                     type: Demopage.supportedControls.Checkbox,
                     title: "Display spheres",
                     id: "obstacle-spheres-checkbox-id",
-                },
-            ],
-        },
-        {
-            title: "Rendering",
-            controls: [
-                {
-                    type: Demopage.supportedControls.ColorPicker,
-                    title: "Background",
-                    id: "render-background-color-id",
-                    defaultValueHex: "#CA8BBC",
-                },
-                {
-                    type: Demopage.supportedControls.Tabs,
-                    title: "Mode",
-                    id: "render-mode-tabs-id",
-                    unique: true,
-                    options: [
-                        {
-                            value: "4",
-                            label: "Water",
-                            checked: true,
-                        },
-                        {
-                            value: "6",
-                            label: "Balls",
-                        },
-                    ]
-                },
-                {
-                    type: Demopage.supportedControls.ColorPicker,
-                    title: "Water color",
-                    id: "render-water-color-id",
-                    defaultValueHex: "#0076EC"
-                },
-                {
-                    type: Demopage.supportedControls.Range,
-                    title: "Water opacity",
-                    id: "render-water-opacity-range-id",
-                    min: 0,
-                    max: 3,
-                    value: 1,
-                    step: 0.1
-                },
-                {
-                    type: Demopage.supportedControls.Checkbox,
-                    title: "Foam",
-                    id: "render-foam-checkbox-id",
-                    checked: false,
-                },
-                {
-                    type: Demopage.supportedControls.Checkbox,
-                    title: "Indicators",
-                    id: "render-indicators-checkbox-id",
-                    checked: true,
-                },
-                {
-                    type: Demopage.supportedControls.Checkbox,
-                    title: "Axes",
-                    id: "render-axes-checkbox-id",
-                },
-                {
-                    type: Demopage.supportedControls.Select,
-                    title: "Grid cells",
-                    id: "render-grid-cells-select-id",
-                    placeholder: "<unknown>",
-                    options: [
-                        {
-                            value: "0",
-                            label: "Hidden",
-                            checked: true,
-                        },
-                        {
-                            value: "1",
-                            label: "Color by population",
-                        },
-                        {
-                            value: "2",
-                            label: "Final",
-                        },
-                    ],
-                },
-                {
-                    type: Demopage.supportedControls.Tabs,
-                    title: "Projection",
-                    id: "render-projection-tabs-id",
-                    unique: true,
-                    options: [
-                        {
-                            label: "Orthographic",
-                            value: "ortho",
-                        },
-                        {
-                            label: "Perspective",
-                            value: "perspective",
-                            checked: true,
-                        },
-                    ]
-                },
-            ],
-        },
-        {
-            title: "Engine",
-            controls: [
-                {
-                    type: Demopage.supportedControls.Checkbox,
-                    title: "Pause",
-                    id: "engine-pause-checkbox-id",
-                    checked: false
-                },
-                {
-                    type: Demopage.supportedControls.Range,
-                    title: "Timestep",
-                    id: "engine-timestep-range-id",
-                    min: 0.0004,
-                    max: 0.002,
-                    value: 0.001,
-                    step: 0.0002,
-                },
-                {
-                    type: Demopage.supportedControls.Range,
-                    title: "Steps per frame",
-                    id: "engine-iterations-per-frame-range-id",
-                    min: 1,
-                    max: 10,
-                    value: 5,
-                    step: 1
                 },
             ],
         },
