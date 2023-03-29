@@ -8,7 +8,7 @@ type Data = {
 
 class Blur {
     private static readonly WORKGROUP_SIZE = 256;
-    private static readonly BLUR_RADIUS = 6;
+    private static readonly BLUR_RADIUS = 8;
     private static readonly USEFUL_WORKGROUP_SIZE = Blur.WORKGROUP_SIZE - (2 * Blur.BLUR_RADIUS);
 
     private readonly device: GPUDevice;
@@ -28,6 +28,16 @@ class Blur {
 
         const uniformBufferAttributes = [
             { name: "direction", type: WebGPU.Types.vec2I32 },
+            { name: "blurFactors_0", type: WebGPU.Types.f32 },
+            { name: "blurFactors_1", type: WebGPU.Types.f32 },
+            { name: "blurFactors_2", type: WebGPU.Types.f32 },
+            { name: "blurFactors_3", type: WebGPU.Types.f32 },
+            { name: "blurFactors_4", type: WebGPU.Types.f32 },
+            { name: "blurFactors_5", type: WebGPU.Types.f32 },
+            { name: "blurFactors_6", type: WebGPU.Types.f32 },
+            { name: "blurFactors_7", type: WebGPU.Types.f32 },
+            { name: "blurFactors_8", type: WebGPU.Types.f32 },
+            { name: "padding", type: WebGPU.Types.f32 }, // padding
         ];
         this.uniformsHorizontal = new WebGPU.Uniforms(device, uniformBufferAttributes);
         this.uniformsHorizontal.setValueFromName("direction", [1, 0]);
@@ -54,10 +64,12 @@ class Blur {
         this.setDeferredTextures(data);
     }
 
-    public compute(commandEncoder: GPUCommandEncoder): void {
+    public compute(commandEncoder: GPUCommandEncoder, compression: number): void {
         if (!this.bindgroupHorizontal || !this.bindgroupVertical) {
             throw new Error();
         }
+
+        this.computeBlurFactors(compression);
 
         const width = this.temporaryTexture.getWidth();
         const height = this.temporaryTexture.getHeight();
@@ -148,6 +160,30 @@ class Blur {
                 }
             ]
         });
+    }
+
+    private computeBlurFactors(compression: number): void {
+        const factors: number[] = [];
+
+        const sigma = 4;
+        const prefix = 1 / (Math.sqrt(2 * Math.PI) * sigma);
+        let sum = 0;
+        for (let i = 0; i <= Blur.BLUR_RADIUS; i++) {
+            const x = i / compression;
+            const result = prefix * Math.exp(-0.5 * x * x / (2 * sigma * sigma));
+            factors.push(result);
+            sum += (i === 0) ? result : 2 * result;
+        }
+        for (let i = 0; i < factors.length; i++) {
+            factors[i]! /= sum;
+        }
+
+        factors.forEach((factor: number, index: number) => {
+            this.uniformsHorizontal.setValueFromName(`blurFactors_${index}`, factor);
+            this.uniformsVertical.setValueFromName(`blurFactors_${index}`, factor);
+        })
+        this.uniformsHorizontal.uploadToGPU();
+        this.uniformsVertical.uploadToGPU();
     }
 }
 

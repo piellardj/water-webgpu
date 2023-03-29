@@ -10,6 +10,7 @@ type ViewData = {
     cameraPosition: glMatrix.ReadonlyVec3;
     cameraUp: glMatrix.ReadonlyVec3;
     cameraRight: glMatrix.ReadonlyVec3;
+    relativeDistance: number; // in [0, 1]
 };
 
 function clamp(x: number, min: number, max: number): number {
@@ -61,6 +62,9 @@ function interpolate(datas: { distance: number, value: number }[], distance: num
     }
     return datas[datas.length - 1]!.value;
 }
+
+const minZoom = 0.6;
+const maxZoom = 5;
 
 class Camera {
     private readonly _lookAt: glMatrix.vec3 = [0, 0, 0];
@@ -144,6 +148,7 @@ class Camera {
             cameraPosition: this._eyePosition,
             cameraUp: this._viewUpWorldspace,
             cameraRight: this._viewRightWorlspace,
+            relativeDistance: this.zoom / maxZoom,
         };
     }
 
@@ -196,7 +201,7 @@ class Camera {
     }
 
     private clampZoom(): void {
-        this.zoom = clamp(this.zoom, 0.6, 5);
+        this.zoom = clamp(this.zoom, minZoom, maxZoom);
     }
 
     private clampPhi(): void {

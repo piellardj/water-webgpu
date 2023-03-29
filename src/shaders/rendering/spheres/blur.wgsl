@@ -11,16 +11,7 @@ struct ComputeIn {
 };
 
 override workgroupSize: i32;
-const blurRadius = 6;
-const blurFactors = array<f32,blurRadius + 1>(
-    0.09987135279447043,
-    0.09780323302971188,
-    0.09185334214586623,
-    0.08272992187339422,
-    0.07145894496300231,
-    0.05919405030749892,
-    0.047024831283291185,
-);
+const blurRadius = 8;
 
 alias FragmentDataType = vec4<f32>;
 
@@ -79,13 +70,25 @@ fn main(in: ComputeIn) {
             var cumulatedData = FragmentDataType(0);
             var samplesCount = 0.0;
 
-            addContribution(currentFragment.depth, indexInCache, blurFactors[0], &cumulatedData, &samplesCount);
+            addContribution(currentFragment.depth, indexInCache, uniforms.blurFactors_0, &cumulatedData, &samplesCount);
 
-            for (var i = 1; i <= blurRadius; i++) {
-                let blurFactor = blurFactors[i];
-                addContribution(currentFragment.depth, indexInCache - i, blurFactor, &cumulatedData, &samplesCount);
-                addContribution(currentFragment.depth, indexInCache + i, blurFactor, &cumulatedData, &samplesCount);
-            }
+            addContribution(currentFragment.depth, indexInCache - 1, uniforms.blurFactors_1, &cumulatedData, &samplesCount);
+            addContribution(currentFragment.depth, indexInCache + 1, uniforms.blurFactors_1, &cumulatedData, &samplesCount);
+
+            addContribution(currentFragment.depth, indexInCache - 2, uniforms.blurFactors_2, &cumulatedData, &samplesCount);
+            addContribution(currentFragment.depth, indexInCache + 2, uniforms.blurFactors_2, &cumulatedData, &samplesCount);
+
+            addContribution(currentFragment.depth, indexInCache - 3, uniforms.blurFactors_3, &cumulatedData, &samplesCount);
+            addContribution(currentFragment.depth, indexInCache + 3, uniforms.blurFactors_3, &cumulatedData, &samplesCount);
+
+            addContribution(currentFragment.depth, indexInCache - 4, uniforms.blurFactors_4, &cumulatedData, &samplesCount);
+            addContribution(currentFragment.depth, indexInCache + 4, uniforms.blurFactors_4, &cumulatedData, &samplesCount);
+
+            addContribution(currentFragment.depth, indexInCache - 5, uniforms.blurFactors_5, &cumulatedData, &samplesCount);
+            addContribution(currentFragment.depth, indexInCache + 5, uniforms.blurFactors_5, &cumulatedData, &samplesCount);
+
+            addContribution(currentFragment.depth, indexInCache - 6, uniforms.blurFactors_6, &cumulatedData, &samplesCount);
+            addContribution(currentFragment.depth, indexInCache + 6, uniforms.blurFactors_6, &cumulatedData, &samplesCount);
 
             cumulatedData = cumulatedData / samplesCount;
             storeFragment(texelId, cumulatedData, currentFragment.depth);

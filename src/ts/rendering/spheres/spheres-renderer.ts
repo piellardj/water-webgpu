@@ -26,7 +26,7 @@ class SpheresRenderer {
         this.deferredRenderer.render(commandEncoder, viewData, data);
 
         if (Parameters.blur) {
-            this.blur.compute(commandEncoder);
+            this.blur.compute(commandEncoder, viewData.relativeDistance);
         }
     }
 
