@@ -77,12 +77,12 @@ class Scene {
     public update(commandEncoder: GPUCommandEncoder, dt: number): void {
         const domainAnimation = Parameters.domainAnimation;
         if (domainAnimation === EDomainAnimationType.ROTATION) {
-            this.domainRotationPeriod += 0.2 * dt;
+            this.domainRotationPeriod += 0.4 * dt;
             Parameters.domainRotation = this.domainRotationPeriod;
         } else {
             this.domainRotationPeriod = Parameters.domainRotation;
             if (domainAnimation === EDomainAnimationType.CONTRACT) {
-                this.domainContractionPeriod += 0.4 * dt;
+                this.domainContractionPeriod += 0.8 * dt;
                 Parameters.domainContraction = 0.2 + 0.8 * (0.5 + 0.5 * Math.cos(this.domainContractionPeriod));
             }
         }
