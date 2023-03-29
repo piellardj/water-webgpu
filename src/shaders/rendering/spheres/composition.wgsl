@@ -84,11 +84,11 @@ fn main_fragment(in: VertexOut) -> FragmentOut {
         }
         case displayMode_water {
             let reflectedRayWorlspace = reflect(-toCamera, normalWorld);
-            let specular = uniforms.specularity * smoothstep(0.95, 0.98, reflectedRayWorlspace.z);
+            let specular = uniforms.specularity * smoothstep(0.90, 0.95, reflectedRayWorlspace.z);
 
             let pureWaterColor: vec3<f32> = pow(uniforms.waterColor, vec3<f32>(1.0 + 8.0 * waterDepth * uniforms.waterOpacity));
             let waterColor = mix(pureWaterColor, foamColor, foam);
-            let fresnelFactor = uniforms.f0 * 2.0 * pow(1.0 - normalScreenspace.z, 2.0); // not at all the real forumla
+            let fresnelFactor = uniforms.f0 * 2.0 * pow(1.0 - normalScreenspace.z, 2.0); // not at all the real formula
             out.color = vec4<f32>(
                 specular + mix(waterColor, uniforms.worldColor, fresnelFactor),
                 1.0
