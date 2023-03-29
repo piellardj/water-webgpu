@@ -1,6 +1,6 @@
 {
-    "name": "sph-webgpu",
-    "homepage": "https://piellardj.github.io/sph-webgpu",
+    "name": "balls-webgpu",
+    "homepage": "https://piellardj.github.io/balls-webgpu",
     "scripts": {
         "pre-commit": "npm run rebuild && npm run lint",
         "http-server": "http-server ./docs -p 8080 -c-1",
@@ -14,7 +14,7 @@
         "webpack-watch": "webpack --config src/config/webpack.config.js --watch"
     },
     "author": "Jérémie PIELLARD <jeremie.piellard@gmail.com> (https://github.com/piellardj)",
-    "repository": "github:piellardj/sph-webgpu",
+    "repository": "github:piellardj/balls-webgpu",
     "engines": {
         "node": ">=18.14.2"
     },

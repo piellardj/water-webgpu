@@ -10,7 +10,7 @@ const data: IDemopageData = {
     introduction: [
         "Realtime SPH implementation using WebGPU",
     ],
-    githubProjectName: "sph-webgpu",
+    githubProjectName: "balls-webgpu",
     additionalLinks: [],
     styleFiles: [],
     scriptFiles: [
