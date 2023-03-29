@@ -44,10 +44,7 @@ class InitialPositions {
                 const xShiftFromY = ((nY + 1) % 2) * this.spheresRadius;
                 const startX = shiftToStart(xShiftFromZ + xShiftFromY, this.strideX) - this.strideX;
 
-                const segments = this.mesh.getSegments(ERayDirection.X, [y, z]).filter(segment => {
-                    return Math.abs(segment.from - segment.to) > 0.001;
-                });
-
+                const segments = this.mesh.getSegments(ERayDirection.X, [y, z]);
                 this.addRow(startX, y, z, positions, segments);
             }
         }

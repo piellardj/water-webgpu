@@ -22,7 +22,7 @@ const data: IDemopageData = {
             label: "Average FPS"
         },
         {
-            id: "average-its",
+            id: "average-ips",
             label: "Average iterations per second"
         },
         {
