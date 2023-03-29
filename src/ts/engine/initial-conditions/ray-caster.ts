@@ -114,7 +114,6 @@ class RayCaster {
         }
         // }
 
-
         // if (intersections.length % 2 !== 0) {
         //     throw new Error(`Invalid intersections length '${intersections.length}'.`);
         // }

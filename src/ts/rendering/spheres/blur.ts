@@ -181,7 +181,7 @@ class Blur {
         factors.forEach((factor: number, index: number) => {
             this.uniformsHorizontal.setValueFromName(`blurFactors_${index}`, factor);
             this.uniformsVertical.setValueFromName(`blurFactors_${index}`, factor);
-        })
+        });
         this.uniformsHorizontal.uploadToGPU();
         this.uniformsVertical.uploadToGPU();
     }

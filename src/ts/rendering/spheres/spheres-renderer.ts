@@ -5,7 +5,6 @@ import { Blur } from "./blur";
 import { Composition, type RenderData as CompositionRenderData } from "./composition";
 import { Deferred, type Data as DeferredData, type RenderData as DeferredRenderData } from "./deferred";
 
-
 class SpheresRenderer {
     private readonly webgpuCanvas: WebGPU.Canvas;
     private readonly deferredRenderer: Deferred;
