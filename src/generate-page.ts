@@ -87,11 +87,11 @@ const data: IDemopageData = {
                         {
                             value: "4",
                             label: "Water",
+                            checked: true,
                         },
                         {
                             value: "6",
                             label: "Balls",
-                            checked: true,
                         },
                     ]
                 },

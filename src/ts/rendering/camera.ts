@@ -77,7 +77,7 @@ class Camera {
     private readonly _projectionMatrix = glMatrix.mat4.create();
     private readonly _vpMatrix = glMatrix.mat4.create();
 
-    private zoom = 2.5;
+    private zoom = 3;
     private theta = 1;
     private phi = 1.2;
 
