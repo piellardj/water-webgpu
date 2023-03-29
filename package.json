@@ -1,6 +1,6 @@
 {
-    "name": "balls-webgpu",
-    "homepage": "https://piellardj.github.io/balls-webgpu",
+    "name": "water-webgpu",
+    "homepage": "https://piellardj.github.io/water-webgpu",
     "scripts": {
         "pre-commit": "npm run rebuild && npm run lint",
         "http-server": "http-server ./docs -p 8080 -c-1",
@@ -14,7 +14,7 @@
         "webpack-watch": "webpack --config src/config/webpack.config.js --watch"
     },
     "author": "Jérémie PIELLARD <jeremie.piellard@gmail.com> (https://github.com/piellardj)",
-    "repository": "github:piellardj/balls-webgpu",
+    "repository": "github:piellardj/water-webgpu",
     "engines": {
         "node": ">=18.14.2"
     },

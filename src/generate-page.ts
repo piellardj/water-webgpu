@@ -6,11 +6,12 @@ import { IDemopageData } from "webpage-templates/build/script/demopage/i-demopag
 
 const data: IDemopageData = {
     title: "Smoothed-particle hydrodynamics",
-    description: "TODO",
+    description: "WebGPU implementation of water handling a million particles",
     introduction: [
-        "Realtime SPH implementation using WebGPU",
+        "This is a water simulation where water is modeled as thousands of small balls colliding with each other. You can interact with it by adding objects such as a cup or a helix. You can also dynamically change the domain constraints and the engine settings. The smaller the timestep, the more precise it is.",
+        "This project runs fully on GPU and can handle up to a million balls. It is implemented with the experimental WebGPU API, which allows GPGPU in the browser for massively parallel computing. You might need to manually enable WebGPU in your browser.",
     ],
-    githubProjectName: "balls-webgpu",
+    githubProjectName: "water-webgpu",
     additionalLinks: [],
     styleFiles: [],
     scriptFiles: [
