@@ -1,6 +1,6 @@
 import { Camera } from "./rendering/camera";
 import { Scene } from "./scene";
-import { FrameCounter } from "./ui/frame-counter";
+import { Counter } from "./ui/counter";
 import * as Indicators from "./ui/indicators";
 import { Parameters } from "./ui/parameters";
 import * as WebGPU from "./webgpu-utils/webgpu-utils";
@@ -16,11 +16,11 @@ function main(device: GPUDevice, canvas: HTMLCanvasElement): void {
         particlesQuantity: Parameters.particlesQuantity,
     });
 
-    const framesCounter = new FrameCounter();
-    framesCounter.onChange = (fps: number) => {
-        Indicators.setAverageFps(fps);
-        Indicators.setAverageIps(fps * Parameters.engineStepsPerFrame);
-    };
+    const framesCounter = new Counter();
+    framesCounter.onChange = Indicators.setAverageFps;
+
+    const iterationsCounter = new Counter();
+    iterationsCounter.onChange = Indicators.setAverageIps;
 
     Parameters.onParticlesQuantityChange.push(() => scene.setParticlesQuantity(Parameters.particlesQuantity));
     Parameters.onParticlesRadiusChange.push(() => scene.setParticlesRadius(Parameters.particlesRadius));
@@ -29,7 +29,7 @@ function main(device: GPUDevice, canvas: HTMLCanvasElement): void {
     Parameters.onObstacleChange.push(() => scene.setObstacle(Parameters.obstacleType));
 
     function mainLoop(): void {
-        framesCounter.registerFrame();
+        framesCounter.register();
 
         webgpuCanvas.setClearColor(Parameters.renderBackgroundColor);
         webgpuCanvas.adjustSize();
@@ -43,6 +43,7 @@ function main(device: GPUDevice, canvas: HTMLCanvasElement): void {
             const timestep = Parameters.engineTimestep;
             for (let i = Parameters.engineStepsPerFrame; i > 0; i--) {
                 scene.update(commandEncoder, timestep);
+                iterationsCounter.register();
             }
         }
 

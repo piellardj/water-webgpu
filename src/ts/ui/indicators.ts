@@ -7,7 +7,7 @@ function setAverageFps(value: number): void {
 }
 
 function setAverageIps(value: number): void {
-    Page.Canvas.setIndicatorText("average-its", `${value.toFixed()}`);
+    Page.Canvas.setIndicatorText("average-ips", `${value.toFixed()}`);
 }
 
 function setParticlesCount(value: number): void {

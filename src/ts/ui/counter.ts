@@ -1,7 +1,7 @@
 type FpsCallback = (fps: number) => void;
 
-class FrameCounter {
-    private frames: number = 0;
+class Counter {
+    private count: number = 0;
     public onChange: FpsCallback | null = null;
 
     public constructor() {
@@ -12,19 +12,19 @@ class FrameCounter {
             lastUpdate = now;
 
             if (this.onChange) {
-                const fps = 1000 * this.frames / dt;
-                this.onChange(fps);
+                const countPerSeconds = 1000 * this.count / dt;
+                this.onChange(countPerSeconds);
             }
-            this.frames = 0;
+            this.count = 0;
         }, 500);
     }
 
-    public registerFrame(): void {
-        this.frames++;
+    public register(): void {
+        this.count++;
     }
 }
 
 export {
-    FrameCounter,
+    Counter,
 };
 
