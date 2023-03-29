@@ -257,13 +257,34 @@ In GLSL when creating a structure, each attribute has requirements in terms of b
 
 Here is an example of a structure that could be packed better:
 ```glsl
-struct Particle {            //            align(16) size(48)
+struct Particle {            //            align(16) size(64)
     position: vec3<f32>,     // offset(0)  align(16) size(12)
+    // 4 bytes wasted
     velocity: vec3<f32>,     // offset(16) align(16) size(12)
+    // 4 bytes wasted
     acceleration: vec3<f32>, // offset(32) align(16) size(12)
-    weight: f32,             // offset(12) align(4)  size(4)
+    weight: f32,             // offset(44) align(4)  size(4) 
+    foam: f32,               // offset(48) align(4)  size(4) 
+    indexInCell: u32,        // offset(52) align(4)  size(4) 
+    // 8 bytes wasted
 };
 ```
+Since `SizeOf(vec3<f32>) = 12` and `AlignOf(vec3<f32>) = 16`, in this example there is a 4-bytes gap between `position`, `velocity` and `acceleration`. This wastes 8 bytes in padding. Worse it makes the structure 16 bytes too big because the `size` of a structure needs to be a multiple of its `align`: here, even if the used size would have been 56 bytes, there is more padding added at the end.
+A better way to pack this structure would be to use this padding to store the 4-bytes types like so:
+```glsl
+struct Particle {            //            align(16) size(48)
+    position: vec3<f32>,     // offset(0)  align(16) size(12)
+    weight: f32,             // offset(12) align(4)  size(4) 
+    velocity: vec3<f32>,     // offset(16) align(16) size(12)
+    foam: f32,               // offset(28) align(4)  size(4) 
+    acceleration: vec3<f32>, // offset(32) align(16) size(12)
+    indexInCell: u32,        // offset(44) align(4)  size(4) 
+};
+```
+This way, no space is wasted and the structure is 75% smaller, down to 48 bytes instead of 64 ! This can seem anecdotal but has a huge impact in my project where I store 100000s of particles: it can save dozens of megabytes of GPU memory.
+
+For large structures this is a bit tedious to tweak the attributes manually, so I created a helper class to automatically pack structures as much as possible.
+
 ## Improvements
 There are many ways this project could be improved.
 On the engine side:
