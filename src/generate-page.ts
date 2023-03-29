@@ -103,7 +103,7 @@ const data: IDemopageData = {
                 },
                 {
                     type: Demopage.supportedControls.Range,
-                    title: "Water opacity",
+                    title: "Color intensity",
                     id: "render-water-opacity-range-id",
                     min: 0,
                     max: 3,
@@ -247,61 +247,6 @@ const data: IDemopageData = {
             ],
         },
         {
-            title: "Domain",
-            controls: [
-                {
-                    type: Demopage.supportedControls.Select,
-                    title: "Animation",
-                    id: "domain-animation-select-id",
-                    placeholder: "<unknown>",
-                    options: [
-                        {
-                            value: "none",
-                            label: "None",
-                            checked: true,
-                        },
-                        {
-                            value: "rotate",
-                            label: "Rotate",
-                        },
-                        {
-                            value: "contract",
-                            label: "Contract",
-                        },
-                    ],
-                },
-                {
-                    type: Demopage.supportedControls.Range,
-                    title: "Rotation",
-                    id: "domain-rotation-range-id",
-                    min: 0,
-                    max: 360,
-                    value: 0,
-                    step: 0.1,
-                },
-                {
-                    type: Demopage.supportedControls.Range,
-                    title: "Contraction",
-                    id: "domain-contraction-range-id",
-                    min: 0.2,
-                    max: 1,
-                    value: 1,
-                    step: 0.001,
-                },
-                {
-                    type: Demopage.supportedControls.Checkbox,
-                    title: "Display box",
-                    id: "domain-display-checkbox-id",
-                    checked: true,
-                },
-                {
-                    type: Demopage.supportedControls.Button,
-                    label: "Reset",
-                    id: "domain-reset-button-id",
-                },
-            ],
-        },
-        {
             title: "Obstacles",
             controls: [
                 {
@@ -356,6 +301,61 @@ const data: IDemopageData = {
                     type: Demopage.supportedControls.Checkbox,
                     title: "Display spheres",
                     id: "obstacle-spheres-checkbox-id",
+                },
+            ],
+        },
+        {
+            title: "Domain",
+            controls: [
+                {
+                    type: Demopage.supportedControls.Select,
+                    title: "Animation",
+                    id: "domain-animation-select-id",
+                    placeholder: "<unknown>",
+                    options: [
+                        {
+                            value: "none",
+                            label: "None",
+                            checked: true,
+                        },
+                        {
+                            value: "rotate",
+                            label: "Rotate",
+                        },
+                        {
+                            value: "contract",
+                            label: "Contract",
+                        },
+                    ],
+                },
+                {
+                    type: Demopage.supportedControls.Range,
+                    title: "Rotation",
+                    id: "domain-rotation-range-id",
+                    min: 0,
+                    max: 360,
+                    value: 0,
+                    step: 0.1,
+                },
+                {
+                    type: Demopage.supportedControls.Range,
+                    title: "Contraction",
+                    id: "domain-contraction-range-id",
+                    min: 0.2,
+                    max: 1,
+                    value: 1,
+                    step: 0.001,
+                },
+                {
+                    type: Demopage.supportedControls.Checkbox,
+                    title: "Display box",
+                    id: "domain-display-checkbox-id",
+                    checked: true,
+                },
+                {
+                    type: Demopage.supportedControls.Button,
+                    label: "Reset",
+                    id: "domain-reset-button-id",
                 },
             ],
         },

@@ -21,16 +21,16 @@ const controlId = {
     PARTICLES_DISPLAY_CHECKBOX: "particles-display-checkbox-id",
     PARTICLES_RESET_BUTTON: "particles-reset-button-id",
 
+    OBSTACLE_SELECT: "obstacles-select-id",
+    OBSTACLE_ANIMATION_SELECT: "obstacles-animation-select-id",
+    OBSTACLE_MESH_CHECKBOX: "obstacle-mesh-checkbox-id",
+    OBSTACLE_SPHERES_CHECKBOX: "obstacle-spheres-checkbox-id",
+
     DOMAIN_ANIMATION_SELECT: "domain-animation-select-id",
     DOMAIN_ROTATION_RANGE: "domain-rotation-range-id",
     DOMAIN_CONTRACTION_RANGE: "domain-contraction-range-id",
     DOMAIN_DISPLAY_CHECKBOX: "domain-display-checkbox-id",
     DOMAIN_RESET_BUTTON: "domain-reset-button-id",
-
-    OBSTACLE_SELECT: "obstacles-select-id",
-    OBSTACLE_ANIMATION_SELECT: "obstacles-animation-select-id",
-    OBSTACLE_MESH_CHECKBOX: "obstacle-mesh-checkbox-id",
-    OBSTACLE_SPHERES_CHECKBOX: "obstacle-spheres-checkbox-id",
 
     DEBUG_BLUR_CHECKBOX: "debug-blur-checkbox-id",
     DEBUG_SPHERES_RADIUS_RANGE: "debug-spheres-radius-range-id",
@@ -184,6 +184,27 @@ abstract class Parameters {
         return false;
     }
 
+    public static get obstacleType(): EObstacleType {
+        const value = Page.Select.getValue(controlId.OBSTACLE_SELECT);
+        if (!value) {
+            throw new Error();
+        }
+        return value as EObstacleType;
+    }
+    public static get obstacleAnimation(): EObstacleAnimationType {
+        const value = Page.Select.getValue(controlId.OBSTACLE_ANIMATION_SELECT);
+        if (!value) {
+            throw new Error();
+        }
+        return value as EObstacleAnimationType;
+    }
+    public static get obstacleDisplayAsMesh(): boolean {
+        return Page.Checkbox.isChecked(controlId.OBSTACLE_MESH_CHECKBOX);
+    }
+    public static get obstacleDisplayAsSpheres(): boolean {
+        return Page.Checkbox.isChecked(controlId.OBSTACLE_SPHERES_CHECKBOX);
+    }
+
     public static get domainAnimation(): EDomainAnimationType {
         const value = Page.Select.getValue(controlId.DOMAIN_ANIMATION_SELECT);
         if (!value) {
@@ -206,27 +227,6 @@ abstract class Parameters {
     }
     public static get domainDisplay(): boolean {
         return Page.Checkbox.isChecked(controlId.DOMAIN_DISPLAY_CHECKBOX);
-    }
-
-    public static get obstacleType(): EObstacleType {
-        const value = Page.Select.getValue(controlId.OBSTACLE_SELECT);
-        if (!value) {
-            throw new Error();
-        }
-        return value as EObstacleType;
-    }
-    public static get obstacleAnimation(): EObstacleAnimationType {
-        const value = Page.Select.getValue(controlId.OBSTACLE_ANIMATION_SELECT);
-        if (!value) {
-            throw new Error();
-        }
-        return value as EObstacleAnimationType;
-    }
-    public static get obstacleDisplayAsMesh(): boolean {
-        return Page.Checkbox.isChecked(controlId.OBSTACLE_MESH_CHECKBOX);
-    }
-    public static get obstacleDisplayAsSpheres(): boolean {
-        return Page.Checkbox.isChecked(controlId.OBSTACLE_SPHERES_CHECKBOX);
     }
 
     public static get blur(): boolean {
