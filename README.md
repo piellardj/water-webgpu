@@ -7,6 +7,18 @@ This project runs fully on GPU and can handle up to a million balls. It is imple
 
 See it live [here](https://piellardj.github.io/water-webgpu/).
 
+## Preview
+
+https://user-images.githubusercontent.com/22922087/228359283-33cc019e-f49b-4865-9906-eb5b36fb7920.mp4
+
+https://user-images.githubusercontent.com/22922087/228642679-4031c3f1-6008-4f5b-bc70-46198698d09b.mp4
+
+https://user-images.githubusercontent.com/22922087/228644853-d2b4d2da-42aa-4678-a433-e3ecf7e17c6a.mp4
+
+https://user-images.githubusercontent.com/22922087/228642866-f7bef392-21a3-464e-99ca-78a793789c3b.mp4
+
+https://user-images.githubusercontent.com/22922087/228643120-e85d4b6d-4832-4d22-9152-ecd5484afe3c.mp4
+
 ## Algorithms
 ### Engine
 The simulation runs fully on the GPU: the CPU is only used to compute the initial positions.
