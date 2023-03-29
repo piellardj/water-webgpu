@@ -282,6 +282,8 @@ class Scene {
                 return Mesh.load(Models.Obstacles.PiercedFloor);
             case EObstacleType.FUNNEL:
                 return Mesh.load(Models.Obstacles.Funnel);
+            case EObstacleType.CUP:
+                return Mesh.load(Models.Obstacles.Cup);
             default:
                 throw new Error();
         }

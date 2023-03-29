@@ -80,6 +80,7 @@ enum EObstacleType {
     HELIX = "helix",
     PIERCED_FLOOR = "pierced-floor",
     FUNNEL = "funnel",
+    CUP = "cup",
 }
 
 enum EDomainAnimationType {

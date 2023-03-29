@@ -192,6 +192,10 @@ const data: IDemopageData = {
                             value: "helix",
                             label: "Helix",
                         },
+                        {
+                            value: "cup",
+                            label: "Cup",
+                        },
                     ],
                 },
                 {

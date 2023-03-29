@@ -9,6 +9,7 @@ import XXXX from "../../../../models/particles-xxxx.obj";
 import XXXXX from "../../../../models/particles-xxxxx.obj";
 
 import Capsules from "../../../../models/capsules.obj";
+import Cup from "../../../../models/cup.obj";
 import Funnel from "../../../../models/funnel.obj";
 import Helix from "../../../../models/helix.obj";
 import PiercedFloor from "../../../../models/pierced-floor.obj";
@@ -25,6 +26,7 @@ const particles = {
 
 const obstacles = {
     Capsules,
+    Cup,
     Funnel,
     Helix,
     PiercedFloor
