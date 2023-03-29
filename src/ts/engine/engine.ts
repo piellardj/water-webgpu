@@ -2,7 +2,7 @@ import * as glMatrix from "gl-matrix";
 import * as WebGPU from "../webgpu-utils/webgpu-utils";
 import { CellsBufferData, CellsBufferDescriptor, GridData, Indexing, NonEmptyCellsBuffers } from "./indexing/indexing";
 import { FillableMesh } from "./initial-conditions/fillable-mesh";
-import * as InitialPositions from "./initial-conditions/initial-positions";
+import { InitialPositions } from "./initial-conditions/initial-positions";
 import { Mesh } from "./initial-conditions/models/mesh";
 import { Acceleration } from "./simulation/acceleration";
 import { Initialization } from "./simulation/initialization";
@@ -209,12 +209,14 @@ class Engine {
 
     private applyReset(data: Data): ResetResult {
         const particlesFillableMesh = new FillableMesh(data.particlesContainerMesh.triangles);
-        const particlesPositions = InitialPositions.fillMesh(data.spheresRadius, particlesFillableMesh);
+        const particlesPositionsComputer = new InitialPositions(data.spheresRadius, particlesFillableMesh, true);
+        const particlesPositions = particlesPositionsComputer.computePositions();
 
         let obstaclesPositions: glMatrix.vec3[] = [];
         if (data.obstaclesMesh) {
             const obstaclesFillableMesh = new FillableMesh(data.obstaclesMesh.triangles);
-            obstaclesPositions = InitialPositions.fillMesh(data.spheresRadius, obstaclesFillableMesh);
+            const obstaclesPositionsComputer = new InitialPositions(data.spheresRadius, obstaclesFillableMesh, false);
+            obstaclesPositions = obstaclesPositionsComputer.computePositions();
         }
 
         const particlesCount = particlesPositions.length + obstaclesPositions.length;

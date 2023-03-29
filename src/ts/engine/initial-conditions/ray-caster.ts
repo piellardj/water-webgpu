@@ -44,8 +44,8 @@ function computeBarycentricXY(triangle: Triangle2D, p: glMatrix.ReadonlyVec2): [
     const d20 = dot(v2, v0);
     const d21 = dot(v2, v1);
     const denom = d00 * d11 - d01 * d01;
-    const v = (d11 * d20 - d01 * d21) / denom;
-    const w = (d00 * d21 - d01 * d20) / denom;
+    const v = (denom === 0) ? -2 : (d11 * d20 - d01 * d21) / denom;
+    const w = (denom === 0) ? -2 : (d00 * d21 - d01 * d20) / denom;
     const u = 1 - v - w;
     return [u, v, w];
 }
@@ -89,6 +89,8 @@ class RayCaster {
 
     public computeInternalSegments(rayCoords: glMatrix.ReadonlyVec2): Segment[] {
         const intersections: number[] = [];
+        // {
+        const rawIntersections: number[] = [];
 
         for (const triangle of this.triangles2D) {
             const barycentric = computeBarycentricXY(triangle, rayCoords);
@@ -96,15 +98,26 @@ class RayCaster {
 
             if (rayHitsTriangle) {
                 const z = barycentric[0] * triangle.c1 + barycentric[1] * triangle.c2 + barycentric[2] * triangle.c3;
-                intersections.push(z);
+                rawIntersections.push(z);
             }
         }
+
+        if (rawIntersections.length > 0) {
+            rawIntersections.sort();
+            let last = -10000;
+            rawIntersections.forEach(value => {
+                if (Math.abs(value - last) > 0.0001) {
+                    intersections.push(value);
+                    last = value;
+                }
+            });
+        }
+        // }
+
 
         // if (intersections.length % 2 !== 0) {
         //     throw new Error(`Invalid intersections length '${intersections.length}'.`);
         // }
-
-        intersections.sort();
 
         const segments: Segment[] = [];
         for (let i = 0; i + 1 < intersections.length; i += 2) {
