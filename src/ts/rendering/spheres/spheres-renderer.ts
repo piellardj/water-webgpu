@@ -7,11 +7,13 @@ import { Deferred, type Data as DeferredData, type RenderData as DeferredRenderD
 
 
 class SpheresRenderer {
+    private readonly webgpuCanvas: WebGPU.Canvas;
     private readonly deferredRenderer: Deferred;
     private readonly blur: Blur;
     private readonly compositionRenderer: Composition;
 
     public constructor(webgpuCanvas: WebGPU.Canvas, data: DeferredData) {
+        this.webgpuCanvas = webgpuCanvas;
         this.deferredRenderer = new Deferred(webgpuCanvas, data);
 
         const texturesData = {
@@ -26,7 +28,8 @@ class SpheresRenderer {
         this.deferredRenderer.render(commandEncoder, viewData, data);
 
         if (Parameters.blur) {
-            this.blur.compute(commandEncoder, viewData.relativeDistance);
+            const screenScale = 0.25 * this.webgpuCanvas.height / 512;
+            this.blur.compute(commandEncoder, viewData.relativeDistance * screenScale);
         }
     }
 
