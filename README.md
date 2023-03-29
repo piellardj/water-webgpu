@@ -56,8 +56,10 @@ Then to each particle, I assign a global id (in red) which is the sum of the cel
     <img alt="Spatial indexing: step 4" src="src/readme/indexing-04.png"/>
 </div>
 
+Finally, I reorder the particles according to their global id.
+
 Once this indexing is done:
-- the particles were reordered in place;
+- the particles were reordered;
 - I easily can get the list of particles in a cell: they are the ones with ids ranging from `cStart` to `cStart + pCount`.
 
 In this example, let's say I want to compute the collisions for particle 1.
@@ -78,6 +80,8 @@ Here is the evolution of the iterations per second relatively to the particles c
         <i>Iterations-per-second by particles count.</i>
     </p>
 </div>
+
+Tweaking the grid size (as long as it respects the minimum cell size condition) will certainly affect performance too; however I did not perform any tests of this kind to determine the ideal size.
 
 ### Rendering
 The project supports two render modes:
@@ -285,6 +289,65 @@ This way, no space is wasted and the structure is 75% smaller, down to 48 bytes 
 
 For large structures this is a bit tedious to tweak the attributes manually, so I created a helper class to automatically pack structures as much as possible.
 
+### Spatial indexing with atomicAdd
+WebGPU offers atomic operations described in the "[Atomic Read-modify-write](https://www.w3.org/TR/WGSL/#atomic-rmw)" section of the spec. These allow several invocations to work in parallel on the same data in storage or workgroup address space without risking race conditions.
+
+I use it in the step 2 of the spatial indexing process, to increment `pCount` the count of particles in each cell.
+<div style="text-align:center">
+    <img alt="Spatial indexing: step 2" src="src/readme/indexing-02.png"/>
+</div>
+In this step:
+- the cell's `pCount` were previously reset to 0
+- each invocation handles one particle.
+
+The code snipet to increment the cells `pCount` and get the particle's local id is:
+```glsl
+
+struct Cell {
+    pCount: atomic<u32>,
+};
+
+struct Particle {
+    position: vec3<f32>,
+    indexInCell: u32,
+};
+
+struct ComputeIn {
+    @builtin(global_invocation_id) globalInvocationId : vec3<u32>,
+};
+
+@group(0) @binding(0) var<storage,read_write> cellsBuffer: array<Cell>;
+@group(0) @binding(1) var<storage,read_write> particlesBuffer: array<Particle>;
+
+override particlesCount: u32;
+
+fn computeCellIndex(position: vec3<f32>) -> u32 {
+    // compute it
+}
+
+@compute @workgroup_size(128)
+fn main(in: ComputeIn) {
+    let particleId = in.globalInvocationId.x;
+
+    if (particleId < particlesCount) { // particlesCount might not be a multiple of 128, so a few invocations are wasted
+        let position = particlesBuffer[particleId].position;
+        let cellIndex = computeCellIndex(position);
+        // atomicAdd increments the cell's pCount and return its value pre-incrementation
+        particlesBuffer[particleId].indexInCell = atomicAdd(&cellsBuffer[cellIndex].pCount, 1u);
+    }
+}
+```
+
+### Prefix sum
+Implementing prefix sum for parallel architectures is a well-known subject. I chose to implement a simple algorithm described below, which consists of two passes: the reduce pass and the down pass.
+
+<div style="text-align:center">
+    <img alt="Prefix sum (exclusive scan) algorithm I used." src="src/readme/prefix-sum.png"/>
+    <p>
+        <i>Prefix sum (exclusive scan) algorithm I used.</i>
+    </p>
+</div>
+
 ## Improvements
 There are many ways this project could be improved.
 On the engine side:
@@ -293,3 +356,4 @@ On the engine side:
 
 On the rendering side:
 - another way to render water from spheres would be to recontruct the water surface, for instance with marching cubes. This is a great subject in itself and implementing it on GPU would be interesting.
+- another way to compute water depth, without additive blending, would be to do a two-passes rendering: the first one to retrieve the depth of the backFaces, and then the second one computing the difference between the front face's depth. An adavantage of this method is that is also works with mesh geometry.
