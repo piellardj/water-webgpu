@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="description" content="WebGPU water simulation handling a million particles" />
+    <title>Water</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" type="image/png" href="favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="favicon-32x32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96">
+    <link rel="stylesheet" type="text/css" href="css/page.css?v=2023-03-29T19%3A34%3A33.239Z">
+  </head>
+
+  <body>
+    <header>
+      <a class="logo logo-animate-fill" href="https://piellardj.github.io" id="back-to-home-button" title="Home" aria-label="Home">
+        <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+          <g stroke-width="2">
+            <path fill="none" stroke-linejoin="round" d="M17.5,32h4.5v11h7v-7l1,-1h4l1,1v7h7v-11h4.5L32,16.5z" />
+        </svg>
+      </a>
+    </header>
+    <main>
+      <div class="intro">
+        <h1>Water</h1>
+
+        <div class="description">
+          <p>This is a water simulation modeling water as thousands of small balls colliding with each other. You can interact with it by adding objects such as a cup or a helix. You can also dynamically change the domain constraints and the engine settings. The smaller the timestep, the more precise it is.</p>
+          <p>This project runs fully on GPU and can handle up to a million balls. It is implemented with the experimental WebGPU API, which allows GPGPU in the browser for massively parallel computing. You might need to manually enable WebGPU in your browser.</p>
+
+          <br>
+
+          <a href="https://github.com/piellardj/water-webgpu">More on GitHub</a>
+        </div>
+      </div>
+      <div id="error-messages">
+        <noscript>
+          You need to enable Javascript to run this experiment.
+        </noscript>
+      </div>
+
+      <input type="checkbox" id="fullscreen-checkbox-id" class="hidden">
+      <div class="demo">
+        <input type="checkbox" id="side-pane-checkbox-id" class="hidden">
+        <div id="canvas-container">
+          <canvas id="canvas"></canvas>
+          <div class="loader">
+            <span></span>
+            <div class="loader-animation"></div>
+          </div>
+          <div id="indicators">
+            <div id="average-fps-indicator-id">
+              Average FPS: <span></span>
+            </div>
+            <div id="average-ips-indicator-id">
+              Average iterations per second: <span></span>
+            </div>
+            <div id="particles-count-indicator-id">
+              Particles count: <span></span>
+            </div>
+            <div id="grid-indicator-id">
+              Grid: <span></span>
+            </div>
+          </div>
+          <div id="canvas-buttons-column">
+            <label class="canvas-button" id="fullscreen-toggle-id" for="fullscreen-checkbox-id"></label>
+            <label class="canvas-button" id="side-pane-toggle-id" for="side-pane-checkbox-id"></label>
+          </div>
+        </div>
+        <div class="controls-block">
+          <label class="canvas-button" id="side-pane-close-toggle-id" for="side-pane-checkbox-id">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+              <line x1="22" y1="22" x2="10" y2="10" stroke-linecap="round" stroke-width="2" />
+              <line x1="22" y1="10" x2="10" y2="22" stroke-linecap="round" stroke-width="2" />
+            </svg>
+          </label>
+          <section class="controls-section">
+            <h2>Engine</h2>
+
+            <div class="controls-list">
+              <div class="control" id="control-engine-pause-checkbox-id">
+                <label>Pause:</label>
+                <div class="checkbox">
+                  <input type="checkbox" id="engine-pause-checkbox-id">
+                  <label for="engine-pause-checkbox-id" class="checkmark"></label>
+                </div>
+              </div>
+              <div class="control" id="control-engine-timestep-range-id">
+                <label>Timestep:</label>
+                <div class="range-container">
+                  <input type="range" min="0.0001" max="0.001" value="0.0004" step="0.0001" class="slider" id="engine-timestep-range-id">
+                  <div class="range-skin-container">
+                    <div class="range-stub">
+                      <span class="range-bar range-bar-left range-stub-left"></span>
+                    </div>
+                    <div class="range-progress">
+                      <div class="range-progress-left">
+                        <span class="range-bar range-bar-left"></span>
+                        <span class="range-handle"></span>
+                        <output for="engine-timestep-range-id" class="range-tooltip"></output>
+                      </div>
+                      <div class="range-progress-right">
+                        <span class="range-bar range-bar-right"></span>
+                      </div>
+                    </div>
+                    <div class="range-stub">
+                      <span class="range-bar range-bar-right range-stub-right"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="control" id="control-engine-iterations-per-frame-range-id">
+                <label>Steps per frame:</label>
+                <div class="range-container">
+                  <input type="range" min="1" max="20" value="5" step="1" class="slider" id="engine-iterations-per-frame-range-id">
+                  <div class="range-skin-container">
+                    <div class="range-stub">
+                      <span class="range-bar range-bar-left range-stub-left"></span>
+                    </div>
+                    <div class="range-progress">
+                      <div class="range-progress-left">
+                        <span class="range-bar range-bar-left"></span>
+                        <span class="range-handle"></span>
+                        <output for="engine-iterations-per-frame-range-id" class="range-tooltip"></output>
+                      </div>
+                      <div class="range-progress-right">
+                        <span class="range-bar range-bar-right"></span>
+                      </div>
+                    </div>
+                    <div class="range-stub">
+                      <span class="range-bar range-bar-right range-stub-right"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+          <hr />
+          <section class="controls-section">
+            <h2>Rendering</h2>
+
+            <div class="controls-list">
+              <div class="control" id="control-render-background-color-id">
+                <label>Background:</label>
+
+                <div class="color-picker-container">
+                  <div class="color-picker  compact" id="render-background-color-id" data-current-color="#CA8BBC">
+                    <div class="color-preview">&nbsp;</div>
+                    <span class="color-value">#CA8BBC</span>
+                  </div>
+                </div>
+              </div>
+              <div class="control" id="control-render-mode-tabs-id">
+                <label>Mode:</label>
+                <div class="tabs compact" id="render-mode-tabs-id-id">
+                  <input type="radio" name="render-mode-tabs-id" value="4" id="render-mode-tabs-id-4-id" checked />
+                  <label for="render-mode-tabs-id-4-id">Water</label>
+                  <input type="radio" name="render-mode-tabs-id" value="6" id="render-mode-tabs-id-6-id" />
+                  <label for="render-mode-tabs-id-6-id">Balls</label>
+                </div>
+              </div>
+              <div class="control" id="control-render-water-color-id">
+                <label>Water color:</label>
+
+                <div class="color-picker-container">
+                  <div class="color-picker  compact" id="render-water-color-id" data-current-color="#0076EC">
+                    <div class="color-preview">&nbsp;</div>
+                    <span class="color-value">#0076EC</span>
+                  </div>
+                </div>
+              </div>
+              <div class="control" id="control-render-water-opacity-range-id">
+                <label>Color intensity:</label>
+                <div class="range-container">
+                  <input type="range" min="0" max="3" value="1" step="0.1" class="slider" id="render-water-opacity-range-id">
+                  <div class="range-skin-container">
+                    <div class="range-stub">
+                      <span class="range-bar range-bar-left range-stub-left"></span>
+                    </div>
+                    <div class="range-progress">
+                      <div class="range-progress-left">
+                        <span class="range-bar range-bar-left"></span>
+                        <span class="range-handle"></span>
+                        <output for="render-water-opacity-range-id" class="range-tooltip"></output>
+                      </div>
+                      <div class="range-progress-right">
+                        <span class="range-bar range-bar-right"></span>
+                      </div>
+                    </div>
+                    <div class="range-stub">
+                      <span class="range-bar range-bar-right range-stub-right"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="control" id="control-render-foam-checkbox-id">
+                <label>Foam:</label>
+                <div class="checkbox">
+                  <input type="checkbox" id="render-foam-checkbox-id">
+                  <label for="render-foam-checkbox-id" class="checkmark"></label>
+                </div>
+              </div>
+              <div class="control" id="control-render-indicators-checkbox-id">
+                <label>Indicators:</label>
+                <div class="checkbox">
+                  <input type="checkbox" id="render-indicators-checkbox-id" checked>
+                  <label for="render-indicators-checkbox-id" class="checkmark"></label>
+                </div>
+              </div>
+              <div class="control" id="control-render-axes-checkbox-id">
+                <label>Axes:</label>
+                <div class="checkbox">
+                  <input type="checkbox" id="render-axes-checkbox-id">
+                  <label for="render-axes-checkbox-id" class="checkmark"></label>
+                </div>
+              </div>
+              <div class="control" id="control-render-grid-cells-select-id">
+                <label>Grid cells:</label>
+                <div class="select-container compact" id="render-grid-cells-select-id">
+                  <div class="select-current-value" data-value="0">Hidden</div>
+                  <div class="select-values-list" data-placeholder="<unknown>">
+                    <div class="select-value" data-value="0">Hidden</div>
+                    <div class="select-value" data-value="1">Color by population</div>
+                    <div class="select-value" data-value="2">Final</div>
+                  </div>
+                </div>
+              </div>
+              <div class="control" id="control-render-projection-tabs-id">
+                <label>Projection:</label>
+                <div class="tabs compact" id="render-projection-tabs-id-id">
+                  <input type="radio" name="render-projection-tabs-id" value="ortho" id="render-projection-tabs-id-ortho-id" />
+                  <label for="render-projection-tabs-id-ortho-id">Orthographic</label>
+                  <input type="radio" name="render-projection-tabs-id" value="perspective" id="render-projection-tabs-id-perspective-id" checked />
+                  <label for="render-projection-tabs-id-perspective-id">Perspective</label>
+                </div>
+              </div>
+            </div>
+          </section>
+          <hr />
+          <section class="controls-section">
+            <h2>Particles</h2>
+
+            <div class="controls-list">
+              <div class="control" id="control-particles-radius-tabs-id">
+                <label>Radius:</label>
+                <div class="tabs compact" id="particles-radius-tabs-id-id">
+                  <input type="radio" name="particles-radius-tabs-id" value="0.005" id="particles-radius-tabs-id-0.005-id" />
+                  <label for="particles-radius-tabs-id-0.005-id">Small</label>
+                  <input type="radio" name="particles-radius-tabs-id" value="0.01" id="particles-radius-tabs-id-0.01-id" checked />
+                  <label for="particles-radius-tabs-id-0.01-id">Medium</label>
+                  <input type="radio" name="particles-radius-tabs-id" value="0.02" id="particles-radius-tabs-id-0.02-id" />
+                  <label for="particles-radius-tabs-id-0.02-id">Large</label>
+                </div>
+              </div>
+              <div class="control" id="control-particles-quantity-select-id">
+                <label>Quantity:</label>
+                <div class="select-container compact" id="particles-quantity-select-id">
+                  <div class="select-current-value" data-value="xx">Medium amount</div>
+                  <div class="select-values-list" data-placeholder="<unknown>">
+                    <div class="select-value" data-value="s">Small amount</div>
+                    <div class="select-value" data-value="x">Fair amount</div>
+                    <div class="select-value" data-value="xx">Medium amount</div>
+                    <div class="select-value" data-value="xxx">Big amount</div>
+                    <div class="select-value" data-value="xxxx">Huge amount</div>
+                    <div class="select-value" data-value="xxxxx">Giant amount</div>
+                  </div>
+                </div>
+              </div>
+              <div class="control" id="control-particles-gravity-range-id">
+                <label>Gravity:</label>
+                <div class="range-container">
+                  <input type="range" min="-1" max="1" value="0.9" step="0.1" class="slider" id="particles-gravity-range-id">
+                  <div class="range-skin-container">
+                    <div class="range-stub">
+                      <span class="range-bar range-bar-left range-stub-left"></span>
+                    </div>
+                    <div class="range-progress">
+                      <div class="range-progress-left">
+                        <span class="range-bar range-bar-left"></span>
+                        <span class="range-handle"></span>
+                        <output for="particles-gravity-range-id" class="range-tooltip"></output>
+                      </div>
+                      <div class="range-progress-right">
+                        <span class="range-bar range-bar-right"></span>
+                      </div>
+                    </div>
+                    <div class="range-stub">
+                      <span class="range-bar range-bar-right range-stub-right"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="control" id="control-particles-display-checkbox-id">
+                <label>Display:</label>
+                <div class="checkbox">
+                  <input type="checkbox" id="particles-display-checkbox-id" checked>
+                  <label for="particles-display-checkbox-id" class="checkmark"></label>
+                </div>
+              </div>
+              <div class="control" id="control-particles-reset-button-id">
+                <button class="button  flat" id="particles-reset-button-id">Reset</button>
+              </div>
+            </div>
+          </section>
+          <hr />
+          <section class="controls-section">
+            <h2>Obstacles</h2>
+
+            <div class="controls-list">
+              <div class="control" id="control-obstacles-select-id">
+                <label>Obstacles:</label>
+                <div class="select-container compact" id="obstacles-select-id">
+                  <div class="select-current-value" data-value="helix">Helix</div>
+                  <div class="select-values-list" data-placeholder="<unknown>">
+                    <div class="select-value" data-value="none">None</div>
+                    <div class="select-value" data-value="capsules">Capsules</div>
+                    <div class="select-value" data-value="helix">Helix</div>
+                    <div class="select-value" data-value="cup">Cup</div>
+                  </div>
+                </div>
+              </div>
+              <div class="control" id="control-obstacles-animation-select-id">
+                <label>Animation:</label>
+                <div class="select-container compact" id="obstacles-animation-select-id">
+                  <div class="select-current-value" data-value="rotate">Rotate</div>
+                  <div class="select-values-list" data-placeholder="<unknown>">
+                    <div class="select-value" data-value="none">None</div>
+                    <div class="select-value" data-value="rotate">Rotate</div>
+                  </div>
+                </div>
+              </div>
+              <div class="control" id="control-obstacle-mesh-checkbox-id">
+                <label>Display mesh:</label>
+                <div class="checkbox">
+                  <input type="checkbox" id="obstacle-mesh-checkbox-id" checked>
+                  <label for="obstacle-mesh-checkbox-id" class="checkmark"></label>
+                </div>
+              </div>
+              <div class="control" id="control-obstacle-spheres-checkbox-id">
+                <label>Display spheres:</label>
+                <div class="checkbox">
+                  <input type="checkbox" id="obstacle-spheres-checkbox-id">
+                  <label for="obstacle-spheres-checkbox-id" class="checkmark"></label>
+                </div>
+              </div>
+            </div>
+          </section>
+          <hr />
+          <section class="controls-section">
+            <h2>Domain</h2>
+
+            <div class="controls-list">
+              <div class="control" id="control-domain-animation-select-id">
+                <label>Animation:</label>
+                <div class="select-container compact" id="domain-animation-select-id">
+                  <div class="select-current-value" data-value="none">None</div>
+                  <div class="select-values-list" data-placeholder="<unknown>">
+                    <div class="select-value" data-value="none">None</div>
+                    <div class="select-value" data-value="rotate">Rotate</div>
+                    <div class="select-value" data-value="contract">Contract</div>
+                  </div>
+                </div>
+              </div>
+              <div class="control" id="control-domain-rotation-range-id">
+                <label>Rotation:</label>
+                <div class="range-container">
+                  <input type="range" min="0" max="360" value="0" step="0.1" class="slider" id="domain-rotation-range-id">
+                  <div class="range-skin-container">
+                    <div class="range-stub">
+                      <span class="range-bar range-bar-left range-stub-left"></span>
+                    </div>
+                    <div class="range-progress">
+                      <div class="range-progress-left">
+                        <span class="range-bar range-bar-left"></span>
+                        <span class="range-handle"></span>
+                        <output for="domain-rotation-range-id" class="range-tooltip"></output>
+                      </div>
+                      <div class="range-progress-right">
+                        <span class="range-bar range-bar-right"></span>
+                      </div>
+                    </div>
+                    <div class="range-stub">
+                      <span class="range-bar range-bar-right range-stub-right"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="control" id="control-domain-contraction-range-id">
+                <label>Contraction:</label>
+                <div class="range-container">
+                  <input type="range" min="0.2" max="1" value="1" step="0.001" class="slider" id="domain-contraction-range-id">
+                  <div class="range-skin-container">
+                    <div class="range-stub">
+                      <span class="range-bar range-bar-left range-stub-left"></span>
+                    </div>
+                    <div class="range-progress">
+                      <div class="range-progress-left">
+                        <span class="range-bar range-bar-left"></span>
+                        <span class="range-handle"></span>
+                        <output for="domain-contraction-range-id" class="range-tooltip"></output>
+                      </div>
+                      <div class="range-progress-right">
+                        <span class="range-bar range-bar-right"></span>
+                      </div>
+                    </div>
+                    <div class="range-stub">
+                      <span class="range-bar range-bar-right range-stub-right"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="control" id="control-domain-display-checkbox-id">
+                <label>Display box:</label>
+                <div class="checkbox">
+                  <input type="checkbox" id="domain-display-checkbox-id" checked>
+                  <label for="domain-display-checkbox-id" class="checkmark"></label>
+                </div>
+              </div>
+              <div class="control" id="control-domain-reset-button-id">
+                <button class="button  flat" id="domain-reset-button-id">Reset</button>
+              </div>
+            </div>
+          </section>
+          <hr />
+          <section class="controls-section" id="section-debug-section-id">
+            <h2>Debug</h2>
+
+            <div class="controls-list">
+              <div class="control" id="control-debug-spheres-radius-range-id">
+                <label>Radius:</label>
+                <div class="range-container">
+                  <input type="range" min="0" max="2" value="1" step="0.1" class="slider" id="debug-spheres-radius-range-id">
+                  <div class="range-skin-container">
+                    <div class="range-stub">
+                      <span class="range-bar range-bar-left range-stub-left"></span>
+                    </div>
+                    <div class="range-progress">
+                      <div class="range-progress-left">
+                        <span class="range-bar range-bar-left"></span>
+                        <span class="range-handle"></span>
+                        <output for="debug-spheres-radius-range-id" class="range-tooltip"></output>
+                      </div>
+                      <div class="range-progress-right">
+                        <span class="range-bar range-bar-right"></span>
+                      </div>
+                    </div>
+                    <div class="range-stub">
+                      <span class="range-bar range-bar-right range-stub-right"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="control" id="control-debug-blur-checkbox-id">
+                <label>Blur:</label>
+                <div class="checkbox">
+                  <input type="checkbox" id="debug-blur-checkbox-id">
+                  <label for="debug-blur-checkbox-id" class="checkmark"></label>
+                </div>
+              </div>
+              <div class="control" id="control-debug-display-mode-select-id">
+                <label>Display mode:</label>
+                <div class="select-container compact" id="debug-display-mode-select-id">
+                  <div class="select-current-value" data-value="2">World normals</div>
+                  <div class="select-values-list" data-placeholder="<unknown>">
+                    <div class="select-value" data-value="0">Local position</div>
+                    <div class="select-value" data-value="1">Screenspace normals</div>
+                    <div class="select-value" data-value="2">World normals</div>
+                    <div class="select-value" data-value="3">Water depth</div>
+                    <div class="select-value" data-value="4">Water</div>
+                    <div class="select-value" data-value="5">Depth</div>
+                    <div class="select-value" data-value="6">Balls</div>
+                  </div>
+                </div>
+              </div>
+              <div class="control" id="control-debug-specularity-range-id">
+                <label>Specularity:</label>
+                <div class="range-container">
+                  <input type="range" min="0" max="1" value="0.8" step="0.01" class="slider" id="debug-specularity-range-id">
+                  <div class="range-skin-container">
+                    <div class="range-stub">
+                      <span class="range-bar range-bar-left range-stub-left"></span>
+                    </div>
+                    <div class="range-progress">
+                      <div class="range-progress-left">
+                        <span class="range-bar range-bar-left"></span>
+                        <span class="range-handle"></span>
+                        <output for="debug-specularity-range-id" class="range-tooltip"></output>
+                      </div>
+                      <div class="range-progress-right">
+                        <span class="range-bar range-bar-right"></span>
+                      </div>
+                    </div>
+                    <div class="range-stub">
+                      <span class="range-bar range-bar-right range-stub-right"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="control" id="control-debug-fresnel-range-id">
+                <label>Fresnel:</label>
+                <div class="range-container">
+                  <input type="range" min="0" max="1" value="1" step="0.01" class="slider" id="debug-fresnel-range-id">
+                  <div class="range-skin-container">
+                    <div class="range-stub">
+                      <span class="range-bar range-bar-left range-stub-left"></span>
+                    </div>
+                    <div class="range-progress">
+                      <div class="range-progress-left">
+                        <span class="range-bar range-bar-left"></span>
+                        <span class="range-handle"></span>
+                        <output for="debug-fresnel-range-id" class="range-tooltip"></output>
+                      </div>
+                      <div class="range-progress-right">
+                        <span class="range-bar range-bar-right"></span>
+                      </div>
+                    </div>
+                    <div class="range-stub">
+                      <span class="range-bar range-bar-right range-stub-right"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div class="badge-shelf">
+        <a class="badge" href="mailto:jeremie.piellard@gmail.com" title="Email">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" viewBox="0 0 512 512">
+            <path d="M512 85V448H0V85l256 224L512 85zM488 64H24L256 267 488 64z" />
+          </svg>
+        </a>
+
+        <a class="badge" href="https://github.com/piellardj" title="GitHub">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" viewBox="0 0 1024 1024">
+            <path d="M512 0C229 0 0 229 0 512c0 226 147 418 350 486 26 5 35-11 35-25 0-12 0-53-1-95C242 909 212 818 212 818c-23-59-57-75-57-75-47-32 4-31 4-31 51 4 78 53 78 53 46 78 120 56 149 43 5-33 18-56 33-68C305 725 185 682 185 485c0-56 20-102 53-137-5-13-23-65 5-136 0 0 43-14 141 53 41-11 85-17 128-17 44 0 87 6 128 17 98-66 141-52 141-52 28 71 10 123 5 136 33 36 53 81 53 137 0 197-120 240-234 253 18 16 35 47 35 95 0 68-1 124-1 141 0 14 9 30 35 25C877 930 1024 738 1024 512 1024 229 795 0 512 0z" />
+          </svg>
+        </a>
+
+        <a class="badge" href="https://www.linkedin.com/in/jeremie-piellard/" title="LinkedIn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" viewBox="0 0 512 512">
+            <path d="M30 177l93-1v304l-93 1v-304z" />
+            <path d="M200 177l89-1v39l0 11c26-26 53-45 97-45 51 0 100 21 100 91v208l-90 1v-159c0-35-9-58-51-58-37 0-52 7-52 55v160l-92 1v-304z" />
+            <path d="M128 81c0 28-23 51-51 51s-51-23-51-51c0-28 23-51 51-51 28 0 51 23 51 51z" />
+          </svg>
+        </a>
+      </div>
+    </footer>
+    <script type="text/javascript">
+      var Page = Page || {};
+      Object.defineProperty(Page, "version", {
+        value: "2023-03-29T19%3A34%3A33.239Z",
+        writable: false,
+      });
+    </script>
+    <script src="script/page.min.js?v=2023-03-29T19%3A34%3A33.239Z"></script>
+    <script src="script/main.js?v=2023-03-29T19%3A34%3A33.239Z"></script>
+  </body>
+
+</html>
