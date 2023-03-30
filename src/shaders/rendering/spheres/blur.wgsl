@@ -1,8 +1,8 @@
 @group(0) @binding(0) var inputTexture: texture_2d<f32>;
-@group(0) @binding(1) var inputFoamTexture: texture_2d<f32>;
-@group(0) @binding(2) var outputTexture: texture_storage_2d<rgba8unorm, write>;
-@group(0) @binding(3) var outputFoamTexture: texture_storage_2d<rgba8unorm, write>;
-@group(0) @binding(4) var<uniform> uniforms: Uniforms;
+@group(0) @binding(1) var outputTexture: texture_storage_2d<rgba8unorm, write>;
+@group(0) @binding(2) var<uniform> uniforms: Uniforms;
+// @group(0) @binding(1) var inputFoamTexture: texture_2d<f32>;
+// @group(0) @binding(3) var outputFoamTexture: texture_storage_2d<rgba8unorm, write>;
 
 struct ComputeIn {
     @builtin(workgroup_id) workgroupId: vec3<u32>,
@@ -13,7 +13,7 @@ struct ComputeIn {
 override workgroupSize: i32;
 const blurRadius = 8;
 
-alias FragmentDataType = vec4<f32>;
+alias FragmentDataType = vec3<f32>;
 
 struct Fragment {
     data: FragmentDataType,
@@ -25,16 +25,16 @@ var<workgroup> workgroupCache : array<Fragment, workgroupSize>;
 fn loadFragment(texelId: vec2<i32>) -> Fragment {
     var currentFragment: Fragment;
     let rawTexel = textureLoad(inputTexture, texelId, 0);
-    let foam = textureLoad(inputFoamTexture, texelId, 0).r;
-    currentFragment.data = vec4<f32>(rawTexel.rgb, foam);
+    // let foam = textureLoad(inputFoamTexture, texelId, 0).r;
+    currentFragment.data = rawTexel.rgb;
     currentFragment.depth = rawTexel.a;
     return currentFragment;
 }
 fn storeFragment(texelId: vec2<i32>, cumulatedData: FragmentDataType, depth: f32) {
     let outputColor = vec4<f32>(cumulatedData.rgb, depth);
-    let outputFoamColor = vec4<f32>(cumulatedData.a);
+    // let outputFoamColor = vec4<f32>(cumulatedData.a);
     textureStore(outputTexture, texelId, outputColor);
-    textureStore(outputFoamTexture, texelId, outputFoamColor);
+    // textureStore(outputFoamTexture, texelId, outputFoamColor);
 }
 
 fn addContribution(currentFragmentDepth: f32, neighbourIndexInCache: i32, factor: f32, cumulatedData: ptr<function,FragmentDataType>, samplesCount: ptr<function,f32>) {

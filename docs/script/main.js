@@ -10808,7 +10808,7 @@ class Blur {
         this.bindgroupVertical = null;
         this.device = device;
         this.temporaryTexture = new WebGPU.Texture(device, "rgba8unorm", GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING);
-        this.temporaryFoamTexture = new WebGPU.Texture(device, "rgba8unorm", GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING);
+        // this.temporaryFoamTexture = new WebGPU.Texture(device, "rgba8unorm", GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING);
         const uniformBufferAttributes = [
             { name: "direction", type: WebGPU.Types.vec2I32 },
             { name: "blurFactors_0", type: WebGPU.Types.f32 },
@@ -10862,26 +10862,26 @@ class Blur {
         if (!data.deferredTexture.hasUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING)) {
             throw new Error("Texture has wrong usage.");
         }
-        if (!data.foamTexture.hasUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING)) {
-            throw new Error("Texture has wrong usage.");
-        }
+        // if (!data.foamTexture.hasUsage(GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING)) {
+        //     throw new Error("Texture has wrong usage.");
+        // }
         if (data.deferredTexture.format !== "rgba8unorm" || this.temporaryTexture.format !== "rgba8unorm") {
             throw new Error("Texture has wrong format.");
         }
-        if (data.foamTexture.format !== "rgba8unorm" || this.temporaryFoamTexture.format !== "rgba8unorm") {
-            throw new Error("Texture has wrong format.");
-        }
-        if (data.foamTexture.getWidth() !== data.deferredTexture.getWidth() || data.foamTexture.getHeight() !== data.deferredTexture.getHeight()) {
-            throw new Error();
-        }
+        // if (data.foamTexture.format !== "rgba8unorm" || this.temporaryFoamTexture.format !== "rgba8unorm") {
+        //     throw new Error("Texture has wrong format.");
+        // }
+        // if (data.foamTexture.getWidth() !== data.deferredTexture.getWidth() || data.foamTexture.getHeight() !== data.deferredTexture.getHeight()) {
+        //     throw new Error();
+        // }
         const width = data.deferredTexture.getWidth();
         const height = data.deferredTexture.getHeight();
         this.temporaryTexture.setSize(width, height);
-        this.temporaryFoamTexture.setSize(width, height);
+        // this.temporaryFoamTexture.setSize(width, height);
         const deferredTextureView = data.deferredTexture.getView();
-        const deferredFoamTextureView = data.foamTexture.getView();
+        // const deferredFoamTextureView = data.foamTexture.getView();
         const temporaryTextureView = this.temporaryTexture.getView();
-        const temporaryFoamTextureView = this.temporaryFoamTexture.getView();
+        // const temporaryFoamTextureView = this.temporaryFoamTexture.getView();
         const layout = this.pipeline.getBindGroupLayout(0);
         this.bindgroupHorizontal = this.device.createBindGroup({
             layout,
@@ -10891,17 +10891,17 @@ class Blur {
                     resource: deferredTextureView,
                 }, {
                     binding: 1,
-                    resource: deferredFoamTextureView,
-                }, {
-                    binding: 2,
                     resource: temporaryTextureView,
                 }, {
-                    binding: 3,
-                    resource: temporaryFoamTextureView,
-                }, {
-                    binding: 4,
+                    binding: 2,
                     resource: this.uniformsHorizontal.bindingResource,
-                }
+                    // }, {
+                    //     binding: 3,
+                    //     resource: deferredFoamTextureView,
+                    // }, {
+                    //     binding: 4,
+                    //     resource: temporaryFoamTextureView,
+                },
             ]
         });
         this.bindgroupVertical = this.device.createBindGroup({
@@ -10912,17 +10912,17 @@ class Blur {
                     resource: temporaryTextureView,
                 }, {
                     binding: 1,
-                    resource: temporaryFoamTextureView,
-                }, {
-                    binding: 2,
                     resource: deferredTextureView,
                 }, {
-                    binding: 3,
-                    resource: deferredFoamTextureView,
-                }, {
-                    binding: 4,
+                    binding: 2,
                     resource: this.uniformsVertical.bindingResource,
-                }
+                    // }, {
+                    //     binding: 3,
+                    //     resource: temporaryFoamTextureView,
+                    // }, {
+                    //     binding: 4,
+                    //     resource: deferredFoamTextureView,
+                },
             ]
         });
     }
@@ -11128,7 +11128,7 @@ class Deferred {
     constructor(webgpuCanvas, data) {
         this.device = webgpuCanvas.device;
         this.texture = new WebGPU.Texture(this.device, "rgba8unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING);
-        this.foamTexture = new WebGPU.Texture(this.device, "rgba8unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING);
+        this.foamTexture = new WebGPU.Texture(this.device, "r8unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING);
         this.depthTexture = new WebGPU.Texture(this.device, "depth16unorm", GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING);
         this.uniforms = new WebGPU.Uniforms(this.device, [
             { name: "vpMatrix", type: WebGPU.Types.mat4x4 },
@@ -13974,7 +13974,7 @@ module.exports = "@group(0) @binding(0) var<uniform> uniforms: Uniforms;\r\n\r\n
   \*************************************************/
 /***/ ((module) => {
 
-module.exports = "@group(0) @binding(0) var inputTexture: texture_2d<f32>;\r\n@group(0) @binding(1) var inputFoamTexture: texture_2d<f32>;\r\n@group(0) @binding(2) var outputTexture: texture_storage_2d<rgba8unorm, write>;\r\n@group(0) @binding(3) var outputFoamTexture: texture_storage_2d<rgba8unorm, write>;\r\n@group(0) @binding(4) var<uniform> uniforms: Uniforms;\r\n\r\nstruct ComputeIn {\r\n    @builtin(workgroup_id) workgroupId: vec3<u32>,\r\n    @builtin(local_invocation_id) localInvocationId: vec3<u32>,\r\n    @builtin(global_invocation_id) globalInvocationId: vec3<u32>,\r\n};\r\n\r\noverride workgroupSize: i32;\r\nconst blurRadius = 8;\r\n\r\nalias FragmentDataType = vec4<f32>;\r\n\r\nstruct Fragment {\r\n    data: FragmentDataType,\r\n    depth: f32,\r\n};\r\n\r\nvar<workgroup> workgroupCache : array<Fragment, workgroupSize>;\r\n\r\nfn loadFragment(texelId: vec2<i32>) -> Fragment {\r\n    var currentFragment: Fragment;\r\n    let rawTexel = textureLoad(inputTexture, texelId, 0);\r\n    let foam = textureLoad(inputFoamTexture, texelId, 0).r;\r\n    currentFragment.data = vec4<f32>(rawTexel.rgb, foam);\r\n    currentFragment.depth = rawTexel.a;\r\n    return currentFragment;\r\n}\r\nfn storeFragment(texelId: vec2<i32>, cumulatedData: FragmentDataType, depth: f32) {\r\n    let outputColor = vec4<f32>(cumulatedData.rgb, depth);\r\n    let outputFoamColor = vec4<f32>(cumulatedData.a);\r\n    textureStore(outputTexture, texelId, outputColor);\r\n    textureStore(outputFoamTexture, texelId, outputFoamColor);\r\n}\r\n\r\nfn addContribution(currentFragmentDepth: f32, neighbourIndexInCache: i32, factor: f32, cumulatedData: ptr<function,FragmentDataType>, samplesCount: ptr<function,f32>) {\r\n    if (neighbourIndexInCache >= 0 && neighbourIndexInCache < workgroupSize) {\r\n        let neighbourFragment = workgroupCache[neighbourIndexInCache];\r\n\r\n        if (distance(currentFragmentDepth, neighbourFragment.depth) < 0.02) {\r\n            *samplesCount = *samplesCount + factor;\r\n            *cumulatedData = *cumulatedData + factor * neighbourFragment.data;\r\n        }\r\n    }\r\n}\r\n\r\n@compute @workgroup_size(workgroupSize)\r\nfn main(in: ComputeIn) {\r\n    let textureSize = vec2<i32>(textureDimensions(inputTexture));\r\n    let globalInvocationId = vec2<i32>(in.globalInvocationId.xy) - vec2<i32>(2 * blurRadius * i32(in.workgroupId.x), 0);\r\n\r\n    let texelId = globalInvocationId.x * uniforms.direction + globalInvocationId.y * (vec2<i32>(1) - uniforms.direction);\r\n    let indexInCache = i32(in.localInvocationId.x);\r\n\r\n    // first, load workgroup cache\r\n    let currentFragment = loadFragment(texelId);\r\n    workgroupCache[indexInCache] = currentFragment;\r\n    workgroupBarrier();\r\n\r\n    // then compute blur\r\n    if (texelId.x < textureSize.x && texelId.y < textureSize.y) {\r\n        let textureSize1D: i32 = dot(textureSize, uniforms.direction);\r\n        let nearImageBorder = (globalInvocationId.x <= blurRadius) || (globalInvocationId.x >= textureSize1D - 1 - blurRadius);\r\n        let insideWorkgroup = (indexInCache >= blurRadius) && (indexInCache <= workgroupSize - 1 - blurRadius);\r\n        if (nearImageBorder || insideWorkgroup) {\r\n            var cumulatedData = FragmentDataType(0);\r\n            var samplesCount = 0.0;\r\n\r\n            addContribution(currentFragment.depth, indexInCache, uniforms.blurFactors_0, &cumulatedData, &samplesCount);\r\n\r\n            addContribution(currentFragment.depth, indexInCache - 1, uniforms.blurFactors_1, &cumulatedData, &samplesCount);\r\n            addContribution(currentFragment.depth, indexInCache + 1, uniforms.blurFactors_1, &cumulatedData, &samplesCount);\r\n\r\n            addContribution(currentFragment.depth, indexInCache - 2, uniforms.blurFactors_2, &cumulatedData, &samplesCount);\r\n            addContribution(currentFragment.depth, indexInCache + 2, uniforms.blurFactors_2, &cumulatedData, &samplesCount);\r\n\r\n            addContribution(currentFragment.depth, indexInCache - 3, uniforms.blurFactors_3, &cumulatedData, &samplesCount);\r\n            addContribution(currentFragment.depth, indexInCache + 3, uniforms.blurFactors_3, &cumulatedData, &samplesCount);\r\n\r\n            addContribution(currentFragment.depth, indexInCache - 4, uniforms.blurFactors_4, &cumulatedData, &samplesCount);\r\n            addContribution(currentFragment.depth, indexInCache + 4, uniforms.blurFactors_4, &cumulatedData, &samplesCount);\r\n\r\n            addContribution(currentFragment.depth, indexInCache - 5, uniforms.blurFactors_5, &cumulatedData, &samplesCount);\r\n            addContribution(currentFragment.depth, indexInCache + 5, uniforms.blurFactors_5, &cumulatedData, &samplesCount);\r\n\r\n            addContribution(currentFragment.depth, indexInCache - 6, uniforms.blurFactors_6, &cumulatedData, &samplesCount);\r\n            addContribution(currentFragment.depth, indexInCache + 6, uniforms.blurFactors_6, &cumulatedData, &samplesCount);\r\n\r\n            cumulatedData = cumulatedData / samplesCount;\r\n            storeFragment(texelId, cumulatedData, currentFragment.depth);\r\n        }\r\n\r\n    }\r\n}\r\n";
+module.exports = "@group(0) @binding(0) var inputTexture: texture_2d<f32>;\r\n@group(0) @binding(1) var outputTexture: texture_storage_2d<rgba8unorm, write>;\r\n@group(0) @binding(2) var<uniform> uniforms: Uniforms;\r\n// @group(0) @binding(1) var inputFoamTexture: texture_2d<f32>;\r\n// @group(0) @binding(3) var outputFoamTexture: texture_storage_2d<rgba8unorm, write>;\r\n\r\nstruct ComputeIn {\r\n    @builtin(workgroup_id) workgroupId: vec3<u32>,\r\n    @builtin(local_invocation_id) localInvocationId: vec3<u32>,\r\n    @builtin(global_invocation_id) globalInvocationId: vec3<u32>,\r\n};\r\n\r\noverride workgroupSize: i32;\r\nconst blurRadius = 8;\r\n\r\nalias FragmentDataType = vec3<f32>;\r\n\r\nstruct Fragment {\r\n    data: FragmentDataType,\r\n    depth: f32,\r\n};\r\n\r\nvar<workgroup> workgroupCache : array<Fragment, workgroupSize>;\r\n\r\nfn loadFragment(texelId: vec2<i32>) -> Fragment {\r\n    var currentFragment: Fragment;\r\n    let rawTexel = textureLoad(inputTexture, texelId, 0);\r\n    // let foam = textureLoad(inputFoamTexture, texelId, 0).r;\r\n    currentFragment.data = rawTexel.rgb;\r\n    currentFragment.depth = rawTexel.a;\r\n    return currentFragment;\r\n}\r\nfn storeFragment(texelId: vec2<i32>, cumulatedData: FragmentDataType, depth: f32) {\r\n    let outputColor = vec4<f32>(cumulatedData.rgb, depth);\r\n    // let outputFoamColor = vec4<f32>(cumulatedData.a);\r\n    textureStore(outputTexture, texelId, outputColor);\r\n    // textureStore(outputFoamTexture, texelId, outputFoamColor);\r\n}\r\n\r\nfn addContribution(currentFragmentDepth: f32, neighbourIndexInCache: i32, factor: f32, cumulatedData: ptr<function,FragmentDataType>, samplesCount: ptr<function,f32>) {\r\n    if (neighbourIndexInCache >= 0 && neighbourIndexInCache < workgroupSize) {\r\n        let neighbourFragment = workgroupCache[neighbourIndexInCache];\r\n\r\n        if (distance(currentFragmentDepth, neighbourFragment.depth) < 0.02) {\r\n            *samplesCount = *samplesCount + factor;\r\n            *cumulatedData = *cumulatedData + factor * neighbourFragment.data;\r\n        }\r\n    }\r\n}\r\n\r\n@compute @workgroup_size(workgroupSize)\r\nfn main(in: ComputeIn) {\r\n    let textureSize = vec2<i32>(textureDimensions(inputTexture));\r\n    let globalInvocationId = vec2<i32>(in.globalInvocationId.xy) - vec2<i32>(2 * blurRadius * i32(in.workgroupId.x), 0);\r\n\r\n    let texelId = globalInvocationId.x * uniforms.direction + globalInvocationId.y * (vec2<i32>(1) - uniforms.direction);\r\n    let indexInCache = i32(in.localInvocationId.x);\r\n\r\n    // first, load workgroup cache\r\n    let currentFragment = loadFragment(texelId);\r\n    workgroupCache[indexInCache] = currentFragment;\r\n    workgroupBarrier();\r\n\r\n    // then compute blur\r\n    if (texelId.x < textureSize.x && texelId.y < textureSize.y) {\r\n        let textureSize1D: i32 = dot(textureSize, uniforms.direction);\r\n        let nearImageBorder = (globalInvocationId.x <= blurRadius) || (globalInvocationId.x >= textureSize1D - 1 - blurRadius);\r\n        let insideWorkgroup = (indexInCache >= blurRadius) && (indexInCache <= workgroupSize - 1 - blurRadius);\r\n        if (nearImageBorder || insideWorkgroup) {\r\n            var cumulatedData = FragmentDataType(0);\r\n            var samplesCount = 0.0;\r\n\r\n            addContribution(currentFragment.depth, indexInCache, uniforms.blurFactors_0, &cumulatedData, &samplesCount);\r\n\r\n            addContribution(currentFragment.depth, indexInCache - 1, uniforms.blurFactors_1, &cumulatedData, &samplesCount);\r\n            addContribution(currentFragment.depth, indexInCache + 1, uniforms.blurFactors_1, &cumulatedData, &samplesCount);\r\n\r\n            addContribution(currentFragment.depth, indexInCache - 2, uniforms.blurFactors_2, &cumulatedData, &samplesCount);\r\n            addContribution(currentFragment.depth, indexInCache + 2, uniforms.blurFactors_2, &cumulatedData, &samplesCount);\r\n\r\n            addContribution(currentFragment.depth, indexInCache - 3, uniforms.blurFactors_3, &cumulatedData, &samplesCount);\r\n            addContribution(currentFragment.depth, indexInCache + 3, uniforms.blurFactors_3, &cumulatedData, &samplesCount);\r\n\r\n            addContribution(currentFragment.depth, indexInCache - 4, uniforms.blurFactors_4, &cumulatedData, &samplesCount);\r\n            addContribution(currentFragment.depth, indexInCache + 4, uniforms.blurFactors_4, &cumulatedData, &samplesCount);\r\n\r\n            addContribution(currentFragment.depth, indexInCache - 5, uniforms.blurFactors_5, &cumulatedData, &samplesCount);\r\n            addContribution(currentFragment.depth, indexInCache + 5, uniforms.blurFactors_5, &cumulatedData, &samplesCount);\r\n\r\n            addContribution(currentFragment.depth, indexInCache - 6, uniforms.blurFactors_6, &cumulatedData, &samplesCount);\r\n            addContribution(currentFragment.depth, indexInCache + 6, uniforms.blurFactors_6, &cumulatedData, &samplesCount);\r\n\r\n            cumulatedData = cumulatedData / samplesCount;\r\n            storeFragment(texelId, cumulatedData, currentFragment.depth);\r\n        }\r\n\r\n    }\r\n}\r\n";
 
 /***/ }),
 
