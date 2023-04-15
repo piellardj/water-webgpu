@@ -13,6 +13,10 @@ const data: IDemopageData = {
         "You might need to manually enable WebGPU in your browser.",
     ],
     githubProjectName: "water-webgpu",
+    readme: {
+        filepath: path.join(__dirname, "..", "README.md"),
+        branchName: "main"
+    },
     additionalLinks: [],
     styleFiles: [],
     scriptFiles: [

@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="description" content="Readme page of my project 'Water'. WebGPU water simulation handling a million particles" />
+    <title>Water - Explanations</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" type="image/png" href="favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="favicon-32x32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96">
+    <link rel="stylesheet" type="text/css" href="css/page.css?v=2023-04-15T20%3A57%3A31.368Z">
+  </head>
+
+  <body>
+    <header>
+      <a class="logo logo-animate-fill" href="https://piellardj.github.io/water-webgpu/" id="seep-live-button" title="Live project" aria-label="Live project">
+        <svg class="logo-icon" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+          <g stroke-width="2">
+            <path fill="none" stroke-linejoin="round" d="M24,20v24L46,32z" />
+        </svg>
+      </a>
+    </header>
+    <main>
+      <div class="contents">
+        <h1 id="waterwebgpu">water-webgpu</h1>
+        <h2 id="description">Description</h2>
+        <p>This is a water simulation where water is modeled as thousands of small balls colliding with each other. You can interact with it by adding objects such as a cup or a helix. You can also dynamically change the domain contraints and the engine settings. The smaller the timestep, the more precise it is.</p>
+        <p>This project runs fully on GPU and can handle up to a million balls. It is implemented with the experimental WebGPU API, which allows GPGPU in the browser for massively parallel computing. You might need to manually enable WebGPU in your browser.</p>
+        <p>See it live <a href="https://piellardj.github.io/water-webgpu/">here</a>.</p>
+        <h2 id="preview">Preview</h2>
+        <p>
+        <div style="text-align:center">
+          <video controls muted>
+            <source src="https://user-images.githubusercontent.com/22922087/228359283-33cc019e-f49b-4865-9906-eb5b36fb7920.mp4" type="video/mp4">
+          </video>
+        </div>
+        </p>
+        <p>
+        <div style="text-align:center">
+          <video controls muted>
+            <source src="https://user-images.githubusercontent.com/22922087/228642679-4031c3f1-6008-4f5b-bc70-46198698d09b.mp4" type="video/mp4">
+          </video>
+        </div>
+        </p>
+        <p>
+        <div style="text-align:center">
+          <video controls muted>
+            <source src="https://user-images.githubusercontent.com/22922087/228644853-d2b4d2da-42aa-4678-a433-e3ecf7e17c6a.mp4" type="video/mp4">
+          </video>
+        </div>
+        </p>
+        <p>
+        <div style="text-align:center">
+          <video controls muted>
+            <source src="https://user-images.githubusercontent.com/22922087/228642866-f7bef392-21a3-464e-99ca-78a793789c3b.mp4" type="video/mp4">
+          </video>
+        </div>
+        </p>
+        <p>
+        <div style="text-align:center">
+          <video controls muted>
+            <source src="https://user-images.githubusercontent.com/22922087/228643120-e85d4b6d-4832-4d22-9152-ecd5484afe3c.mp4" type="video/mp4">
+          </video>
+        </div>
+        </p>
+        <h2 id="algorithms">Algorithms</h2>
+        <h3 id="engine">Engine</h3>
+        <p>The simulation runs fully on the GPU: the CPU is only used to compute the initial positions.</p>
+        <h4 id="baseprinciple">Base principle</h4>
+        <p>The physics are not the focus of this project, so they are pretty basic.</p>
+        <p>All particles in the scene share the same size. They evolve inside a delimited spatial domain (a unit cube). Particles collide with each other, so that there is no interpenetration. Particles are subject to gravity. I use Euler integration for each step.</p>
+        <p>In the scene there can be obstacles. They are modeled as special particles that do not move, so in case of collision between a mobile particle and an obstacle's particle, it is the mobile particle that absorbs the energy and bounces back. For the rendering, the obstacles are rendered as meshes, but this is only for display.</p>
+        <div style="text-align:center">
+          <img alt="Obstacle modeled as particles." src="https://github.com/piellardj/water-webgpu/raw/main/src/readme/obstacle.png" />
+          <p>
+            <i>Obstacle modeled as particles.</i>
+          </p>
+        </div>
+        <h4 id="spatialindexing">Spatial indexing</h4>
+        <p>A naive implementation of these equations would be, for each sphere to check every other sphere for collision. However:</p>
+        <ul>
+          <li>this is obviously not scalable;</li>
+          <li>this is wasting a lot of resources, because if two spheres are too far from one another, there is no need to compute their interaction.</li>
+        </ul>
+        <p>The solution to both these issues is to use spatial indexing, so that:</p>
+        <ul>
+          <li>each particle only checks the particles near it and skips the ones far away;</li>
+          <li>particles that are spatially close are adjacent in the <code>GPUBuffer</code>, which is favorable for GPU cache.</li>
+        </ul>
+        <p>Spatial indexing works well on GPU, but requires an adapted implementation, different from a classical CPU one.</p>
+        <p>In my explanation, I will consider a 2D domain to make diagrams readable; however in my project I use 3D indexing. This technique can be generalized to higher dimensions if needed.</p>
+        <p>Let take the example of a scene where there are spheres of radius <code>r</code>. I divide the domain into a regular grid, where the cell size at least <code>2r</code>. This way if a sphere is in a certain cell, then the only other spheres potentially colliding are the ones in the same cell, or in the 9 adjacent cells.</p>
+        <p>In this example there are 7 spheres (in blue), and the domain is divided into 16 cells (in black). Each cell is given a unique scalar identifier.</p>
+        <div style="text-align:center">
+          <img alt="Spatial indexing: step 1" width="512px" src="https://github.com/piellardj/water-webgpu/raw/main/src/readme/indexing-01.png" />
+        </div>
+        <p>Then I count the number of spheres in each cell (<code>pCount</code> in these diagrams), and I assign a local id to each sphere (in blue).</p>
+        <div style="text-align:center">
+          <img alt="Spatial indexing: step 2" src="https://github.com/piellardj/water-webgpu/raw/main/src/readme/indexing-02.png" />
+        </div>
+        <p>Then I compute a prefix sum (exclusive scan): the <code>cStart</code> of each cell is the sum of the <code>pCount</code> of the previous cells.</p>
+        <div style="text-align:center">
+          <img alt="Spatial indexing: step 3" src="https://github.com/piellardj/water-webgpu/raw/main/src/readme/indexing-03.png" />
+        </div>
+        <p>Then to each particle, I assign a global id (in red) which is the sum of the cell's <code>cStart</code> and the particle's local id. This global id is unique to each particle, and is then used to reorder particles.</p>
+        <div style="text-align:center">
+          <img alt="Spatial indexing: step 4" src="https://github.com/piellardj/water-webgpu/raw/main/src/readme/indexing-04.png" />
+        </div>
+        <p>Finally, I reorder the particles according to their global id.</p>
+        <p>Once this indexing is done:</p>
+        <ul>
+          <li>the particles were reordered;</li>
+          <li>I easily can get the list of particles in a cell: they are the ones with ids ranging from <code>cStart</code> to <code>cStart + pCount</code>.</li>
+        </ul>
+        <p>In this example, let's say I want to compute the collisions for particle 1.</p>
+        <ul>
+          <li>I start by computing the cell id (cell #2)</li>
+          <li>I then lookup particles in adjacent cells (#1, #2, #3, #5, #6, #7): in cells #1,#3,#5,#6 <code>pCount=0</code> so no particles, in cell #2 particles <code>0</code> to <code>0+3</code> (0, 1, 2), in cell #7 particles <code>5</code> to <code>5+1</code> (5).</li>
+        </ul>
+        <p>Here is what indexing looks like (only the cells with <code>pCount&gt;0</code> are displayed):</p>
+        <p>
+        <div style="text-align:center">
+          <video controls muted>
+            <source src="https://user-images.githubusercontent.com/22922087/228377674-6cc242ab-d291-4367-823d-86c9c04d8297.mp4" type="video/mp4">
+          </video>
+        </div>
+        </p>
+        <h4 id="performance">Performance</h4>
+        <p>Unfortunately, at the time of writing I did not find an easy way of precisely monitoring performance. I don't know, of physics or spatial indexing, which takes the most computing time. The only metric I have is the iterations per second (one iteration being spatial indexing + physics computing).</p>
+        <p>Here is the evolution of the iterations per second relatively to the particles count. Measures were done on my desktop computer with an nVidia 1660 Ti, with particles of radius 0.005, and a grid size of 98x98x98 (9411952 cells of 0.0102 each).</p>
+        <div style="text-align:center">
+          <img alt="Iterations-per-second by particles count." src="https://github.com/piellardj/water-webgpu/raw/main/src/readme/performance.png" />
+          <p>
+            <i>Iterations-per-second by particles count.</i>
+          </p>
+        </div>
+        <p>Tweaking the grid size (as long as it respects the minimum cell size condition) will certainly affect performance too; however I did not perform any tests of this kind to determine the ideal size.</p>
+        <h3 id="rendering">Rendering</h3>
+        <p>The project supports two render modes:</p>
+        <ul>
+          <li>balls, which is the cheapest one</li>
+          <li>water, which is the most expensive one</li>
+        </ul>
+        <p>These modes are purely cosmetic and don't affect the simulation in any way. In both modes I use deferred rendering.
+          Below, examples of both rendering modes for a same scene, comprising a central obstacle partially submerged.</p>
+        <div style="text-align:center">
+          <img alt="'Balls' rendering mode." src="https://github.com/piellardj/water-webgpu/raw/main/src/readme/balls_shaded.png" />
+          <p>
+            <i>"Balls" rendering mode.</i>
+          </p>
+        </div>
+        <div style="text-align:center">
+          <img alt="'Water' rendering mode." src="https://github.com/piellardj/water-webgpu/raw/main/src/readme/water_shaded.png" />
+          <p>
+            <i>"Water" rendering mode.</i>
+          </p>
+        </div>
+        <h4 id="ballsrenderingmode">"Balls" rendering mode</h4>
+        <p>This rendering mode of rendering is the most straightforward one.</p>
+        <p>Each ball is first rendered as a 2D billboard, which each fragment containing the billboard-local position in the red/green channels. Since the balls are really close to one another, a simple 2D billboard is not enough: I have to manually compute the depth in the fragment shader to mimic the shape of the sphere. In my tests, for large amounts of spheres this is still cheaper than using actually 3D geometry.
+          The depth is stored in the alpha channel. Since it is only 8 bits, I need to carefully chose the camera near and far planes to maximize useful range.</p>
+        <div style="text-align:center">
+          <img alt="In RG channels, local position. In alpha channel, depth." src="https://github.com/piellardj/water-webgpu/raw/main/src/readme/local-pos_depth.png" />
+          <p>
+            <i>In RG channels, local position. In alpha channel, depth.</i>
+          </p>
+        </div>
+        <p>Then at composition-time, I compute the world normal by combining the billboard-local position and the camera properties:</p>
+        <div style="text-align:center">
+          <img alt="Computed world normals." src="https://github.com/piellardj/water-webgpu/raw/main/src/readme/world_normals.png" />
+          <p>
+            <i>Computed world normals.</i>
+          </p>
+        </div>
+        <p>and from there it is easy to compute a basic diffuse shading:</p>
+        <div style="text-align:center">
+          <img alt="Final balls shading with diffuse lighting." src="https://github.com/piellardj/water-webgpu/raw/main/src/readme/balls_final.png" />
+          <p>
+            <i>Final balls shading with diffuse lighting.</i>
+          </p>
+        </div>
+        <h4 id="waterrenderingmode">"Water" rendering mode</h4>
+        <p>This rendering mode is way more expensive but has a cartoonish water look that I like. Everything happens in screen-space: no additional geometry is required.</p>
+        <p>The first step is common with the "balls" rendering mode: I render each sphere as a billboard. This time however, I use all 4 channels of the texture and I store in the blue channel the water depth (computed in additive mode).</p>
+        <div style="text-align:center">
+          <img alt="In RG channels, local position. In blue channel, water depth. In alpha channel, depth." src="https://github.com/piellardj/water-webgpu/raw/main/src/readme/local-pos_water-depth_depth.png" />
+          <p>
+            <i>In RG channels, local position. In blue channel, water depth. In alpha channel, depth.</i>
+          </p>
+        </div>
+        <p>In a second step, I apply a blur to try to merge the spheres together.</p>
+        <div style="text-align:center">
+          <img alt="Same texture, with local position and water depth blurred." src="https://github.com/piellardj/water-webgpu/raw/main/src/readme/local-pos_water-depth_depth_blurred.png" />
+          <p>
+            <i>Same texture, with local position and water depth blurred.</i>
+          </p>
+        </div>
+        <p>This blur is applied in a compute shader. It is computed in two steps as a separable Gaussian blur: first vertical, then horizontal. For better performance, I first load the region into workgroup cache, then work on that cache. It takes depth into account, in order to keep edges sharp: if there is a discontinuity in depth, then no blur is applied. Otherwise, a sphere in the foreground would be merged with the water in the background, which makes no sense visually.</p>
+        <div style="text-align:center">
+          <img alt="Where there is a depth discontinuity, no blur is applied." src="https://github.com/piellardj/water-webgpu/raw/main/src/readme/blur_depth-aware.png" />
+          <p>
+            <i>Where there is a depth discontinuity, no blur is applied.</i>
+          </p>
+        </div>
+        <p>In the last step, all this information is combined, and with a bit of Fresnel and specularity here is the result:</p>
+        <div style="text-align:center">
+          <img alt="Here is what the shaded water looks like." src="https://github.com/piellardj/water-webgpu/raw/main/src/readme/water.png" />
+          <p>
+            <i>Here is what the shaded water looks like.</i>
+          </p>
+        </div>
+        <p>I am especially happy with the water depth information, which greatly improves the rendering since it allows to see obstacles through the water. This effect is visible in the video below:</p>
+        <p>
+        <div style="text-align:center">
+          <video controls muted>
+            <source src="https://user-images.githubusercontent.com/22922087/228359283-33cc019e-f49b-4865-9906-eb5b36fb7920.mp4" type="video/mp4">
+          </video>
+        </div>
+        </p>
+        <h2 id="implementationdetails">Implementation details</h2>
+        <p>I used this project to further learn about WebGPU (which at the time of writing, is still in draft so things could change in the future). Below are specific implementation details I think are notable.</p>
+        <h3 id="waterdepthadditiveblendingandwritemasks">Water depth: additive blending and write masks</h3>
+        <p>I was a bit worried about the computation of the water depth. However it turned out to be easy because WebGPU supports:</p>
+        <ul>
+          <li>additive blending</li>
+        </ul>
+        <pre><code class="typescript language-typescript">const additiveBlend: GPUBlendState = {
+    color: {
+        srcFactor: "one",
+        dstFactor: "one",
+        operation: "add",
+    },
+    alpha: {
+        srcFactor: "one",
+        dstFactor: "one",
+        operation: "add",
+    }
+};
+</code></pre>
+        <ul>
+          <li>and write mask</li>
+        </ul>
+        <pre><code class="typescript language-typescript">const colorTarget: GPUColorTargetState = {
+    format: "rgba8unorm",
+    writeMask: GPUColorWrite.BLUE, // or GPUColorWrite.RED | GPUColorWrite.GREEN | GPUColorWrite.ALPHA
+};
+</code></pre>
+        <p>This is necessary because the RGA channels of the deferred texture store the scene rendered classically (with depth write) whereas the B channel stores the scene in additive mode without depth write: as a result I cannot compute all four channels at the same time, I have to perform 2 renders into the same texture. I first render the RGA channels with a RGA writeMask and <code>depthWriteEnabled=true</code>, and then I do a second render for the B channel, with a B writeMask and <code>depthWriteEnabled=false</code>.</p>
+        <h3 id="blurcomputeshadersworkgroupaddressspaceandworkgroupbarrier">Blur: compute shaders, workgroup address space and workgroupBarrier</h3>
+        <p>In the "Water" render mode, I have to blur the deferred texture. In WebGL1, I would have used a fragment shader to do this. In WebGPU, there is support for compute shader, which offers more control, flexibility and performance !</p>
+        <p>The blur is computed as a separable Gaussian blur: first a horizontal blur is applied, then a vertical one. The principle of a blur is to sample the neighbouring fragments and sum them, with normalized weights. A direct way of doing this would be, for each texel, to fetch the neighbouring texels directly from the texture. However this proves to be sub-optimal because then each texel would be fetched many times, and a fetch is expensive. A more performant way of doing this is to minimize texel fetches by using a cache in the workgroup address space. This is made possible with the use of the <a href="https://www.w3.org/TR/WGSL/#workgroupBarrier-builtin"><code>workgroupBarrier()</code></a> instruction.</p>
+        <p>You can find such an example in the <a href="https://github.com/webgpu/webgpu-samples/blob/main/src/sample/imageBlur/blur.wgsl">webgpu-samples</a>.</p>
+        <p>Below is a simplified example. In real life there is some more code to handle out-of-bounds reads.</p>
+        <pre><code class="glsl language-glsl">@group(0) @binding(0) var inputTexture: texture_2d&lt;f32&gt;; // input texture
+@group(0) @binding(1) var outputTexture: texture_storage_2d&lt;rgba8unorm, write&gt;; // output texture
+
+struct ComputeIn {
+    @builtin(workgroup_id) workgroupId: vec3&lt;u32&gt;,
+    @builtin(local_invocation_id) localInvocationId: vec3&lt;u32&gt;,
+    @builtin(global_invocation_id) globalInvocationId: vec3&lt;u32&gt;,
+};
+
+const direction = vec2&lt;i32&gt;(1,0); // horizontal blur
+const workgroupSize = 128;
+const blurRadius = 6;
+
+var&lt;workgroup&gt; workgroupCache : array&lt;vec4&lt;f32&gt;, workgroupSize&gt;; // cache stored in the workgroup address space
+
+@compute @workgroup_size(workgroupSize)
+fn main(in: ComputeIn) {
+    let textureSize = vec2&lt;i32&gt;(textureDimensions(inputTexture));
+    let globalInvocationId = vec2&lt;i32&gt;(in.globalInvocationId.xy) - vec2&lt;i32&gt;(2 * blurRadius * i32(in.workgroupId.x), 0);
+
+    let texelId = globalInvocationId.x * direction + globalInvocationId.y * (vec2&lt;i32&gt;(1) - direction);
+    let indexInCache = i32(in.localInvocationId.x);
+
+    // first, load workgroup cache, one single texel fetch per invocation
+    let currentFragment = textureLoad(inputTexture, texelId, 0); // texel fetch (might be out of texture range)
+    workgroupCache[indexInCache] = currentFragment; // write in workgroup cache
+
+    // wait for every invocation of in the workgroup
+    workgroupBarrier();
+    // at this point the workgroupCache stores a copy of a portion of the texture
+
+    // then compute blur by loading values from workgroupCache
+    if (texelId.x &lt; textureSize.x &amp;&amp; texelId.y &lt; textureSize.y) {
+        var blurred = vec4&lt;f32&gt;(0);
+
+        // loop on items from indexInCache-blurRadius to indexInCache+blurRadius
+        for (let i = indexInCache-blurRadius; i &lt;= indexInCache+blurRadius; i++) {
+            blurred += workgroupCache[i];
+        }
+        blurred /= 2.0 * f32(blurRadius) + 1.0;
+
+        // then store the result in the output texture
+        textureStore(outputTexture, texelId, blurred);
+    }
+}
+</code></pre>
+        <h3 id="uniformsbufferpacking">Uniforms buffer packing</h3>
+        <p>In GLSL when creating a structure, each attribute has requirements in terms of bytes alignment (and stride in case of arrays). Correctly packing a structure to minimize space requires a bit of care. Everything is explained in the <a href="https://www.w3.org/TR/WGSL/#alignment-and-size">Alignment and Size</a> section of the spec.</p>
+        <p>Here is an example of a structure that could be packed better:</p>
+        <pre><code class="glsl language-glsl">struct Particle {            //            align(16) size(64)
+    position: vec3&lt;f32&gt;,     // offset(0)  align(16) size(12)
+    // 4 bytes wasted
+    velocity: vec3&lt;f32&gt;,     // offset(16) align(16) size(12)
+    // 4 bytes wasted
+    acceleration: vec3&lt;f32&gt;, // offset(32) align(16) size(12)
+    weight: f32,             // offset(44) align(4)  size(4) 
+    foam: f32,               // offset(48) align(4)  size(4) 
+    indexInCell: u32,        // offset(52) align(4)  size(4) 
+    // 8 bytes wasted
+};
+</code></pre>
+        <p>Since <code>SizeOf(vec3&lt;f32&gt;) = 12</code> and <code>AlignOf(vec3&lt;f32&gt;) = 16</code>, in this example there is a 4-bytes gap between <code>position</code>, <code>velocity</code> and <code>acceleration</code>. This wastes 8 bytes in padding. Worse it makes the structure 16 bytes too big because the <code>size</code> of a structure needs to be a multiple of its <code>align</code>: here, even if the used size would have been 56 bytes, there is more padding added at the end.
+          A better way to pack this structure would be to use this padding to store the 4-bytes types like so:</p>
+        <pre><code class="glsl language-glsl">struct Particle {            //            align(16) size(48)
+    position: vec3&lt;f32&gt;,     // offset(0)  align(16) size(12)
+    weight: f32,             // offset(12) align(4)  size(4) 
+    velocity: vec3&lt;f32&gt;,     // offset(16) align(16) size(12)
+    foam: f32,               // offset(28) align(4)  size(4) 
+    acceleration: vec3&lt;f32&gt;, // offset(32) align(16) size(12)
+    indexInCell: u32,        // offset(44) align(4)  size(4) 
+};
+</code></pre>
+        <p>This way, no space is wasted and the structure is 75% smaller, down to 48 bytes instead of 64 ! This can seem anecdotal but has a huge impact in my project where I store 100000s of particles: it can save dozens of megabytes of GPU memory.</p>
+        <p>For large structures this is a bit tedious to tweak the attributes manually, so I created a helper class to automatically pack structures as much as possible.</p>
+        <h3 id="spatialindexingwithatomicadd">Spatial indexing with atomicAdd</h3>
+        <p>WebGPU offers atomic operations described in the "<a href="https://www.w3.org/TR/WGSL/#atomic-rmw">Atomic Read-modify-write</a>" section of the spec. These allow several invocations to work in parallel on the same data in storage or workgroup address space without risking race conditions.</p>
+        <p>I use it in the step 2 of the spatial indexing process, to increment <code>pCount</code> the count of particles in each cell.</p>
+        <div style="text-align:center">
+          <img alt="Spatial indexing: step 2" src="https://github.com/piellardj/water-webgpu/raw/main/src/readme/indexing-02.png" />
+        </div>
+        <p>In this step:</p>
+        <ul>
+          <li>the cell's <code>pCount</code> were previously reset to 0</li>
+          <li>each invocation handles one particle.</li>
+        </ul>
+        <p>The code snipet to increment the cells <code>pCount</code> and get the particle's local id is:</p>
+        <pre><code class="glsl language-glsl">struct Cell {
+    pCount: atomic&lt;u32&gt;,
+};
+
+struct Particle {
+    position: vec3&lt;f32&gt;,
+    indexInCell: u32,
+};
+
+struct ComputeIn {
+    @builtin(global_invocation_id) globalInvocationId : vec3&lt;u32&gt;,
+};
+
+@group(0) @binding(0) var&lt;storage,read_write&gt; cellsBuffer: array&lt;Cell&gt;;
+@group(0) @binding(1) var&lt;storage,read_write&gt; particlesBuffer: array&lt;Particle&gt;;
+
+override particlesCount: u32;
+
+fn computeCellIndex(position: vec3&lt;f32&gt;) -&gt; u32 {
+    // compute it
+}
+
+@compute @workgroup_size(128)
+fn main(in: ComputeIn) {
+    let particleId = in.globalInvocationId.x;
+
+    if (particleId &lt; particlesCount) { // particlesCount might not be a multiple of 128, so a few invocations are wasted
+        let position = particlesBuffer[particleId].position;
+        let cellIndex = computeCellIndex(position);
+        // atomicAdd increments the cell's pCount and return its value pre-incrementation
+        particlesBuffer[particleId].indexInCell = atomicAdd(&amp;cellsBuffer[cellIndex].pCount, 1u);
+    }
+}
+</code></pre>
+        <h3 id="prefixsum">Prefix sum</h3>
+        <p>Implementing prefix sum for parallel architectures is a well-known subject. I chose to implement a simple algorithm described below, which consists of two passes: the reduce pass and the down pass.</p>
+        <div style="text-align:center">
+          <img alt="Prefix sum (exclusive scan) algorithm I used." src="https://github.com/piellardj/water-webgpu/raw/main/src/readme/prefix-sum.png" />
+          <p>
+            <i>Prefix sum (exclusive scan) algorithm I used.</i>
+          </p>
+        </div>
+        <h2 id="improvements">Improvements</h2>
+        <p>There are many ways this project could be improved.
+          On the engine side:</p>
+        <ul>
+          <li>I could use an Smoothed particle hydrodynamics (SPH) algorithm for more realistic physics;</li>
+          <li>I could use a better integration scheme than Euler, even Verlet would be an improvement.</li>
+          <li>currently, all obstacles are modeled by spheres. This works well but has a major disadvantage: it makes all obstacles bumpy. For instance, balls don't roll well on mild slopes. This leaves a lot of room for improvement.</li>
+        </ul>
+        <p>On the rendering side:</p>
+        <ul>
+          <li>another way to render water from spheres would be to recontruct the water surface, for instance with marching cubes. This is a great subject in itself and implementing it on GPU would be interesting.</li>
+          <li>another way to compute water depth, without additive blending, would be to do a two-passes rendering: the first one to retrieve the depth of the backFaces, and then the second one computing the difference between the front face's depth. An adavantage of this method is that is also works with mesh geometry.</li>
+        </ul>
+      </div>
+    </main>
+
+    <footer>
+      <div class="badge-shelf">
+        <a class="badge" href="mailto:jeremie.piellard@gmail.com" title="Email">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" viewBox="0 0 512 512">
+            <path d="M512 85V448H0V85l256 224L512 85zM488 64H24L256 267 488 64z" />
+          </svg>
+        </a>
+
+        <a class="badge" href="https://github.com/piellardj" title="GitHub">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" viewBox="0 0 1024 1024">
+            <path d="M512 0C229 0 0 229 0 512c0 226 147 418 350 486 26 5 35-11 35-25 0-12 0-53-1-95C242 909 212 818 212 818c-23-59-57-75-57-75-47-32 4-31 4-31 51 4 78 53 78 53 46 78 120 56 149 43 5-33 18-56 33-68C305 725 185 682 185 485c0-56 20-102 53-137-5-13-23-65 5-136 0 0 43-14 141 53 41-11 85-17 128-17 44 0 87 6 128 17 98-66 141-52 141-52 28 71 10 123 5 136 33 36 53 81 53 137 0 197-120 240-234 253 18 16 35 47 35 95 0 68-1 124-1 141 0 14 9 30 35 25C877 930 1024 738 1024 512 1024 229 795 0 512 0z" />
+          </svg>
+        </a>
+
+        <a class="badge" href="https://www.linkedin.com/in/jeremie-piellard/" title="LinkedIn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" viewBox="0 0 512 512">
+            <path d="M30 177l93-1v304l-93 1v-304z" />
+            <path d="M200 177l89-1v39l0 11c26-26 53-45 97-45 51 0 100 21 100 91v208l-90 1v-159c0-35-9-58-51-58-37 0-52 7-52 55v160l-92 1v-304z" />
+            <path d="M128 81c0 28-23 51-51 51s-51-23-51-51c0-28 23-51 51-51 28 0 51 23 51 51z" />
+          </svg>
+        </a>
+      </div>
+    </footer>
+  </body>
+
+</html>
