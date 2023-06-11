@@ -7,6 +7,8 @@ This project runs fully on GPU and can handle up to a million balls. It is imple
 
 See it live [here](https://piellardj.github.io/water-webgpu/).
 
+[![Donate](https://raw.githubusercontent.com/piellardj/piellardj.github.io/master/images/readme/donate-paypal.svg)](https://www.paypal.com/donate/?hosted_button_id=AF7H7GEJTL95E)
+
 ## Preview
 
 https://user-images.githubusercontent.com/22922087/228359283-33cc019e-f49b-4865-9906-eb5b36fb7920.mp4
