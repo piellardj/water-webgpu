@@ -108,7 +108,7 @@ class WebGPUCanvas {
                 storeOp: "store",
             }],
             depthStencilAttachment: {
-                view: this.depthTexture.getView(),
+                view: this.depthTextureView,
                 depthClearValue: 1,
                 depthLoadOp: (options?.clearDepth === false) ? "load": "clear",
                 depthStoreOp: "store",
